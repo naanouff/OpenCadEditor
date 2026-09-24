@@ -1,0 +1,3 @@
+[submodule "vendor/w3dts"]
+	path = vendor/w3dts
+	url = https://github.com/naanouff/w3dts.git
