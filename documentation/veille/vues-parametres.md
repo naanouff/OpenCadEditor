@@ -6,7 +6,7 @@ Les panneaux viennent de `@naanouff/w3dts-viewer-editor`, Dockview et ses styles
 
 ## Vues
 
-La 3D est orthographique : azimut 45°, angle polaire environ 35,26°. L’esquisse est orthographique, le regard suit la normale du plan, le haut de la caméra est un axe de ce plan. Le panoramique et le zoom restent.
+La 3D est orthographique : azimut 45°, environ 55° depuis la verticale, soit 35° au-dessus de l’horizon. L’esquisse est orthographique, le regard suit la normale du plan, le haut de la caméra est un axe de ce plan. Le panoramique et le zoom restent.
 
 La projection orthographique vide encore l’image. La matrice vient de `mat4.ortho`, en profondeur OpenGL. Elle doit entrer dans l’intervalle WebGPU avant ces vues. Un regard pile sur la verticale dégénère : le haut de la caméra prend un axe du plan, plus l’axe Y du monde.
 

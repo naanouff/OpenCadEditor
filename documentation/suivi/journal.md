@@ -95,4 +95,8 @@ La règle de base du développement est le TDD, consignée dans [developpement.m
 
 ## 2026-09-25 — Vues et paramètres consignés, sprint 11 prêt
 
-[veille/vues-parametres.md](../veille/vues-parametres.md) fixe la suite. La 3D devient une isométrie, l’esquisse une vue dans son plan, une fois la profondeur orthographique ramenée à WebGPU. `unite` enregistre l’unité après `piece`. Les arguments chiffrés déclarent entier ou flottant. Un panneau de `@naanouff/w3dts-viewer-editor` liste les paramètres. Le fond du viewport est un gris fixe, sans skybox. [sprints/sprint-11-vues-parametres.md](../sprints/sprint-11-vues-parametres.md) le code en TDD.
+[veille/vues-parametres.md](../veille/vues-parametres.md) fixe la suite. La 3D devient une isométrie, l’esquisse une vue dans son plan, une fois la profondeur orthographique ramenée à WebGPU. `unite` enregistre l’unité après `piece`. Les arguments chiffrés déclarent entier ou flottant. Un panneau de `@naanouff/w3dts-viewer-editor` liste les paramètres. Le fond du viewport est un gris fixe, sans skybox. [sprints/sprint-11-vues-parametres.md](../sprints/sprint-11-vues-parametres.md) est codé. L’unité et le panneau suivent le document. La 3D est une isométrie, l’esquisse une vue dans son plan, le fond un gris fixe.
+
+## 2026-09-25 — Cornes, barrette et tube consignés, sprint 12 prêt
+
+La portée du fond est déjà une lèvre : sur le premier millimètre l’ouverture fait 34 mm, puis le passage reprend 35 mm. [veille/cornes-barrette-tube.md](../veille/cornes-barrette-tube.md) fixe la suite. Quatre boîtes pour les cornes, quatre cylindres horizontaux pour la barrette, un tube et son trou de tige. Les cotes du rectangle sont retenues, l’extrusion copie le profil évalué. [sprints/sprint-12-cornes-barrette-tube.md](../sprints/sprint-12-cornes-barrette-tube.md) le code en TDD. La soustraction booléenne reste après.

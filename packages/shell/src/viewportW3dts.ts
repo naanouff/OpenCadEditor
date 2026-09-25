@@ -1,6 +1,6 @@
 import type { EsquissePosee, Frontiere } from '@opencad/api-parametrique'
 import { documentCad } from './documentCad.ts'
-import { poseGlyphe, vueDuPlan } from './dessin.ts'
+import { poseGlyphe, repere, vueDuPlan } from './dessin.ts'
 import { remplacementEsquisse } from './entree.ts'
 import policeUrl from '../../../vendor/w3dts/node_modules/.pnpm/@fontsource+open-sans@5.2.7/node_modules/@fontsource/open-sans/files/open-sans-latin-400-normal.woff?url'
 import { createTextMeshFromFont } from '@naanouff/w3dts-text-mesh'
@@ -46,16 +46,7 @@ class ProjetAnneau extends LitAbstractProject {
     for (const passe of passes) {
       const raster = passe as RasterPassConfig
       if (raster?.builtInPipeline !== 'skybox' && !/skybox/i.test(raster?.name ?? '')) continue
-      raster.skyboxParams = {
-        gradientStops: [
-          { offset: 0, color: [0.58, 0.59, 0.6] },
-          { offset: 1, color: [0.74, 0.75, 0.76] },
-        ],
-        sunSize: 0,
-        sunBloom: 0,
-        starsThreshold: 1,
-        clouds: { density: 0, scale: 1, speed: 0, brightness: 0 },
-      }
+      delete raster.skyboxParams
     }
     const opaques = passes.find((passe) => passe.name === '02_Opaques') as RasterPassConfig | undefined
     if (opaques) opaques.clearColor = { r: 0.66, g: 0.67, b: 0.68, a: 1 }
@@ -123,15 +114,20 @@ class ProjetAnneau extends LitAbstractProject {
       max: vec3.fromValues(0.03, 0.02, 0.03),
     }
     if (!(controleur instanceof OrbitalCameraController)) return
+    const iso = Math.acos(1 / Math.sqrt(3))
+    controleur.setProjectionMode('orthographic')
     if (esquisse) {
-      controleur.frameBoundingBox(boite)
+      const plan = repere(esquisse.support)
+      controleur.setViewUp(Math.abs(plan.normale[1]) === 1 ? vec3.fromValues(...plan.axeV) : null)
       const vue = vueDuPlan(esquisse.support)
-      const polaire = vue === 'negY' ? Math.PI - 0.35 : vue === 'posY' ? 0.35 : Math.PI / 2
+      const polaire = vue === 'negY' ? Math.PI : vue === 'posY' ? 0 : Math.PI / 2
       const azimut = vue === 'posX' ? Math.PI / 2 : 0
       controleur.setOrbitAngles(azimut, polaire, true)
+      controleur.frameBoundingBox(boite, { resetViewAngles: false })
     } else {
-      controleur.setProjectionMode('perspective')
-      controleur.frameBoundingBox(boite)
+      controleur.setViewUp(null)
+      controleur.setOrbitAngles(Math.PI / 4, iso, true)
+      controleur.frameBoundingBox(boite, { resetViewAngles: false })
     }
   }
 

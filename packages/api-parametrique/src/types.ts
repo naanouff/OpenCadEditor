@@ -42,6 +42,7 @@ export type Piece = {
   dernierSupport: string | null
   solide: Solide | null
   compteur: number
+  unite: string
 }
 
 export type Contexte = {

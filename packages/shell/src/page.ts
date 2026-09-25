@@ -1,3 +1,4 @@
+import '../../../vendor/w3dts/packages/viewer-editor/src/ui/styles/tokens.css'
 import { Hote } from './hote.ts'
 import { afficher } from './viewportW3dts.ts'
 
@@ -13,11 +14,22 @@ function dessiner() {
   })
 }
 
+function afficherParametres() {
+  const liste = document.querySelector<HTMLElement>('#parametres ul')!
+  liste.replaceChildren()
+  for (const [nom, expression] of hote.session.parametres()) {
+    const ligneParametre = document.createElement('li')
+    ligneParametre.textContent = `${nom} = ${expression}`
+    liste.append(ligneParametre)
+  }
+}
+
 function afficherJournal() {
   journal.value = hote.journal
     .map((entree) => (entree.erreur ? `${entree.ligne} — ${entree.erreur}` : entree.ligne))
     .join('\n')
   journal.scrollTop = journal.scrollHeight
+  afficherParametres()
 }
 
 formulaire.addEventListener('submit', (evenement) => {

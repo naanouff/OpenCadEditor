@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
-import { ErreurApi, Session, type Maillage } from '../src/index.ts'
+import { ErreurApi, Session, valeurTypee, type Maillage } from '../src/index.ts'
 
 function rayonExterieur(maillage: Maillage) {
   let max = 0
@@ -226,6 +226,24 @@ cote diametre diametre_lunette
     expect(couronne(0)?.dehors).toBe(-1)
   })
 
+  it('décrit la portée du fond par une lèvre plus étroite que le passage', () => {
+    const session = new Session()
+    session.executer(script.split('rectangle')[0])
+    const faces = () => session.frontiere().faces
+    const cylindre = (rayon: number) => faces().find((face) => face.sorte === 'cylindre' && face.rayon === rayon)
+    const couronne = (y: number) => faces().find((face) => face.sorte === 'couronne' && face.y === y)
+    expect(cylindre(17)).toMatchObject({ bas: 0, haut: 1, dehors: -1 })
+    expect(cylindre(17.5)).toMatchObject({ bas: 1, haut: 6.8, dehors: -1 })
+    expect(couronne(1)).toMatchObject({ rayonExt: 17.5, rayonInt: 17, dehors: 1 })
+    expect(couronne(0)).toMatchObject({ rayonExt: 20, rayonInt: 17, dehors: -1 })
+    expect(cylindre(18)).toMatchObject({ bas: 6.8, haut: 8 })
+    session.commande('param diametre_fond 32')
+    expect(cylindre(16)).toMatchObject({ bas: 0, haut: 1 })
+    session.commande('param profondeur_fond 2')
+    expect(cylindre(16)).toMatchObject({ haut: 2 })
+    expect(cylindre(17.5)).toMatchObject({ bas: 2 })
+  })
+
   it('arrête la paroi du passage au fond de la poche', () => {
     const session = new Session()
     session.executer(script.split('esquisse face.dessous')[0])
@@ -258,6 +276,27 @@ enleve 2
     expect(rayon).toBeCloseTo(20)
     session.commande('param diametre_boite 42')
     expect(rayonExterieur(session.maillage())).toBeCloseTo(21)
+  })
+
+  it('enregistre l’unité après la pièce, millimètres sinon', () => {
+    const session = new Session()
+    expect(session.unite()).toBe('mm')
+    session.commande('piece carrure')
+    expect(session.unite()).toBe('mm')
+    session.commande('unite mm')
+    expect(session.unite()).toBe('mm')
+  })
+
+  it('refuse un flottant là où un entier est attendu, et accepte l’expression de param', () => {
+    expect(() => valeurTypee('entier', '1.5')).toThrow(ErreurApi)
+    const session = new Session()
+    session.executer(`
+piece carrure
+param diametre_boite 40
+param epaisseur_paroi 2.5
+param diametre_passage diametre_boite - 2 * epaisseur_paroi
+`)
+    expect(session.expression('diametre_passage')).toBe('diametre_boite - 2 * epaisseur_paroi')
   })
 
   it('enregistre un domaine sans que la session cite son type', () => {

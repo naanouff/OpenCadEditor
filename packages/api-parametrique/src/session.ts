@@ -28,6 +28,7 @@ function pieceVide(nom: string): Piece {
     dernierSupport: null,
     solide: null,
     compteur: 0,
+    unite: 'mm',
   }
 }
 
@@ -108,6 +109,15 @@ export class Session {
     if (!this.active) return { faces: [] }
     const piece = this.pieceActive()
     return noyauProvisoire.decrire(piece.solide, piece.parametres)
+  }
+
+  unite() {
+    return this.active ? this.pieceActive().unite : 'mm'
+  }
+
+  parametres() {
+    if (!this.active) return [] as [string, string][]
+    return [...this.pieceActive().parametres.entries()]
   }
 
   esquisseCourante() {
@@ -229,6 +239,7 @@ function domainePiece(session: Session): Domaine {
     id: 'session',
     verbes: {
       piece: (reste) => ({ type: 'piece', arguments: { nom: reste }, noms: [reste] }),
+      unite: (reste) => ({ type: 'unite', arguments: { nom: reste }, noms: [] }),
     },
     operations: {
       piece: {
@@ -238,6 +249,15 @@ function domainePiece(session: Session): Domaine {
         },
         defaire(_contexte, operation) {
           session.retirerPiece(operation.arguments.nom)
+        },
+      },
+      unite: {
+        dansHistorique: false,
+        faire(contexte, operation) {
+          contexte.piece.unite = operation.arguments.nom || 'mm'
+        },
+        defaire(contexte) {
+          contexte.piece.unite = 'mm'
         },
       },
     },

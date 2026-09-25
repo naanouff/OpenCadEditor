@@ -32,5 +32,7 @@ Suivi du projet et notes de travail. Ce dossier n’appartient pas au moteur : l
 | [sprints/sprint-10-camera-esquisse.md](sprints/sprint-10-camera-esquisse.md) | Sprint de ce verrou, liaisons sans rotation |
 | [veille/vues-parametres.md](veille/vues-parametres.md) | Isométrie, plan d’esquisse, unité, types, panneau |
 | [sprints/sprint-11-vues-parametres.md](sprints/sprint-11-vues-parametres.md) | Sprint de cette suite, fond fixe compris |
+| [veille/cornes-barrette-tube.md](veille/cornes-barrette-tube.md) | Quatre cornes, trou de barrette, tube de couronne |
+| [sprints/sprint-12-cornes-barrette-tube.md](sprints/sprint-12-cornes-barrette-tube.md) | Sprint de ces trois figures, test rouge puis `decrire` |
 
 Le modeleur ne démarre pas tant que la veille n’est pas écrite. OpenCadEditor est l’éditeur. CADOM (`.cadom`) est le format d’assemblage OpenCAD, pas un logiciel. L’intention est dans `.cadompart`. Ce découpage est consigné dans le journal.

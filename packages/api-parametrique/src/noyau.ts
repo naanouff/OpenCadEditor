@@ -46,13 +46,22 @@ export const noyauProvisoire: NoyauGeometrique = {
     const rayonExt = diametre / 2
     const rayonInt = rayonExt - paroi
     const dessus = solide.enlevements.find((coupe) => !coupe.traverse && coupe.support === 'face.dessus')
+    const dessous = solide.enlevements.find((coupe) => !coupe.traverse && coupe.support === 'face.dessous')
     const portee = dessus && dessus.rayon > rayonInt && dessus.rayon < rayonExt ? dessus : null
+    const levre = dessous && dessous.rayon < rayonInt ? dessous : null
     const fond = portee ? hauteur - portee.profondeur : hauteur
+    const basPassage = levre ? levre.profondeur : 0
     const faces: Frontiere['faces'] = [
       { sorte: 'cylindre', rayon: rayonExt, bas: 0, haut: hauteur, dehors: 1 },
-      { sorte: 'cylindre', rayon: rayonInt, bas: 0, haut: fond, dehors: -1 },
-      { sorte: 'couronne', rayonExt, rayonInt, y: 0, dehors: -1 },
+      { sorte: 'cylindre', rayon: rayonInt, bas: basPassage, haut: fond, dehors: -1 },
+      { sorte: 'couronne', rayonExt, rayonInt: levre ? levre.rayon : rayonInt, y: 0, dehors: -1 },
     ]
+    if (levre) {
+      faces.push(
+        { sorte: 'cylindre', rayon: levre.rayon, bas: 0, haut: levre.profondeur, dehors: -1 },
+        { sorte: 'couronne', rayonExt: rayonInt, rayonInt: levre.rayon, y: levre.profondeur, dehors: 1 },
+      )
+    }
     if (!portee) {
       faces.push({ sorte: 'couronne', rayonExt, rayonInt, y: hauteur, dehors: 1 })
       return { faces }
