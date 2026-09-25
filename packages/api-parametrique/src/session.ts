@@ -98,6 +98,18 @@ export class Session {
     return this.futur.length > 0
   }
 
+  maillage() {
+    if (!this.active) return { positions: [], indices: [] }
+    const piece = this.pieceActive()
+    return noyauProvisoire.mailler(piece.solide, piece.parametres)
+  }
+
+  frontiere() {
+    if (!this.active) return { faces: [] }
+    const piece = this.pieceActive()
+    return noyauProvisoire.decrire(piece.solide, piece.parametres)
+  }
+
   definirPiece(nom: string) {
     this.pieces.set(nom, pieceVide(nom))
     this.active = nom

@@ -1,0 +1,17 @@
+{
+  "name": "@opencad/shell",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "vitest run",
+    "dev": "vite"
+  },
+  "dependencies": {
+    "@opencad/api-parametrique": "file:../api-parametrique"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.3",
+    "vite": "^5.4.11",
+    "vitest": "^2.1.8"
+  }
+}

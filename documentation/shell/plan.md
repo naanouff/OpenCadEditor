@@ -2,7 +2,7 @@
 
 Même règles que l’API : TDD ([developpement.md](../developpement.md)), registres, ports. Le socle ne contient pas de `switch` sur les panneaux. Le shell appelle `packages/api-parametrique`. Il ne possède pas l’historique.
 
-Le sprint qui démarre ce socle est [sprint 04](../sprints/sprint-04-shell.md). Le paquet n’existe pas encore.
+Le sprint qui démarre ce socle est [sprint 04](../sprints/sprint-04-shell.md). Le paquet est `packages/shell`.
 
 Le premier incrément est `packages/shell`, testé par Vitest, sans navigateur. L’adaptateur w3dts (`EXTENSION_ENTRIES`, `emitUi`) vient après, derrière le port viewport.
 

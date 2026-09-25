@@ -1,6 +1,6 @@
 # Sprint 04 — shell terminal et viewport
 
-Produit le socle décrit dans [plan.md](../shell/plan.md). Le paquet `packages/shell` n’existe pas encore. Pas de navigateur, pas de WebGPU.
+Produit le socle décrit dans [plan.md](../shell/plan.md). Le paquet est `packages/shell`. Pas de navigateur, pas de WebGPU.
 
 ## But
 

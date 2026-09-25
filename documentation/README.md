@@ -17,6 +17,8 @@ Suivi du projet et notes de travail. Ce dossier n’appartient pas au moteur : l
 | [veille/api-architecture.md](veille/api-architecture.md) | Socle modulaire de l’API, pile d’actions, domaines |
 | [sprints/sprint-03-api-carrure.md](sprints/sprint-03-api-carrure.md) | Socle de l’API carrure, tests du script et de la pile |
 | [shell/plan.md](shell/plan.md) | Shell : terminal, viewport, maillage, registres |
-| [sprints/sprint-04-shell.md](sprints/sprint-04-shell.md) | Sprint qui code ce shell, pas encore écrit |
+| [sprints/sprint-04-shell.md](sprints/sprint-04-shell.md) | Shell testable : terminal, maillage de l’anneau, viewport |
+| [veille/portee-lunette.md](veille/portee-lunette.md) | Épaulement du dessus, après l’anneau |
+| [sprints/sprint-05-portee-lunette.md](sprints/sprint-05-portee-lunette.md) | Sprint de cette portée, test rouge puis `decrire` |
 
 Le modeleur ne démarre pas tant que la veille n’est pas écrite. OpenCadEditor est l’éditeur. CADOM (`.cadom`) est le format d’assemblage OpenCAD, pas un logiciel. L’intention est dans `.cadompart`. Ce découpage est consigné dans le journal.

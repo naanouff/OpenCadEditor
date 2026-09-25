@@ -54,10 +54,25 @@ export type SolveurEsquisse = {
   etat(esquisse: Esquisse): { ferme: boolean; degres: number }
 }
 
+export type Maillage = {
+  positions: number[]
+  indices: number[]
+}
+
+export type FaceExacte =
+  | { sorte: 'cylindre'; rayon: number; bas: number; haut: number }
+  | { sorte: 'couronne'; rayonExt: number; rayonInt: number; y: number }
+
+export type Frontiere = {
+  faces: FaceExacte[]
+}
+
 export type NoyauGeometrique = {
   extruder(solide: Solide | null): Solide
   enlever(solide: Solide, traverse: boolean): Solide
   aFace(solide: Solide | null, face: string): boolean
+  mailler(solide: Solide | null, parametres: Map<string, string>): Maillage
+  decrire(solide: Solide | null, parametres: Map<string, string>): Frontiere
 }
 
 export type Handler = {

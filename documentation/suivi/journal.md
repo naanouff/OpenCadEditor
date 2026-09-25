@@ -67,4 +67,8 @@ La règle de base du développement est le TDD, consignée dans [developpement.m
 
 ## 2026-09-25 — Shell consigné, sprint 04 prêt
 
-[shell/plan.md](../shell/plan.md) fixe le premier shell : hôte, registre de panneaux, terminal sur `Session`, port viewport, `maillage()` de l’anneau. [sprints/sprint-04-shell.md](../sprints/sprint-04-shell.md) le code en TDD. Le paquet n’existe pas encore. Ce socle précède le canvas WebGPU.
+[shell/plan.md](../shell/plan.md) fixe le premier shell : hôte, registre de panneaux, terminal sur `Session`, port viewport, `maillage()` de l’anneau. [sprints/sprint-04-shell.md](../sprints/sprint-04-shell.md) le code en TDD. `packages/shell` envoie les lignes à la session, annule par la pile, et pousse le maillage de l’anneau vers un viewport de test. `maillage()` suit `diametre_boite`. Ce socle précède le canvas WebGPU. Une page Vite dans `packages/shell` affiche l’anneau par ses faces exactes. Les arêtes cachées sont retirées dans la même passe. `filDeFer` produit le tableau `brepWireframe.position`. La page démarre le moteur w3dts : solide ombré et fil de fer via `VectorLineOverlayComponent`.
+
+## 2026-09-25 — Portée de lunette consignée, sprint 05 prêt
+
+[veille/portee-lunette.md](../veille/portee-lunette.md) fixe l’épaulement du dessus : trois cylindres et trois couronnes dès le premier enlèvement borgne, pilotés par `diametre_lunette` et `profondeur_lunette`. [sprints/sprint-05-portee-lunette.md](../sprints/sprint-05-portee-lunette.md) le code en TDD. Cette portée précède celle du fond. Les cornes, la barrette et le tube restent après.

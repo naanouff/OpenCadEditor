@@ -2,7 +2,17 @@ import { readFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
-import { ErreurApi, Session } from '../src/index.ts'
+import { ErreurApi, Session, type Maillage } from '../src/index.ts'
+
+function rayonExterieur(maillage: Maillage) {
+  let max = 0
+  for (let i = 0; i < maillage.positions.length; i += 3) {
+    const x = maillage.positions[i]
+    const z = maillage.positions[i + 2]
+    max = Math.max(max, Math.hypot(x, z))
+  }
+  return max
+}
 
 const script = `
 piece carrure
@@ -114,6 +124,30 @@ describe('carrure', () => {
     session.commande('param diametre_barrette 2')
     expect(session.aRefaire).toBe(false)
     expect(() => session.refaire()).toThrow(/rien à refaire/)
+  })
+
+  it('décrit l’anneau par des faces exactes dont le rayon suit diametre_boite', () => {
+    const session = new Session()
+    session.executer(script)
+    const rayons = () =>
+      session
+        .frontiere()
+        .faces.filter((face) => face.sorte === 'cylindre')
+        .map((face) => face.rayon)
+        .sort((a, b) => a - b)
+    expect(rayons()).toEqual([17.5, 20])
+    expect(session.frontiere().faces.filter((face) => face.sorte === 'couronne')).toHaveLength(2)
+    session.commande('param diametre_boite 42')
+    expect(rayons()[1]).toBeCloseTo(21)
+  })
+
+  it('décrit l’anneau par un tube dont le rayon suit diametre_boite', () => {
+    const session = new Session()
+    session.executer(script)
+    const rayon = rayonExterieur(session.maillage())
+    expect(rayon).toBeCloseTo(20)
+    session.commande('param diametre_boite 42')
+    expect(rayonExterieur(session.maillage())).toBeCloseTo(21)
   })
 
   it('enregistre un domaine sans que la session cite son type', () => {
