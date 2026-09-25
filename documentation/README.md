@@ -5,6 +5,18 @@ Suivi du projet et notes de travail. Ce dossier n’appartient pas au moteur : l
 | Dossier | Rôle |
 |---------|------|
 | [suivi/journal.md](suivi/journal.md) | Décisions datées et état des choix encore ouverts |
+| [developpement.md](developpement.md) | Règle de base : TDD |
 | [veille/](veille/) | Veille fonctionnelle avant développement du modeleur |
+| [maquette/plan-layout.md](maquette/plan-layout.md) | Layout visé de l’éditeur |
+| [maquette/index.html](maquette/index.html) | Maquette statique à ouvrir dans un navigateur |
+| [sprints/sprint-01-maquette-layout.md](sprints/sprint-01-maquette-layout.md) | Sprint de la maquette de layout, déjà dessinée |
+| [veille/plan-interfaces.md](veille/plan-interfaces.md) | Veille des interfaces du benchmark, avant de reprendre le layout |
+| [veille/interfaces.md](veille/interfaces.md) | Repérage des interfaces du benchmark, captures créditées |
+| [sprints/sprint-02-veille-interfaces.md](sprints/sprint-02-veille-interfaces.md) | Sprint de cette veille, captures enregistrées ou absence expliquée |
+| [veille/commandes-milgauss.md](veille/commandes-milgauss.md) | Commandes et fonctions pour reconstruire la carrure |
+| [veille/api-architecture.md](veille/api-architecture.md) | Socle modulaire de l’API, pile d’actions, domaines |
+| [sprints/sprint-03-api-carrure.md](sprints/sprint-03-api-carrure.md) | Socle de l’API carrure, tests du script et de la pile |
+| [shell/plan.md](shell/plan.md) | Shell : terminal, viewport, maillage, registres |
+| [sprints/sprint-04-shell.md](sprints/sprint-04-shell.md) | Sprint qui code ce shell, pas encore écrit |
 
 Le modeleur ne démarre pas tant que la veille n’est pas écrite. OpenCadEditor est l’éditeur. CADOM (`.cadom`) est le format d’assemblage OpenCAD, pas un logiciel. L’intention est dans `.cadompart`. Ce découpage est consigné dans le journal.

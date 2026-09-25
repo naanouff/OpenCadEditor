@@ -1,0 +1,318 @@
+:root {
+  color-scheme: dark;
+  --bg: #121418;
+  --panel: #1b1f27;
+  --panel-2: #232833;
+  --line: #343b49;
+  --text: #e7ebf2;
+  --muted: #9aa3b5;
+  --accent: #7aa2ff;
+  --select: #2a3958;
+  --ok: #d7dde8;
+  --proposal: #c9a15b;
+  --proposal-bg: rgba(201, 161, 91, 0.12);
+  --font: "Segoe UI", system-ui, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 13px;
+}
+
+.app {
+  height: 100%;
+  display: grid;
+  grid-template-rows: auto auto 1fr auto;
+}
+
+.ribbon {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 12px;
+  align-items: end;
+  padding: 8px 12px 0;
+  background: var(--panel);
+  border-bottom: 1px solid var(--line);
+}
+
+.tabs {
+  display: flex;
+  gap: 4px;
+}
+
+.tab,
+.tool,
+.mini,
+.cube button {
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  border-radius: 6px;
+}
+
+.tab {
+  padding: 6px 10px;
+  color: var(--muted);
+}
+
+.tab.active {
+  color: var(--text);
+  background: var(--panel-2);
+  border-color: var(--line);
+}
+
+.tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 8px 0;
+}
+
+.tool {
+  padding: 6px 8px;
+  background: var(--panel-2);
+  border-color: var(--line);
+}
+
+.tool.active {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.search {
+  margin: 8px 0;
+  padding: 6px 8px;
+  border: 1px dashed var(--proposal);
+  border-radius: 6px;
+  background: var(--proposal-bg);
+  color: var(--muted);
+  min-width: 220px;
+}
+
+.crumb {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 6px 12px;
+  border-bottom: 1px dashed var(--proposal);
+  background: var(--proposal-bg);
+  color: var(--muted);
+}
+
+.body {
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 280px 1fr 300px;
+}
+
+.side,
+.props,
+.viewport {
+  min-height: 0;
+  min-width: 0;
+}
+
+.side,
+.props {
+  background: var(--panel);
+  overflow: auto;
+}
+
+.side {
+  border-right: 1px solid var(--line);
+}
+
+.props {
+  border-left: 1px solid var(--line);
+  padding: 12px;
+}
+
+h1,
+h2 {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 12px 12px 8px;
+}
+
+.tree,
+.params {
+  list-style: none;
+  margin: 0;
+  padding: 0 8px 8px;
+}
+
+.tree li,
+.params li {
+  padding: 6px 8px;
+  border-radius: 6px;
+}
+
+.tree li.selected {
+  background: var(--select);
+}
+
+.tree .rollback {
+  margin: 4px 16px 8px;
+  border-top: 2px solid var(--accent);
+  color: var(--muted);
+  font-size: 11px;
+  padding-top: 4px;
+}
+
+.proposal {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 0 6px;
+  border: 1px dashed var(--proposal);
+  border-radius: 999px;
+  color: var(--proposal);
+  font-size: 10px;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.viewport {
+  position: relative;
+  display: grid;
+  place-items: center;
+  background:
+    linear-gradient(transparent 31px, rgba(255, 255, 255, 0.04) 32px),
+    linear-gradient(90deg, transparent 31px, rgba(255, 255, 255, 0.04) 32px),
+    #161a20;
+  background-size: 32px 32px;
+}
+
+.sketch {
+  width: min(420px, 70%);
+  aspect-ratio: 1;
+}
+
+.sketch circle.outer {
+  fill: none;
+  stroke: var(--ok);
+  stroke-width: 2.5;
+}
+
+.sketch circle.inner {
+  fill: none;
+  stroke: var(--ok);
+  stroke-width: 2;
+}
+
+.dim {
+  fill: var(--proposal);
+  font-size: 14px;
+  font-family: var(--font);
+}
+
+.mode,
+.context,
+.cube {
+  position: absolute;
+  border: 1px dashed var(--proposal);
+  background: rgba(18, 20, 24, 0.92);
+  border-radius: 8px;
+}
+
+.mode {
+  top: 12px;
+  left: 12px;
+  padding: 6px 8px;
+}
+
+.context {
+  top: 38%;
+  left: 58%;
+  display: flex;
+  gap: 4px;
+  padding: 6px;
+}
+
+.mini {
+  padding: 4px 6px;
+  border-color: var(--line);
+  background: var(--panel-2);
+}
+
+.cube {
+  top: 12px;
+  right: 12px;
+  display: grid;
+  gap: 4px;
+  padding: 8px;
+}
+
+.cube button {
+  padding: 4px 8px;
+  border-color: var(--line);
+  background: var(--panel-2);
+}
+
+.axis {
+  position: absolute;
+  left: 16px;
+  bottom: 16px;
+  width: 64px;
+  height: 64px;
+}
+
+.field {
+  display: grid;
+  gap: 4px;
+  margin-bottom: 12px;
+}
+
+.field span {
+  color: var(--muted);
+}
+
+.field input,
+.field select {
+  background: var(--panel-2);
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 6px 8px;
+  font: inherit;
+}
+
+.ghost {
+  margin-top: 8px;
+  padding: 8px;
+  border: 1px dashed var(--proposal);
+  border-radius: 8px;
+  background: var(--proposal-bg);
+}
+
+.ghost svg {
+  width: 100%;
+  height: 72px;
+}
+
+.status {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 6px 12px;
+  background: var(--panel);
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+}
+
+.status strong {
+  color: var(--ok);
+  font-weight: 600;
+}

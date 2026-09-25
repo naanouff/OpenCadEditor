@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>OpenCadEditor — maquette du layout</title>
+    <link rel="stylesheet" href="layout.css" />
+  </head>
+  <body>
+    <div class="app">
+      <header class="ribbon">
+        <div>
+          <nav class="tabs" aria-label="Sections">
+            <button class="tab active" type="button">Esquisse</button>
+            <button class="tab" type="button">Fonctions</button>
+            <button class="tab" type="button">Assemblage</button>
+          </nav>
+          <div class="tools" aria-label="Outils d’esquisse">
+            <button class="tool" type="button">Ligne</button>
+            <button class="tool active" type="button">Cercle</button>
+            <button class="tool" type="button">Coïncidence</button>
+            <button class="tool" type="button">Cote</button>
+          </div>
+        </div>
+        <label class="search">
+          Rechercher une commande
+          <span class="proposal">proposition</span>
+        </label>
+      </header>
+
+      <div class="crumb">
+        Carrure / Esquisse anneau / Cercle extérieur
+        <span class="proposal">proposition</span>
+      </div>
+
+      <div class="body">
+        <aside class="side">
+          <h2>Historique</h2>
+          <ul class="tree">
+            <li>Origine</li>
+            <li>Plan de dessus</li>
+            <li>Plan de face</li>
+            <li>Plan de droite</li>
+            <li class="selected">Esquisse anneau</li>
+            <li>Extrusion — carrure</li>
+            <li>Portée lunette</li>
+            <li>Portée fond</li>
+            <li>
+              Cornes
+              <span class="proposal">symétrie 6 h</span>
+            </li>
+          </ul>
+          <div class="rollback">Reprise</div>
+          <h2>Paramètres</h2>
+          <ul class="params">
+            <li><code>diametre_boite</code> 40 mm</li>
+            <li><code>epaisseur_paroi</code> 2,5 mm</li>
+            <li><code>entrecorne</code> 20 mm</li>
+          </ul>
+        </aside>
+
+        <main class="viewport" aria-label="Viewport">
+          <div class="mode">
+            Esquisse · Dessus
+            <span class="proposal">proposition</span>
+          </div>
+          <div class="cube">
+            <button type="button">Dessus</button>
+            <button type="button">Face</button>
+            <button type="button">Droite</button>
+            <button type="button">
+              Coupe <span class="proposal">proposition</span>
+            </button>
+          </div>
+          <svg class="sketch" viewBox="0 0 200 200" role="img" aria-label="Anneau de la carrure">
+            <circle class="outer" cx="100" cy="100" r="78" />
+            <circle class="inner" cx="100" cy="100" r="58" />
+            <text class="dim" x="108" y="28">Ø diametre_boite</text>
+            <text class="dim" x="112" y="96">epaisseur_paroi</text>
+          </svg>
+          <div class="context">
+            <button class="mini" type="button">Coïncidence</button>
+            <button class="mini" type="button">Cote</button>
+            <button class="mini" type="button">Construction</button>
+            <span class="proposal">proposition</span>
+          </div>
+          <svg class="axis" viewBox="0 0 64 64" aria-hidden="true">
+            <path d="M8 56 H56" stroke="#e06a6a" stroke-width="2" />
+            <path d="M8 56 V8" stroke="#6ad18a" stroke-width="2" />
+            <circle cx="8" cy="56" r="3" fill="#7aa2ff" />
+          </svg>
+        </main>
+
+        <aside class="props">
+          <h1>Extrusion — carrure</h1>
+          <label class="field">
+            <span>Distance</span>
+            <input value="hauteur_carrure" readonly />
+          </label>
+          <label class="field">
+            <span>Sens</span>
+            <select>
+              <option>Vers le dessus</option>
+            </select>
+          </label>
+          <p>Le ruban lance la fonction. Ce panneau la règle.</p>
+          <div class="ghost">
+            Aperçu avant validation
+            <span class="proposal">proposition</span>
+            <svg viewBox="0 0 160 72" aria-hidden="true">
+              <rect x="20" y="16" width="120" height="40" fill="none" stroke="#c9a15b" stroke-dasharray="4 3" />
+              <text x="48" y="40" fill="#c9a15b" font-size="12">hauteur_carrure</text>
+            </svg>
+          </div>
+        </aside>
+      </div>
+
+      <footer class="status">
+        <span><strong>Esquisse entièrement contrainte</strong> · trait blanc</span>
+        <span>mm</span>
+        <span>Carrure</span>
+      </footer>
+    </div>
+  </body>
+</html>
