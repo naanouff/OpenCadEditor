@@ -1,6 +1,7 @@
 import type { EsquissePosee, Frontiere } from '@opencad/api-parametrique'
 import { documentCad } from './documentCad.ts'
 import { poseGlyphe, vueDuPlan } from './dessin.ts'
+import { remplacementEsquisse } from './entree.ts'
 import policeUrl from '../../../vendor/w3dts/node_modules/.pnpm/@fontsource+open-sans@5.2.7/node_modules/@fontsource/open-sans/files/open-sans-latin-400-normal.woff?url'
 import { createTextMeshFromFont } from '@naanouff/w3dts-text-mesh'
 import {
@@ -111,6 +112,11 @@ class ProjetAnneau extends LitAbstractProject {
     const mode = esquisse?.support ?? '3d'
     if (mode === this.modeVue) return
     this.modeVue = mode
+    const entree = (
+      engine as { inputManager?: { applyInputOverridesJson(texte: string): void; resetInputToDefaults(): void } }
+    ).inputManager
+    if (esquisse) entree?.applyInputOverridesJson(remplacementEsquisse())
+    else entree?.resetInputToDefaults()
     const controleur = cameraControllerManager.getActiveController()
     const boite = {
       min: vec3.fromValues(-0.03, -0.005, -0.03),

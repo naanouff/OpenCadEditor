@@ -91,4 +91,8 @@ La règle de base du développement est le TDD, consignée dans [developpement.m
 
 ## 2026-09-25 — Caméra d’esquisse consignée, sprint 10 prêt
 
-[veille/camera-esquisse.md](../veille/camera-esquisse.md) fige la vue face au plan tant qu’une esquisse est ouverte. Le glisser déplace, la molette zoome, la rotation n’a plus de bouton. [sprints/sprint-10-camera-esquisse.md](../sprints/sprint-10-camera-esquisse.md) le code en TDD. La projection orthographique et la vue isométrique restent après.
+[veille/camera-esquisse.md](../veille/camera-esquisse.md) fige la vue face au plan tant qu’une esquisse est ouverte. Le glisser déplace, la molette zoome, la rotation n’a plus de bouton. [sprints/sprint-10-camera-esquisse.md](../sprints/sprint-10-camera-esquisse.md) est codé. En esquisse, le glisser déplace et la molette zoome. La rotation revient avec le solide. La projection orthographique et la vue isométrique restent après.
+
+## 2026-09-25 — Vues et paramètres consignés, sprint 11 prêt
+
+[veille/vues-parametres.md](../veille/vues-parametres.md) fixe la suite. La 3D devient une isométrie, l’esquisse une vue dans son plan, une fois la profondeur orthographique ramenée à WebGPU. `unite` enregistre l’unité après `piece`. Les arguments chiffrés déclarent entier ou flottant. Un panneau de `@naanouff/w3dts-viewer-editor` liste les paramètres. Le fond du viewport est un gris fixe, sans skybox. [sprints/sprint-11-vues-parametres.md](../sprints/sprint-11-vues-parametres.md) le code en TDD.

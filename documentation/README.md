@@ -30,5 +30,7 @@ Suivi du projet et notes de travail. Ce dossier n’appartient pas au moteur : l
 | [sprints/sprint-09-cotes-texte.md](sprints/sprint-09-cotes-texte.md) | Sprint de ces glyphes, maillage Open Sans à la place du HTML |
 | [veille/camera-esquisse.md](veille/camera-esquisse.md) | Esquisse en panoramique et zoom, rotation au retour du solide |
 | [sprints/sprint-10-camera-esquisse.md](sprints/sprint-10-camera-esquisse.md) | Sprint de ce verrou, liaisons sans rotation |
+| [veille/vues-parametres.md](veille/vues-parametres.md) | Isométrie, plan d’esquisse, unité, types, panneau |
+| [sprints/sprint-11-vues-parametres.md](sprints/sprint-11-vues-parametres.md) | Sprint de cette suite, fond fixe compris |
 
 Le modeleur ne démarre pas tant que la veille n’est pas écrite. OpenCadEditor est l’éditeur. CADOM (`.cadom`) est le format d’assemblage OpenCAD, pas un logiciel. L’intention est dans `.cadompart`. Ce découpage est consigné dans le journal.

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import type { Frontiere } from '@opencad/api-parametrique'
 import { documentCad } from '../src/documentCad.ts'
 import { coteDiametre, grille, pasGrille, poseGlyphe, repere } from '../src/dessin.ts'
+import { jeuEntree } from '../src/entree.ts'
 
 const anneau: Frontiere = {
   faces: [
@@ -76,5 +77,13 @@ describe('vue esquisse', () => {
     const cosinus = (a[0] * b[0] + a[1] * b[1]) / (Math.hypot(a[0], a[1]) * Math.hypot(b[0], b[1]))
     expect(cosinus).toBeCloseTo(Math.cos(Math.PI / 6))
     expect(Math.hypot(second.trait[0], second.trait[2])).toBeCloseTo(15)
+  })
+
+  it('retire la rotation en esquisse et la rend au solide', () => {
+    const esquisse = jeuEntree('esquisse')
+    const solide = jeuEntree('solide')
+    expect(esquisse.rotation).toEqual([])
+    expect(esquisse.panoramique).toContain(0)
+    expect(solide.rotation).toContain(2)
   })
 })
