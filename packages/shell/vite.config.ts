@@ -9,6 +9,8 @@ export default defineConfig({
   publicDir: path.resolve(paquets, 'viewer-editor/public'),
   resolve: {
     alias: {
+      // Vite ne surveille pas la copie de node_modules : il servirait un module figé.
+      '@opencad/api-parametrique': path.resolve(ici, '../api-parametrique/src/index.ts'),
       '@naanouff/w3dts-core': path.resolve(paquets, 'core/src/index.ts'),
       '@naanouff/w3dts-logger': path.resolve(paquets, 'logger/src/index.ts'),
       '@naanouff/w3dts-vector-lines': path.resolve(paquets, 'vector-lines/src/index.ts'),

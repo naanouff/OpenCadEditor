@@ -2,6 +2,50 @@ import type { Frontiere, Maillage } from '@opencad/api-parametrique'
 
 const PAS = 48
 
+/** Pas de grille en millimètres : 1 de près, 5 au milieu, 10 de loin. */
+export function pasGrille(etendueMm: number) {
+  if (etendueMm <= 50) return 1
+  if (etendueMm <= 150) return 5
+  return 10
+}
+
+/** Repère du plan d'esquisse. Y est la verticale. */
+export function repere(support: string) {
+  if (support === 'plan.3h') return { normale: [1, 0, 0], axeU: [0, 1, 0], axeV: [0, 0, 1] }
+  if (support === 'plan.12h') return { normale: [0, 0, 1], axeU: [1, 0, 0], axeV: [0, 1, 0] }
+  if (support === 'face.dessous') return { normale: [0, -1, 0], axeU: [1, 0, 0], axeV: [0, 0, -1] }
+  return { normale: [0, 1, 0], axeU: [1, 0, 0], axeV: [0, 0, -1] }
+}
+
+/** Vue caméra qui regarde ce plan. */
+export function vueDuPlan(support: string): 'posX' | 'negY' | 'posY' | 'posZ' {
+  if (support === 'plan.3h') return 'posX'
+  if (support === 'plan.12h') return 'posZ'
+  if (support === 'face.dessous') return 'negY'
+  return 'posY'
+}
+
+/** Segments de grille dans le plan, en millimètres. L'altitude est portée par la normale. */
+export function grille(support: string, pas: number, etendue: number, altitude: number) {
+  const { normale, axeU, axeV } = repere(support)
+  const array: number[] = []
+  const n = Math.floor(etendue / pas)
+  const poser = (i: number, j: number) => {
+    const x = normale[0] * altitude + axeU[0] * i + axeV[0] * j
+    const y = normale[1] * altitude + axeU[1] * i + axeV[1] * j
+    const z = normale[2] * altitude + axeU[2] * i + axeV[2] * j
+    array.push(x, y, z)
+  }
+  for (let i = -n; i <= n; i++) {
+    const u = i * pas
+    poser(u, -etendue)
+    poser(u, etendue)
+    poser(-etendue, u)
+    poser(etendue, u)
+  }
+  return array
+}
+
 function rang(face: Frontiere['faces'][number]) {
   if (face.sorte === 'couronne') return face.y > 0 ? 2 : 0
   return 1

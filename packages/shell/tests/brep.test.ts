@@ -4,10 +4,10 @@ import { filDeFer, rendu } from '../src/dessin.ts'
 
 const anneau: Frontiere = {
   faces: [
-    { sorte: 'cylindre', rayon: 20, bas: 0, haut: 8 },
-    { sorte: 'cylindre', rayon: 17.5, bas: 0, haut: 8 },
-    { sorte: 'couronne', rayonExt: 20, rayonInt: 17.5, y: 8 },
-    { sorte: 'couronne', rayonExt: 20, rayonInt: 17.5, y: 0 },
+    { sorte: 'cylindre', rayon: 20, bas: 0, haut: 8, dehors: 1 },
+    { sorte: 'cylindre', rayon: 17.5, bas: 0, haut: 8, dehors: -1 },
+    { sorte: 'couronne', rayonExt: 20, rayonInt: 17.5, y: 8, dehors: 1 },
+    { sorte: 'couronne', rayonExt: 20, rayonInt: 17.5, y: 0, dehors: -1 },
   ],
 }
 

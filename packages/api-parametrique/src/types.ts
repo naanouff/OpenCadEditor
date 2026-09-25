@@ -68,9 +68,15 @@ export type Maillage = {
   indices: number[]
 }
 
+/**
+ * Sens de la normale, hors de la matière.
+ * Cylindre : 1 loin de l'axe, -1 vers l'axe. Couronne : 1 vers le haut, -1 vers le bas.
+ */
+export type Dehors = 1 | -1
+
 export type FaceExacte =
-  | { sorte: 'cylindre'; rayon: number; bas: number; haut: number }
-  | { sorte: 'couronne'; rayonExt: number; rayonInt: number; y: number }
+  | { sorte: 'cylindre'; rayon: number; bas: number; haut: number; dehors: Dehors }
+  | { sorte: 'couronne'; rayonExt: number; rayonInt: number; y: number; dehors: Dehors }
 
 export type Frontiere = {
   faces: FaceExacte[]

@@ -49,18 +49,18 @@ export const noyauProvisoire: NoyauGeometrique = {
     const portee = dessus && dessus.rayon > rayonInt && dessus.rayon < rayonExt ? dessus : null
     const fond = portee ? hauteur - portee.profondeur : hauteur
     const faces: Frontiere['faces'] = [
-      { sorte: 'cylindre', rayon: rayonExt, bas: 0, haut: hauteur },
-      { sorte: 'cylindre', rayon: rayonInt, bas: 0, haut: fond },
-      { sorte: 'couronne', rayonExt, rayonInt, y: 0 },
+      { sorte: 'cylindre', rayon: rayonExt, bas: 0, haut: hauteur, dehors: 1 },
+      { sorte: 'cylindre', rayon: rayonInt, bas: 0, haut: fond, dehors: -1 },
+      { sorte: 'couronne', rayonExt, rayonInt, y: 0, dehors: -1 },
     ]
     if (!portee) {
-      faces.push({ sorte: 'couronne', rayonExt, rayonInt, y: hauteur })
+      faces.push({ sorte: 'couronne', rayonExt, rayonInt, y: hauteur, dehors: 1 })
       return { faces }
     }
     faces.push(
-      { sorte: 'cylindre', rayon: portee.rayon, bas: fond, haut: hauteur },
-      { sorte: 'couronne', rayonExt, rayonInt: portee.rayon, y: hauteur },
-      { sorte: 'couronne', rayonExt: portee.rayon, rayonInt, y: fond },
+      { sorte: 'cylindre', rayon: portee.rayon, bas: fond, haut: hauteur, dehors: -1 },
+      { sorte: 'couronne', rayonExt, rayonInt: portee.rayon, y: hauteur, dehors: 1 },
+      { sorte: 'couronne', rayonExt: portee.rayon, rayonInt, y: fond, dehors: 1 },
     )
     return { faces }
   },

@@ -191,6 +191,20 @@ cote diametre diametre_lunette
     })
   })
 
+  it('porte le côté matière de chaque face', () => {
+    const session = new Session()
+    session.executer(script.split('esquisse face.dessous')[0])
+    const faces = session.frontiere().faces
+    const cylindre = (rayon: number) => faces.find((face) => face.sorte === 'cylindre' && face.rayon === rayon)
+    const couronne = (y: number) => faces.find((face) => face.sorte === 'couronne' && face.y === y)
+    expect(cylindre(20)?.dehors).toBe(1)
+    expect(cylindre(17.5)?.dehors).toBe(-1)
+    expect(cylindre(18)?.dehors).toBe(-1)
+    expect(couronne(8)?.dehors).toBe(1)
+    expect(couronne(6.8)?.dehors).toBe(1)
+    expect(couronne(0)?.dehors).toBe(-1)
+  })
+
   it('arrête la paroi du passage au fond de la poche', () => {
     const session = new Session()
     session.executer(script.split('esquisse face.dessous')[0])

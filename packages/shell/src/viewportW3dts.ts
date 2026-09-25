@@ -1,8 +1,10 @@
 import type { EsquissePosee, Frontiere } from '@opencad/api-parametrique'
 import { documentCad } from './documentCad.ts'
+import { vueDuPlan } from './dessin.ts'
 import {
   DirectionalLightComponent,
   EngineBuilder,
+  OrbitalCameraController,
   GPUManager,
   LitAbstractProject,
   Material,
@@ -29,7 +31,7 @@ const chargeurVide = { load: async () => null }
 class ProjetAnneau extends LitAbstractProject {
   private params: ProjectLoadParams | null = null
   private racine: SceneNode | null = null
-  private cadre = false
+  private modeVue = ''
 
   constructor() {
     super('ProjetAnneau')
@@ -64,7 +66,7 @@ class ProjetAnneau extends LitAbstractProject {
     params.engine.renderer.iblIntensity = 0.45
     this.params = params
     this.poserSoleil()
-    this.montrer(documentCad({ faces: [] }))
+    this.montrer(documentCad({ faces: [] }), null)
   }
 
   private poserSoleil() {
@@ -90,7 +92,7 @@ class ProjetAnneau extends LitAbstractProject {
     scene.add(lumiere)
   }
 
-  montrer(document: ReturnType<typeof documentCad>) {
+  montrer(document: ReturnType<typeof documentCad>, esquisse: EsquissePosee | null) {
     const params = this.params
     if (!params) return
     const { scene, world, engine, cameraControllerManager, logger } = params
@@ -99,13 +101,28 @@ class ProjetAnneau extends LitAbstractProject {
     scene.add(racine)
     this.racine = racine
     poserMaillage(racine, world, engine, document)
-    poserFil(racine, world, engine, logger, document.brepWireframe.position.array)
-    if (this.cadre) return
-    this.cadre = true
-    cameraControllerManager.getActiveController()?.frameBoundingBox({
+    poserFil(racine, world, engine, logger, document.brepWireframe.position.array, [0.12, 0.13, 0.14, 1], 'solide')
+    poserFil(racine, world, engine, logger, document.grille.position.array, [0.8, 0.81, 0.82, 1], 'grille')
+    poserFil(racine, world, engine, logger, document.esquisse.position.array, [0.15, 0.45, 0.92, 1], 'esquisse')
+    const mode = esquisse?.support ?? '3d'
+    if (mode === this.modeVue) return
+    this.modeVue = mode
+    const controleur = cameraControllerManager.getActiveController()
+    const boite = {
       min: vec3.fromValues(-0.03, -0.005, -0.03),
       max: vec3.fromValues(0.03, 0.02, 0.03),
-    })
+    }
+    if (!(controleur instanceof OrbitalCameraController)) return
+    if (esquisse) {
+      controleur.frameBoundingBox(boite)
+      const vue = vueDuPlan(esquisse.support)
+      const polaire = vue === 'negY' ? Math.PI - 0.35 : vue === 'posY' ? 0.35 : Math.PI / 2
+      const azimut = vue === 'posX' ? Math.PI / 2 : 0
+      controleur.setOrbitAngles(azimut, polaire, true)
+    } else {
+      controleur.setProjectionMode('perspective')
+      controleur.frameBoundingBox(boite)
+    }
   }
 }
 
@@ -153,11 +170,13 @@ function poserFil(
   engine: Engine,
   logger: ProjectLoadParams['logger'],
   segments: number[],
+  rgba: [number, number, number, number],
+  nom: string,
 ) {
-  const construit = buildLineListInterleavedVertices(segments, [0.05, 0.05, 0.05, 1], 50_000, logger, 'anneau')
+  const construit = buildLineListInterleavedVertices(segments, rgba, 50_000, logger, nom)
   if (construit.vertexCount === 0) return
-  const tampon = engine.resourceManager.createLineOverlayVertexBuffer(construit.vertices, 'fil-de-fer')
-  const noeud = new SceneNode('fil-de-fer', world)
+  const tampon = engine.resourceManager.createLineOverlayVertexBuffer(construit.vertices, nom)
+  const noeud = new SceneNode(nom, world)
   world.addComponent(
     noeud.entityId,
     new VectorLineOverlayComponent(tampon, construit.vertexCount, 0, 'line-list'),
@@ -186,5 +205,5 @@ async function demarrer(canevas: HTMLCanvasElement) {
 export function afficher(canevas: HTMLCanvasElement, frontiere: Frontiere, esquisse: EsquissePosee | null = null) {
   const document = documentCad(frontiere, esquisse)
   if (!demarrage) demarrage = demarrer(canevas)
-  return demarrage.then(() => projet?.montrer(document))
+  return demarrage.then(() => projet?.montrer(document, esquisse))
 }

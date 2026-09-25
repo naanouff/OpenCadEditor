@@ -1,18 +1,32 @@
 import type { EsquissePosee, Frontiere } from '@opencad/api-parametrique'
-import { cercleFerme, filDeFer } from './dessin.ts'
+import { cercleFerme, filDeFer, grille, pasGrille } from './dessin.ts'
 
 /** Le lecteur CAD et les overlays vector-lines sont en mètres. */
 const METRE = 0.001
 const PAS = 48
 
-export function documentCad(frontiere: Frontiere, esquisse: EsquissePosee | null = null) {
-  const array = [...filDeFer(frontiere).position.array]
-  for (const cercle of esquisse?.cercles ?? []) cercleFerme(cercle.rayon, cercle.y, array)
+const RECUL_GRILLE = 0.15
+
+function enMetres(array: number[]) {
   return {
-    brepWireframe: {
-      position: { array: array.map((valeur) => valeur * METRE) },
-      segmentCount: array.length / 6,
-    },
+    position: { array: array.map((valeur) => valeur * METRE) },
+    segmentCount: array.length / 6,
+  }
+}
+
+export function documentCad(frontiere: Frontiere, esquisse: EsquissePosee | null = null) {
+  const esquisseMm: number[] = []
+  const grilleMm: number[] = []
+  if (esquisse) {
+    const altitude = esquisse.cercles[0]?.y ?? 0
+    const etendue = 30
+    grilleMm.push(...grille(esquisse.support, pasGrille(etendue * 2), etendue, altitude - RECUL_GRILLE))
+    for (const cercle of esquisse.cercles) cercleFerme(cercle.rayon, cercle.y, esquisseMm)
+  }
+  return {
+    brepWireframe: enMetres(filDeFer(frontiere).position.array),
+    grille: enMetres(grilleMm),
+    esquisse: enMetres(esquisseMm),
     maillage: maillage(frontiere),
   }
 }
@@ -21,7 +35,6 @@ function maillage(frontiere: Frontiere) {
   const positions: number[] = []
   const normales: number[] = []
   const indices: number[] = []
-  const rayonMax = Math.max(0, ...frontiere.faces.filter((face) => face.sorte === 'cylindre').map((face) => face.rayon))
   const poser = (x: number, y: number, z: number, nx: number, ny: number, nz: number) => {
     const debut = positions.length / 3
     positions.push(x * METRE, y * METRE, z * METRE)
@@ -30,7 +43,7 @@ function maillage(frontiere: Frontiere) {
   }
   for (const face of frontiere.faces) {
     if (face.sorte === 'cylindre') {
-      const versExterieur = face.rayon === rayonMax ? 1 : -1
+      const versExterieur = face.dehors
       const bas: number[] = []
       const haut: number[] = []
       for (let i = 0; i < PAS; i++) {
@@ -53,14 +66,13 @@ function maillage(frontiere: Frontiere) {
     for (const [rang, rayon] of [face.rayonExt, face.rayonInt].entries()) {
       for (let i = 0; i < PAS; i++) {
         const angle = (i / PAS) * Math.PI * 2
-        const ny = face.y > 0 ? 1 : -1
-        anneau[rang].push(poser(Math.cos(angle) * rayon, face.y, Math.sin(angle) * rayon, 0, ny, 0))
+        anneau[rang].push(poser(Math.cos(angle) * rayon, face.y, Math.sin(angle) * rayon, 0, face.dehors, 0))
       }
     }
     const [exterieur, interieur] = anneau
     for (let i = 0; i < PAS; i++) {
       const j = (i + 1) % PAS
-      if (face.y > 0) indices.push(exterieur[i], interieur[j], exterieur[j], exterieur[i], interieur[i], interieur[j])
+      if (face.dehors > 0) indices.push(exterieur[i], interieur[j], exterieur[j], exterieur[i], interieur[i], interieur[j])
       else indices.push(exterieur[i], exterieur[j], interieur[j], exterieur[i], interieur[j], interieur[i])
     }
   }

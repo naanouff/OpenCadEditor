@@ -4,10 +4,10 @@ import { documentCad } from '../src/documentCad.ts'
 
 const anneau: Frontiere = {
   faces: [
-    { sorte: 'cylindre', rayon: 20, bas: 0, haut: 8 },
-    { sorte: 'cylindre', rayon: 17.5, bas: 0, haut: 8 },
-    { sorte: 'couronne', rayonExt: 20, rayonInt: 17.5, y: 8 },
-    { sorte: 'couronne', rayonExt: 20, rayonInt: 17.5, y: 0 },
+    { sorte: 'cylindre', rayon: 20, bas: 0, haut: 8, dehors: 1 },
+    { sorte: 'cylindre', rayon: 17.5, bas: 0, haut: 8, dehors: -1 },
+    { sorte: 'couronne', rayonExt: 20, rayonInt: 17.5, y: 8, dehors: 1 },
+    { sorte: 'couronne', rayonExt: 20, rayonInt: 17.5, y: 0, dehors: -1 },
   ],
 }
 
@@ -23,12 +23,34 @@ describe('document CAD w3dts', () => {
     expect(Math.hypot(sommet[0], sommet[2])).toBeCloseTo(0.02)
   })
 
+  it('suit le côté matière porté par la face', () => {
+    const bossage: Frontiere = {
+      faces: [
+        { sorte: 'cylindre', rayon: 20, bas: 0, haut: 8, dehors: 1 },
+        { sorte: 'cylindre', rayon: 4, bas: 0, haut: 2, dehors: 1 },
+        { sorte: 'couronne', rayonExt: 20, rayonInt: 4, y: 0, dehors: 1 },
+      ],
+    }
+    const { positions, normales } = documentCad(bossage).maillage
+    let petitVersDehors = true
+    let couronneVersHaut = true
+    for (let i = 0; i < normales.length; i += 3) {
+      const rayon = Math.hypot(positions[i], positions[i + 2])
+      const versAxe = normales[i] * positions[i] + normales[i + 2] * positions[i + 2]
+      if (rayon > 0.003 && rayon < 0.005 && versAxe < 0) petitVersDehors = false
+      if (normales[i + 1] !== 0 && normales[i + 1] < 0) couronneVersHaut = false
+    }
+    expect(petitVersDehors).toBe(true)
+    expect(couronneVersHaut).toBe(true)
+  })
+
   it('dessine le cercle de l’esquisse en cours', () => {
     const sans = documentCad(anneau).brepWireframe.segmentCount
     const avec = documentCad(anneau, { support: 'face.dessus', cercles: [{ rayon: 18, y: 8 }] })
-    expect(avec.brepWireframe.segmentCount).toBeGreaterThan(sans)
+    expect(avec.brepWireframe.segmentCount).toBe(sans)
+    expect(avec.esquisse.segmentCount).toBeGreaterThan(0)
     let trouve = false
-    const tableau = avec.brepWireframe.position.array
+    const tableau = avec.esquisse.position.array
     for (let i = 0; i < tableau.length; i += 3) {
       if (Math.abs(Math.hypot(tableau[i], tableau[i + 2]) - 0.018) < 1e-6) trouve = true
     }

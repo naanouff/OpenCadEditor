@@ -22,5 +22,9 @@ Suivi du projet et notes de travail. Ce dossier n’appartient pas au moteur : l
 | [sprints/sprint-05-portee-lunette.md](sprints/sprint-05-portee-lunette.md) | Sprint de cette portée, test rouge puis `decrire` |
 | [veille/orientation-faces.md](veille/orientation-faces.md) | Côté matière porté par la frontière, au lieu d’être deviné |
 | [sprints/sprint-06-orientation-faces.md](sprints/sprint-06-orientation-faces.md) | Sprint de ce champ, tests des cas que les règles actuelles ratent |
+| [veille/modes-vue.md](veille/modes-vue.md) | Vue perspective, ou orthographique face au plan de l’esquisse |
+| [sprints/sprint-07-modes-vue.md](sprints/sprint-07-modes-vue.md) | Sprint des deux modes, grille en millimètres |
+| [veille/cotes-esquisse.md](veille/cotes-esquisse.md) | Diamètre affiché dans le plan, la valeur suit l’expression |
+| [sprints/sprint-08-cotes-esquisse.md](sprints/sprint-08-cotes-esquisse.md) | Sprint de ces cotes, trait dans le plan et étiquette HTML |
 
 Le modeleur ne démarre pas tant que la veille n’est pas écrite. OpenCadEditor est l’éditeur. CADOM (`.cadom`) est le format d’assemblage OpenCAD, pas un logiciel. L’intention est dans `.cadompart`. Ce découpage est consigné dans le journal.
