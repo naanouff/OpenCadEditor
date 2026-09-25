@@ -83,4 +83,12 @@ La règle de base du développement est le TDD, consignée dans [developpement.m
 
 ## 2026-09-25 — Cotes d’esquisse consignées, sprint 08 prêt
 
-[veille/cotes-esquisse.md](../veille/cotes-esquisse.md) fixe l’affichage des diamètres dans le plan. Chaque cercle coté porte sa valeur en millimètres, réévaluée avec l’expression. Le trait est un segment du fil, le nombre une étiquette HTML. [sprints/sprint-08-cotes-esquisse.md](../sprints/sprint-08-cotes-esquisse.md) le code en TDD. Les cotes de rectangle et celles du solide en 3D restent après.
+[veille/cotes-esquisse.md](../veille/cotes-esquisse.md) fixe l’affichage des diamètres dans le plan. Chaque cercle coté porte sa valeur en millimètres, réévaluée avec l’expression. Le trait est un segment du fil, le nombre une étiquette HTML. [sprints/sprint-08-cotes-esquisse.md](../sprints/sprint-08-cotes-esquisse.md) est codé. Chaque cercle coté porte son diamètre en millimètres, réévalué avec l’expression : `param diametre_boite 42` passe la cote de 40 à 42. Le trait est un segment dans le plan, le nombre une étiquette HTML. Les cotes de rectangle et celles du solide en 3D restent après.
+
+## 2026-09-25 — Cotes en texte consignées, sprint 09 prêt
+
+[veille/cotes-texte.md](../veille/cotes-texte.md) pose le nombre du diamètre dans le plan de l’esquisse. Le trait y est déjà. L’étiquette HTML, recalculée seulement à la commande, s’en sépare dès que la caméra tourne. [sprints/sprint-09-cotes-texte.md](../sprints/sprint-09-cotes-texte.md) est codé. Le nombre est un glyphe Open Sans dans le plan, via `@naanouff/w3dts-text-mesh`. L’étiquette HTML sort de la page. Les flèches, les cotes de rectangle et la vue isométrique restent après. Chaque diamètre a ensuite sa ligne, arrêtée sur son cercle, flèches aux bouts, décalée de 30° quand les cercles sont concentriques.
+
+## 2026-09-25 — Caméra d’esquisse consignée, sprint 10 prêt
+
+[veille/camera-esquisse.md](../veille/camera-esquisse.md) fige la vue face au plan tant qu’une esquisse est ouverte. Le glisser déplace, la molette zoome, la rotation n’a plus de bouton. [sprints/sprint-10-camera-esquisse.md](../sprints/sprint-10-camera-esquisse.md) le code en TDD. La projection orthographique et la vue isométrique restent après.

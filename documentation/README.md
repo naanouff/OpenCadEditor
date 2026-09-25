@@ -26,5 +26,9 @@ Suivi du projet et notes de travail. Ce dossier n’appartient pas au moteur : l
 | [sprints/sprint-07-modes-vue.md](sprints/sprint-07-modes-vue.md) | Sprint des deux modes, grille en millimètres |
 | [veille/cotes-esquisse.md](veille/cotes-esquisse.md) | Diamètre affiché dans le plan, la valeur suit l’expression |
 | [sprints/sprint-08-cotes-esquisse.md](sprints/sprint-08-cotes-esquisse.md) | Sprint de ces cotes, trait dans le plan et étiquette HTML |
+| [veille/cotes-texte.md](veille/cotes-texte.md) | Nombre de diamètre posé dans le plan, glyphe qui suit la vue |
+| [sprints/sprint-09-cotes-texte.md](sprints/sprint-09-cotes-texte.md) | Sprint de ces glyphes, maillage Open Sans à la place du HTML |
+| [veille/camera-esquisse.md](veille/camera-esquisse.md) | Esquisse en panoramique et zoom, rotation au retour du solide |
+| [sprints/sprint-10-camera-esquisse.md](sprints/sprint-10-camera-esquisse.md) | Sprint de ce verrou, liaisons sans rotation |
 
 Le modeleur ne démarre pas tant que la veille n’est pas écrite. OpenCadEditor est l’éditeur. CADOM (`.cadom`) est le format d’assemblage OpenCAD, pas un logiciel. L’intention est dans `.cadompart`. Ce découpage est consigné dans le journal.

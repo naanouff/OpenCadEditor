@@ -67,10 +67,14 @@ export const noyauProvisoire: NoyauGeometrique = {
   poser(esquisse, solide, parametres) {
     const cercles = esquisse.entites
       .filter((entite) => entite.sorte === 'cercle' && entite.diametre)
-      .map((entite) => ({
-        rayon: evaluateurProvisoire.evaluer(entite.diametre as string, parametres) / 2,
-        y: hauteurDuPlan(esquisse.support, solide, parametres),
-      }))
+      .map((entite) => {
+        const valeur = evaluateurProvisoire.evaluer(entite.diametre as string, parametres)
+        return {
+          rayon: valeur / 2,
+          y: hauteurDuPlan(esquisse.support, solide, parametres),
+          valeur,
+        }
+      })
     return { support: esquisse.support, cercles }
   },
 }

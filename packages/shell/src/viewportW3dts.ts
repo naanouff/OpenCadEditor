@@ -1,6 +1,8 @@
 import type { EsquissePosee, Frontiere } from '@opencad/api-parametrique'
 import { documentCad } from './documentCad.ts'
-import { vueDuPlan } from './dessin.ts'
+import { poseGlyphe, vueDuPlan } from './dessin.ts'
+import policeUrl from '../../../vendor/w3dts/node_modules/.pnpm/@fontsource+open-sans@5.2.7/node_modules/@fontsource/open-sans/files/open-sans-latin-400-normal.woff?url'
+import { createTextMeshFromFont } from '@naanouff/w3dts-text-mesh'
 import {
   DirectionalLightComponent,
   EngineBuilder,
@@ -104,6 +106,8 @@ class ProjetAnneau extends LitAbstractProject {
     poserFil(racine, world, engine, logger, document.brepWireframe.position.array, [0.12, 0.13, 0.14, 1], 'solide')
     poserFil(racine, world, engine, logger, document.grille.position.array, [0.8, 0.81, 0.82, 1], 'grille')
     poserFil(racine, world, engine, logger, document.esquisse.position.array, [0.15, 0.45, 0.92, 1], 'esquisse')
+    poserFil(racine, world, engine, logger, document.cotes.position.array, [0.92, 0.55, 0.12, 1], 'cotes')
+    poserGlyphes(racine, world, engine, esquisse)
     const mode = esquisse?.support ?? '3d'
     if (mode === this.modeVue) return
     this.modeVue = mode
@@ -124,6 +128,7 @@ class ProjetAnneau extends LitAbstractProject {
       controleur.frameBoundingBox(boite)
     }
   }
+
 }
 
 function poserMaillage(
@@ -164,6 +169,47 @@ function poserMaillage(
   parent.add(new SceneNode('solide', world, mesh, matiere))
 }
 
+function poserGlyphes(
+  parent: SceneNode,
+  world: ProjectLoadParams['world'],
+  engine: Engine,
+  esquisse: EsquissePosee | null,
+) {
+  if (!esquisse || !police || !graphe) return
+  esquisse.cercles.forEach((cercle, index) => {
+    const pose = poseGlyphe(esquisse.support, cercle.rayon, cercle.y, cercle.valeur, index)
+    const mesh = createTextMeshFromFont({
+      fontArrayBuffer: police as ArrayBuffer,
+      text: pose.texte,
+      fontSize: 0.003,
+      layout: { align: 'left' },
+      orientation: {
+        mode: 'plane',
+        normal: vec3.fromValues(...pose.normale),
+        tangent: vec3.fromValues(...pose.tangente),
+      },
+      origin: vec3.fromValues(...pose.origine),
+      name: `cote-${index}`,
+    })
+    engine.resourceManager.uploadMesh(mesh)
+    const matiere = new Material({
+      name: `cote-${index}`,
+      shadingModel: 'pbr',
+      shaderGraph: graphe ?? undefined,
+      doubleSided: true,
+      properties: {
+        baseColor: [0.92, 0.55, 0.12],
+        roughness: 1,
+        metallic: 0,
+        normalTexture: null,
+        metallicRoughnessTexture: null,
+      },
+    })
+    engine.resourceManager.uploadMaterial(matiere)
+    parent.add(new SceneNode(`cote-${index}`, world, mesh, matiere))
+  })
+}
+
 function poserFil(
   parent: SceneNode,
   world: ProjectLoadParams['world'],
@@ -187,11 +233,15 @@ function poserFil(
 let projet: ProjetAnneau | null = null
 let demarrage: Promise<void> | null = null
 let graphe: ShaderGraph | null = null
+let police: ArrayBuffer | null = null
 
 async function demarrer(canevas: HTMLCanvasElement) {
   const reponse = await fetch('/shader-graphs/PBRGraph.json')
   if (!reponse.ok) throw new Error('PBRGraph introuvable')
   graphe = (await reponse.json()) as ShaderGraph
+  const fonte = await fetch(policeUrl)
+  if (!fonte.ok) throw new Error('police introuvable')
+  police = await fonte.arrayBuffer()
   setMsaaSampleCount(4)
   const logger = new Logger()
   await GPUManager.initialize(logger)

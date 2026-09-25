@@ -25,6 +25,54 @@ export function vueDuPlan(support: string): 'posX' | 'negY' | 'posY' | 'posZ' {
   return 'posY'
 }
 
+const DECALAGE_COTE = Math.PI / 6
+const FLECHE = 2
+
+/** Ligne de cote d'un diamètre, dans le plan. Millimètres. L'index décale l'angle de 30°. */
+export function coteDiametre(support: string, rayon: number, y: number, index = 0) {
+  const { normale, axeU, axeV } = repere(support)
+  const angle = index * DECALAGE_COTE
+  const direction = [
+    axeU[0] * Math.cos(angle) + axeV[0] * Math.sin(angle),
+    axeU[1] * Math.cos(angle) + axeV[1] * Math.sin(angle),
+    axeU[2] * Math.cos(angle) + axeV[2] * Math.sin(angle),
+  ]
+  const lateral = [
+    normale[1] * direction[2] - normale[2] * direction[1],
+    normale[2] * direction[0] - normale[0] * direction[2],
+    normale[0] * direction[1] - normale[1] * direction[0],
+  ]
+  const point = (distance: number, ecart = 0): [number, number, number] => [
+    normale[0] * y + direction[0] * distance + lateral[0] * ecart,
+    normale[1] * y + direction[1] * distance + lateral[1] * ecart,
+    normale[2] * y + direction[2] * distance + lateral[2] * ecart,
+  ]
+  const a = point(-rayon)
+  const b = point(rayon)
+  const trait = [...a, ...b]
+  const fleche = (signe: number) => {
+    const pointe = point(signe * rayon)
+    const pied = signe * rayon - signe * FLECHE
+    trait.push(...pointe, ...point(pied, 0.6), ...pointe, ...point(pied, -0.6))
+  }
+  fleche(1)
+  fleche(-1)
+  return { trait, ancre: point(rayon + FLECHE), direction }
+}
+
+/** Glyphe du diamètre : texte sur la ligne de cote, juste hors du cercle. */
+export function poseGlyphe(support: string, rayon: number, y: number, valeur: number, index = 0) {
+  const { normale } = repere(support)
+  const { ancre, direction } = coteDiametre(support, rayon, y, index)
+  const arrondi = Math.round(valeur * 10) / 10
+  return {
+    texte: `Ø ${Number.isInteger(arrondi) ? arrondi.toFixed(0) : arrondi.toFixed(1)}`,
+    origine: [ancre[0] * 0.001, ancre[1] * 0.001, ancre[2] * 0.001] as [number, number, number],
+    normale: [normale[0], normale[1], normale[2]] as [number, number, number],
+    tangente: [direction[0], direction[1], direction[2]] as [number, number, number],
+  }
+}
+
 /** Segments de grille dans le plan, en millimètres. L'altitude est portée par la normale. */
 export function grille(support: string, pas: number, etendue: number, altitude: number) {
   const { normale, axeU, axeV } = repere(support)

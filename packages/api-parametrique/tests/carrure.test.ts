@@ -159,6 +159,27 @@ describe('carrure', () => {
     expect(poche()?.y).toBeCloseTo(6)
   })
 
+  it('évalue le diamètre coté, et le met à jour avec le paramètre', () => {
+    const session = new Session()
+    session.executer(`
+piece carrure
+param diametre_boite 40
+param epaisseur_paroi 2.5
+esquisse plan.dessus
+cercle
+cote diametre diametre_boite
+`)
+    expect(session.esquisseCourante()?.cercles[0]?.valeur).toBeCloseTo(40)
+    session.executer(`
+cercle
+concentrique cercle.exterieur
+cote diametre diametre_boite - 2 * epaisseur_paroi
+`)
+    expect(session.esquisseCourante()?.cercles[1]?.valeur).toBeCloseTo(35)
+    session.commande('param diametre_boite 42')
+    expect(session.esquisseCourante()?.cercles[0]?.valeur).toBeCloseTo(42)
+  })
+
   it('montre l’esquisse en cours, puis plus rien après la fonction', () => {
     const session = new Session()
     session.executer(script.split('esquisse plan.dessus')[0])

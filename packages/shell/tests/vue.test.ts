@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { Frontiere } from '@opencad/api-parametrique'
 import { documentCad } from '../src/documentCad.ts'
-import { grille, pasGrille, repere } from '../src/dessin.ts'
+import { coteDiametre, grille, pasGrille, poseGlyphe, repere } from '../src/dessin.ts'
 
 const anneau: Frontiere = {
   faces: [
@@ -45,5 +45,36 @@ describe('vue esquisse', () => {
     expect(avec.brepWireframe.segmentCount).toBe(sans.brepWireframe.segmentCount)
     expect(avec.grille.position.array[1]).toBeCloseTo(-0.00015)
     expect(avec.maillage.indices).toEqual(sans.maillage.indices)
+  })
+
+  it('trace le diamètre et place l’ancre hors du cercle, sans toucher au solide', () => {
+    const { trait, ancre } = coteDiametre('plan.dessus', 20, 0)
+    expect(Math.hypot(trait[0], trait[2])).toBeCloseTo(20)
+    expect(Math.hypot(trait[3], trait[5])).toBeCloseTo(20)
+    expect(Math.hypot(trait[3] - trait[0], trait[5] - trait[2])).toBeCloseTo(40)
+    expect(Math.hypot(ancre[0], ancre[2])).toBeGreaterThan(20)
+    const esquisse = { support: 'plan.dessus', cercles: [{ rayon: 20, y: 0, valeur: 40 }] }
+    const sans = documentCad(anneau)
+    const avec = documentCad(anneau, esquisse)
+    expect(avec.cotes.segmentCount).toBe(5)
+    expect(avec.maillage.indices).toEqual(sans.maillage.indices)
+  })
+
+  it('pose le glyphe hors du cercle, dans le plan, avec le diamètre', () => {
+    const pose = poseGlyphe('plan.dessus', 20, 0, 40)
+    expect(pose.texte).toBe('Ø 40')
+    expect(pose.normale[1]).toBe(1)
+    expect(Math.hypot(pose.origine[0], pose.origine[2])).toBeGreaterThan(0.02)
+  })
+
+  it('décale le second diamètre de 30° pour qu’il ne se confonde pas avec le premier', () => {
+    const premier = coteDiametre('plan.dessus', 20, 0, 0)
+    const second = coteDiametre('plan.dessus', 15, 0, 1)
+    const direction = (trait: number[]) => [trait[3] - trait[0], trait[5] - trait[2]]
+    const a = direction(premier.trait)
+    const b = direction(second.trait)
+    const cosinus = (a[0] * b[0] + a[1] * b[1]) / (Math.hypot(a[0], a[1]) * Math.hypot(b[0], b[1]))
+    expect(cosinus).toBeCloseTo(Math.cos(Math.PI / 6))
+    expect(Math.hypot(second.trait[0], second.trait[2])).toBeCloseTo(15)
   })
 })

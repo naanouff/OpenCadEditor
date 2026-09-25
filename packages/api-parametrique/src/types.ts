@@ -85,7 +85,7 @@ export type Frontiere = {
 /** Esquisse posée sur son plan, prête à dessiner. */
 export type EsquissePosee = {
   support: string
-  cercles: { rayon: number; y: number }[]
+  cercles: { rayon: number; y: number; valeur: number }[]
 }
 
 export type NoyauGeometrique = {

@@ -1,5 +1,5 @@
 import type { EsquissePosee, Frontiere } from '@opencad/api-parametrique'
-import { cercleFerme, filDeFer, grille, pasGrille } from './dessin.ts'
+import { cercleFerme, coteDiametre, filDeFer, grille, pasGrille } from './dessin.ts'
 
 /** Le lecteur CAD et les overlays vector-lines sont en mètres. */
 const METRE = 0.001
@@ -17,16 +17,21 @@ function enMetres(array: number[]) {
 export function documentCad(frontiere: Frontiere, esquisse: EsquissePosee | null = null) {
   const esquisseMm: number[] = []
   const grilleMm: number[] = []
+  const cotesMm: number[] = []
   if (esquisse) {
     const altitude = esquisse.cercles[0]?.y ?? 0
     const etendue = 30
     grilleMm.push(...grille(esquisse.support, pasGrille(etendue * 2), etendue, altitude - RECUL_GRILLE))
-    for (const cercle of esquisse.cercles) cercleFerme(cercle.rayon, cercle.y, esquisseMm)
+    esquisse.cercles.forEach((cercle, index) => {
+      cercleFerme(cercle.rayon, cercle.y, esquisseMm)
+      cotesMm.push(...coteDiametre(esquisse.support, cercle.rayon, cercle.y, index).trait)
+    })
   }
   return {
     brepWireframe: enMetres(filDeFer(frontiere).position.array),
     grille: enMetres(grilleMm),
     esquisse: enMetres(esquisseMm),
+    cotes: enMetres(cotesMm),
     maillage: maillage(frontiere),
   }
 }
