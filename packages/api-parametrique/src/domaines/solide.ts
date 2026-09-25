@@ -44,9 +44,18 @@ export const domaineSolide: Domaine = {
       faire(contexte, operation) {
         exigerEsquisse(contexte)
         if (!contexte.solide) throw new ErreurApi('aucun solide')
-        contexte.evaluateur.evaluer(operation.arguments.expression, contexte.parametres)
-        const traverse = operation.arguments.traverse === 'oui'
-        contexte.solide = contexte.noyau.enlever(contexte.solide, traverse)
+        const esquisse = contexte.esquisse
+        if (!esquisse) throw new ErreurApi('aucune esquisse')
+        const cercle = [...esquisse.entites].reverse().find((entite) => entite.sorte === 'cercle')
+        if (!cercle?.diametre) throw new ErreurApi('profil sans diamètre')
+        const diametre = contexte.evaluateur.evaluer(cercle.diametre, contexte.parametres)
+        const profondeur = contexte.evaluateur.evaluer(operation.arguments.expression, contexte.parametres)
+        contexte.solide = contexte.noyau.enlever(contexte.solide, {
+          support: esquisse.support,
+          rayon: diametre / 2,
+          profondeur,
+          traverse: operation.arguments.traverse === 'oui',
+        })
         contexte.piece.solide = contexte.solide
         contexte.esquisse = null
         contexte.piece.esquisse = null

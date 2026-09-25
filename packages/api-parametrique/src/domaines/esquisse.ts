@@ -89,6 +89,7 @@ export const domaineEsquisse: Domaine = {
         contexte.evaluateur.evaluer(operation.arguments.expression, contexte.parametres)
         const entite = derniere(contexte)
         entite.degres = Math.max(0, entite.degres - 1)
+        if (operation.arguments.cible === 'diametre') entite.diametre = operation.arguments.expression
       },
       defaire() {},
     },

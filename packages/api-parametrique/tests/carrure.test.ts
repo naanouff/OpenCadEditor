@@ -128,7 +128,7 @@ describe('carrure', () => {
 
   it('décrit l’anneau par des faces exactes dont le rayon suit diametre_boite', () => {
     const session = new Session()
-    session.executer(script)
+    session.executer(script.split('esquisse face.dessus')[0])
     const rayons = () =>
       session
         .frontiere()
@@ -139,6 +139,81 @@ describe('carrure', () => {
     expect(session.frontiere().faces.filter((face) => face.sorte === 'couronne')).toHaveLength(2)
     session.commande('param diametre_boite 42')
     expect(rayons()[1]).toBeCloseTo(21)
+  })
+
+  it('décrit la portée de lunette par un épaulement', () => {
+    const session = new Session()
+    session.executer(script.split('esquisse face.dessous')[0])
+    const epaulement = () =>
+      session.frontiere().faces.find((face) => face.sorte === 'cylindre' && face.bas > 0)
+    const dessus = () =>
+      session.frontiere().faces.find((face) => face.sorte === 'couronne' && face.y === 8)
+    const poche = () =>
+      session.frontiere().faces.find((face) => face.sorte === 'couronne' && face.y < 8 && face.y > 0)
+    expect(epaulement()).toMatchObject({ rayon: 18, bas: 6.8 })
+    expect(dessus()).toMatchObject({ rayonInt: 18, rayonExt: 20 })
+    expect(poche()).toMatchObject({ rayonInt: 17.5, rayonExt: 18, y: 6.8 })
+    session.commande('param diametre_lunette 38')
+    expect(epaulement()?.rayon).toBeCloseTo(19)
+    session.commande('param profondeur_lunette 2')
+    expect(poche()?.y).toBeCloseTo(6)
+  })
+
+  it('montre l’esquisse en cours, puis plus rien après la fonction', () => {
+    const session = new Session()
+    session.executer(script.split('esquisse plan.dessus')[0])
+    expect(session.esquisseCourante()).toBeNull()
+    session.executer(`
+esquisse plan.dessus
+cercle
+cote diametre diametre_boite
+`)
+    expect(session.esquisseCourante()).toMatchObject({
+      support: 'plan.dessus',
+      cercles: [{ rayon: 20, y: 0 }],
+    })
+    session.executer(`
+cercle
+concentrique cercle.exterieur
+cote diametre diametre_boite - 2 * epaisseur_paroi
+extrude hauteur_carrure
+`)
+    expect(session.esquisseCourante()).toBeNull()
+    session.executer(`
+esquisse face.dessus
+cercle
+concentrique anneau
+cote diametre diametre_lunette
+`)
+    expect(session.esquisseCourante()).toMatchObject({
+      support: 'face.dessus',
+      cercles: [{ rayon: 18, y: 8 }],
+    })
+  })
+
+  it('arrête la paroi du passage au fond de la poche', () => {
+    const session = new Session()
+    session.executer(script.split('esquisse face.dessous')[0])
+    const passage = session.frontiere().faces.find((face) => face.sorte === 'cylindre' && face.rayon === 17.5)
+    expect(passage).toMatchObject({ bas: 0, haut: 6.8 })
+  })
+
+  it('creuse le cercle coté, pas le paramètre de lunette', () => {
+    const session = new Session()
+    session.executer(script.split('esquisse face.dessus')[0])
+    session.executer(`
+esquisse face.dessus
+cercle
+concentrique anneau
+cote diametre 38
+enleve 2
+`)
+    const epaulement = session.frontiere().faces.find((face) => face.sorte === 'cylindre' && face.bas > 0)
+    const poche = session.frontiere().faces.find((face) => face.sorte === 'couronne' && face.y < 8 && face.y > 0)
+    expect(epaulement).toMatchObject({ rayon: 19, bas: 6 })
+    expect(poche).toMatchObject({ y: 6, rayonExt: 19 })
+    expect(session.expression('diametre_lunette')).toBe('36')
+    expect(session.expression('profondeur_lunette')).toBe('1.2')
   })
 
   it('décrit l’anneau par un tube dont le rayon suit diametre_boite', () => {

@@ -117,6 +117,11 @@ function chaine(points: Point3[], array: number[]) {
   }
 }
 
+/** Cercle fermé ajouté au tableau de segments, en millimètres. */
+export function cercleFerme(rayon: number, y: number, array: number[]) {
+  chaine(cercle3(rayon, y), array)
+}
+
 /** Polylignes exactes, même tableau que `brepWireframe.position` de w3dts. */
 export function filDeFer(frontiere: Frontiere) {
   const array: number[] = []

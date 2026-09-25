@@ -23,6 +23,19 @@ describe('document CAD w3dts', () => {
     expect(Math.hypot(sommet[0], sommet[2])).toBeCloseTo(0.02)
   })
 
+  it('dessine le cercle de l’esquisse en cours', () => {
+    const sans = documentCad(anneau).brepWireframe.segmentCount
+    const avec = documentCad(anneau, { support: 'face.dessus', cercles: [{ rayon: 18, y: 8 }] })
+    expect(avec.brepWireframe.segmentCount).toBeGreaterThan(sans)
+    let trouve = false
+    const tableau = avec.brepWireframe.position.array
+    for (let i = 0; i < tableau.length; i += 3) {
+      if (Math.abs(Math.hypot(tableau[i], tableau[i + 2]) - 0.018) < 1e-6) trouve = true
+    }
+    expect(trouve).toBe(true)
+    expect(avec.maillage.indices).toEqual(documentCad(anneau).maillage.indices)
+  })
+
   it('ferme le solide et oriente les normales hors de la matière', () => {
     const { positions, normales } = documentCad(anneau).maillage
     let couronne = false

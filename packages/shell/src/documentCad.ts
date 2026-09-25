@@ -1,16 +1,17 @@
-import type { Frontiere } from '@opencad/api-parametrique'
-import { filDeFer } from './dessin.ts'
+import type { EsquissePosee, Frontiere } from '@opencad/api-parametrique'
+import { cercleFerme, filDeFer } from './dessin.ts'
 
 /** Le lecteur CAD et les overlays vector-lines sont en mètres. */
 const METRE = 0.001
 const PAS = 48
 
-export function documentCad(frontiere: Frontiere) {
-  const fil = filDeFer(frontiere)
+export function documentCad(frontiere: Frontiere, esquisse: EsquissePosee | null = null) {
+  const array = [...filDeFer(frontiere).position.array]
+  for (const cercle of esquisse?.cercles ?? []) cercleFerme(cercle.rayon, cercle.y, array)
   return {
     brepWireframe: {
-      position: { array: fil.position.array.map((valeur) => valeur * METRE) },
-      segmentCount: fil.segmentCount,
+      position: { array: array.map((valeur) => valeur * METRE) },
+      segmentCount: array.length / 6,
     },
     maillage: maillage(frontiere),
   }

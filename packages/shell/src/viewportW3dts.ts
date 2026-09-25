@@ -1,4 +1,4 @@
-import type { Frontiere } from '@opencad/api-parametrique'
+import type { EsquissePosee, Frontiere } from '@opencad/api-parametrique'
 import { documentCad } from './documentCad.ts'
 import {
   DirectionalLightComponent,
@@ -29,6 +29,7 @@ const chargeurVide = { load: async () => null }
 class ProjetAnneau extends LitAbstractProject {
   private params: ProjectLoadParams | null = null
   private racine: SceneNode | null = null
+  private cadre = false
 
   constructor() {
     super('ProjetAnneau')
@@ -99,6 +100,8 @@ class ProjetAnneau extends LitAbstractProject {
     this.racine = racine
     poserMaillage(racine, world, engine, document)
     poserFil(racine, world, engine, logger, document.brepWireframe.position.array)
+    if (this.cadre) return
+    this.cadre = true
     cameraControllerManager.getActiveController()?.frameBoundingBox({
       min: vec3.fromValues(-0.03, -0.005, -0.03),
       max: vec3.fromValues(0.03, 0.02, 0.03),
@@ -180,8 +183,8 @@ async function demarrer(canevas: HTMLCanvasElement) {
   await engine.start('ProjetAnneau')
 }
 
-export function afficher(canevas: HTMLCanvasElement, frontiere: Frontiere) {
-  const document = documentCad(frontiere)
+export function afficher(canevas: HTMLCanvasElement, frontiere: Frontiere, esquisse: EsquissePosee | null = null) {
+  const document = documentCad(frontiere, esquisse)
   if (!demarrage) demarrage = demarrer(canevas)
   return demarrage.then(() => projet?.montrer(document))
 }

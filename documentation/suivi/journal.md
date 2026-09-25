@@ -71,4 +71,8 @@ La règle de base du développement est le TDD, consignée dans [developpement.m
 
 ## 2026-09-25 — Portée de lunette consignée, sprint 05 prêt
 
-[veille/portee-lunette.md](../veille/portee-lunette.md) fixe l’épaulement du dessus : trois cylindres et trois couronnes dès le premier enlèvement borgne, pilotés par `diametre_lunette` et `profondeur_lunette`. [sprints/sprint-05-portee-lunette.md](../sprints/sprint-05-portee-lunette.md) le code en TDD. Cette portée précède celle du fond. Les cornes, la barrette et le tube restent après.
+[veille/portee-lunette.md](../veille/portee-lunette.md) fixe l’épaulement du dessus : trois cylindres et trois couronnes dès le premier enlèvement borgne, pilotés par `diametre_lunette` et `profondeur_lunette`. [sprints/sprint-05-portee-lunette.md](../sprints/sprint-05-portee-lunette.md) le code en TDD. `enleve` creuse le cercle coté sur sa face d’appui : le rayon et la profondeur viennent de l’esquisse, pas des noms de paramètres. `decrire` en tire l’épaulement et arrête la paroi du passage au fond de la poche. `esquisseCourante()` pose les cercles cotés sur leur plan : le viewport les trace avant la fonction, et la fonction les consomme. Le noyau ne calcule pas encore de soustraction : les faces de la portée sont une figure prévue d’avance.
+
+## 2026-09-25 — Orientation des faces consignée, sprint 06 prêt
+
+[veille/orientation-faces.md](../veille/orientation-faces.md) sort du shell les deux règles qui devinent le côté matière, le plus grand rayon et le signe de l’altitude. La frontière portera un champ `dehors` sur chaque face. [sprints/sprint-06-orientation-faces.md](../sprints/sprint-06-orientation-faces.md) le code en TDD, avec les cas que ces règles ratent : un bossage et une couronne à l’altitude zéro. La soustraction booléenne reste après. Cette portée précède celle du fond. Les cornes, la barrette et le tube restent après.

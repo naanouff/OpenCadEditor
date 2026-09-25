@@ -11,6 +11,7 @@ export type EntiteEsquisse = {
   id: string
   sorte: 'cercle' | 'rectangle'
   degres: number
+  diametre?: string
 }
 
 export type Esquisse = {
@@ -18,10 +19,18 @@ export type Esquisse = {
   entites: EntiteEsquisse[]
 }
 
+export type Enlevement = {
+  support: string
+  rayon: number
+  profondeur: number
+  traverse: boolean
+}
+
 export type Solide = {
   faces: Set<string>
   extrusions: number
   enlevementsBorgnes: number
+  enlevements: Enlevement[]
 }
 
 export type Piece = {
@@ -67,12 +76,19 @@ export type Frontiere = {
   faces: FaceExacte[]
 }
 
+/** Esquisse posée sur son plan, prête à dessiner. */
+export type EsquissePosee = {
+  support: string
+  cercles: { rayon: number; y: number }[]
+}
+
 export type NoyauGeometrique = {
   extruder(solide: Solide | null): Solide
-  enlever(solide: Solide, traverse: boolean): Solide
+  enlever(solide: Solide, coupe: Enlevement): Solide
   aFace(solide: Solide | null, face: string): boolean
   mailler(solide: Solide | null, parametres: Map<string, string>): Maillage
   decrire(solide: Solide | null, parametres: Map<string, string>): Frontiere
+  poser(esquisse: Esquisse, solide: Solide | null, parametres: Map<string, string>): EsquissePosee
 }
 
 export type Handler = {

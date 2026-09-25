@@ -8,7 +8,7 @@ const ligne = document.querySelector<HTMLInputElement>('#ligne')!
 const formulaire = document.querySelector<HTMLFormElement>('#terminal')!
 
 function dessiner() {
-  void afficher(vue, hote.session.frontiere()).catch((erreur: unknown) => {
+  void afficher(vue, hote.session.frontiere(), hote.session.esquisseCourante()).catch((erreur: unknown) => {
     journal.value = erreur instanceof Error ? erreur.message : String(erreur)
   })
 }

@@ -110,6 +110,13 @@ export class Session {
     return noyauProvisoire.decrire(piece.solide, piece.parametres)
   }
 
+  esquisseCourante() {
+    if (!this.active) return null
+    const piece = this.pieceActive()
+    if (!piece.esquisse) return null
+    return noyauProvisoire.poser(piece.esquisse, piece.solide, piece.parametres)
+  }
+
   definirPiece(nom: string) {
     this.pieces.set(nom, pieceVide(nom))
     this.active = nom

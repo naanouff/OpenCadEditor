@@ -1,5 +1,5 @@
 import { evaluateurProvisoire } from './evaluateur.ts'
-import type { Maillage, NoyauGeometrique, Solide } from './types.ts'
+import type { Frontiere, Maillage, NoyauGeometrique, Solide } from './types.ts'
 
 function avecFaces(solide: Solide | null): Solide {
   const suivant: Solide = solide
@@ -7,8 +7,9 @@ function avecFaces(solide: Solide | null): Solide {
         faces: new Set(solide.faces),
         extrusions: solide.extrusions,
         enlevementsBorgnes: solide.enlevementsBorgnes,
+        enlevements: [...solide.enlevements],
       }
-    : { faces: new Set(), extrusions: 0, enlevementsBorgnes: 0 }
+    : { faces: new Set(), extrusions: 0, enlevementsBorgnes: 0, enlevements: [] }
   suivant.faces.add('face.dessus')
   suivant.faces.add('face.dessous')
   return suivant
@@ -21,9 +22,10 @@ export const noyauProvisoire: NoyauGeometrique = {
     suivant.extrusions += 1
     return suivant
   },
-  enlever(solide, traverse) {
+  enlever(solide, coupe) {
     const suivant = avecFaces(solide)
-    if (!traverse) suivant.enlevementsBorgnes += 1
+    suivant.enlevements.push(coupe)
+    if (!coupe.traverse) suivant.enlevementsBorgnes += 1
     return suivant
   },
   aFace(solide, face) {
@@ -43,15 +45,40 @@ export const noyauProvisoire: NoyauGeometrique = {
     const hauteur = evaluateurProvisoire.evaluer('hauteur_carrure', parametres)
     const rayonExt = diametre / 2
     const rayonInt = rayonExt - paroi
-    return {
-      faces: [
-        { sorte: 'cylindre', rayon: rayonExt, bas: 0, haut: hauteur },
-        { sorte: 'cylindre', rayon: rayonInt, bas: 0, haut: hauteur },
-        { sorte: 'couronne', rayonExt, rayonInt, y: hauteur },
-        { sorte: 'couronne', rayonExt, rayonInt, y: 0 },
-      ],
+    const dessus = solide.enlevements.find((coupe) => !coupe.traverse && coupe.support === 'face.dessus')
+    const portee = dessus && dessus.rayon > rayonInt && dessus.rayon < rayonExt ? dessus : null
+    const fond = portee ? hauteur - portee.profondeur : hauteur
+    const faces: Frontiere['faces'] = [
+      { sorte: 'cylindre', rayon: rayonExt, bas: 0, haut: hauteur },
+      { sorte: 'cylindre', rayon: rayonInt, bas: 0, haut: fond },
+      { sorte: 'couronne', rayonExt, rayonInt, y: 0 },
+    ]
+    if (!portee) {
+      faces.push({ sorte: 'couronne', rayonExt, rayonInt, y: hauteur })
+      return { faces }
     }
+    faces.push(
+      { sorte: 'cylindre', rayon: portee.rayon, bas: fond, haut: hauteur },
+      { sorte: 'couronne', rayonExt, rayonInt: portee.rayon, y: hauteur },
+      { sorte: 'couronne', rayonExt: portee.rayon, rayonInt, y: fond },
+    )
+    return { faces }
   },
+  poser(esquisse, solide, parametres) {
+    const cercles = esquisse.entites
+      .filter((entite) => entite.sorte === 'cercle' && entite.diametre)
+      .map((entite) => ({
+        rayon: evaluateurProvisoire.evaluer(entite.diametre as string, parametres) / 2,
+        y: hauteurDuPlan(esquisse.support, solide, parametres),
+      }))
+    return { support: esquisse.support, cercles }
+  },
+}
+
+/** Les plans d'origine sont au niveau zéro. Les faces d'un solide sont à ses bornes. */
+function hauteurDuPlan(support: string, solide: Solide | null, parametres: Map<string, string>) {
+  if (!solide || support !== 'face.dessus') return 0
+  return evaluateurProvisoire.evaluer('hauteur_carrure', parametres)
 }
 
 function anneau(rayonExt: number, rayonInt: number, hauteur: number): Maillage {

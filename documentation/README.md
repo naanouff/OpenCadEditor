@@ -20,5 +20,7 @@ Suivi du projet et notes de travail. Ce dossier n’appartient pas au moteur : l
 | [sprints/sprint-04-shell.md](sprints/sprint-04-shell.md) | Shell testable : terminal, maillage de l’anneau, viewport |
 | [veille/portee-lunette.md](veille/portee-lunette.md) | Épaulement du dessus, après l’anneau |
 | [sprints/sprint-05-portee-lunette.md](sprints/sprint-05-portee-lunette.md) | Sprint de cette portée, test rouge puis `decrire` |
+| [veille/orientation-faces.md](veille/orientation-faces.md) | Côté matière porté par la frontière, au lieu d’être deviné |
+| [sprints/sprint-06-orientation-faces.md](sprints/sprint-06-orientation-faces.md) | Sprint de ce champ, tests des cas que les règles actuelles ratent |
 
 Le modeleur ne démarre pas tant que la veille n’est pas écrite. OpenCadEditor est l’éditeur. CADOM (`.cadom`) est le format d’assemblage OpenCAD, pas un logiciel. L’intention est dans `.cadompart`. Ce découpage est consigné dans le journal.
