@@ -1,5 +1,7 @@
 import { evaluateurProvisoire } from './evaluateur.ts'
-import type { Frontiere, Maillage, NoyauGeometrique, Solide } from './types.ts'
+import { geometriePlan } from './corne.ts'
+import { ombrer } from './ombre.ts'
+import type { Ajout, Enlevement, Frontiere, NoyauGeometrique, Solide } from './types.ts'
 
 function avecFaces(solide: Solide | null): Solide {
   const suivant: Solide = solide
@@ -8,8 +10,9 @@ function avecFaces(solide: Solide | null): Solide {
         extrusions: solide.extrusions,
         enlevementsBorgnes: solide.enlevementsBorgnes,
         enlevements: [...solide.enlevements],
+        ajouts: [...solide.ajouts],
       }
-    : { faces: new Set(), extrusions: 0, enlevementsBorgnes: 0, enlevements: [] }
+    : { faces: new Set(), extrusions: 0, enlevementsBorgnes: 0, enlevements: [], ajouts: [] }
   suivant.faces.add('face.dessus')
   suivant.faces.add('face.dessous')
   return suivant
@@ -17,9 +20,10 @@ function avecFaces(solide: Solide | null): Solide {
 
 /** Poses des faces nommées, sans solide exact. */
 export const noyauProvisoire: NoyauGeometrique = {
-  extruder(solide) {
+  extruder(solide, ajout) {
     const suivant = avecFaces(solide)
     suivant.extrusions += 1
+    if (ajout) suivant.ajouts.push(ajout)
     return suivant
   },
   enlever(solide, coupe) {
@@ -32,11 +36,8 @@ export const noyauProvisoire: NoyauGeometrique = {
     return solide?.faces.has(face) ?? false
   },
   mailler(solide, parametres) {
-    if (!solide) return { positions: [], indices: [] }
-    const diametre = evaluateurProvisoire.evaluer('diametre_boite', parametres)
-    const paroi = evaluateurProvisoire.evaluer('epaisseur_paroi', parametres)
-    const hauteur = evaluateurProvisoire.evaluer('hauteur_carrure', parametres)
-    return anneau(diametre / 2, diametre / 2 - paroi, hauteur)
+    if (!solide) return { positions: [], normales: [], indices: [] }
+    return ombrer(this.decrire(solide, parametres).faces)
   },
   decrire(solide, parametres) {
     if (!solide) return { faces: [] }
@@ -62,15 +63,15 @@ export const noyauProvisoire: NoyauGeometrique = {
         { sorte: 'couronne', rayonExt: rayonInt, rayonInt: levre.rayon, y: levre.profondeur, dehors: 1 },
       )
     }
-    if (!portee) {
-      faces.push({ sorte: 'couronne', rayonExt, rayonInt, y: hauteur, dehors: 1 })
-      return { faces }
+    if (!portee) faces.push({ sorte: 'couronne', rayonExt, rayonInt, y: hauteur, dehors: 1 })
+    else {
+      faces.push(
+        { sorte: 'cylindre', rayon: portee.rayon, bas: fond, haut: hauteur, dehors: -1 },
+        { sorte: 'couronne', rayonExt, rayonInt: portee.rayon, y: hauteur, dehors: 1 },
+        { sorte: 'couronne', rayonExt: portee.rayon, rayonInt, y: fond, dehors: 1 },
+      )
     }
-    faces.push(
-      { sorte: 'cylindre', rayon: portee.rayon, bas: fond, haut: hauteur, dehors: -1 },
-      { sorte: 'couronne', rayonExt, rayonInt: portee.rayon, y: hauteur, dehors: 1 },
-      { sorte: 'couronne', rayonExt: portee.rayon, rayonInt, y: fond, dehors: 1 },
-    )
+    faces.push(...figures(solide.ajouts, solide.enlevements, rayonExt, rayonInt, hauteur, parametres))
     return { faces }
   },
   poser(esquisse, solide, parametres) {
@@ -88,31 +89,176 @@ export const noyauProvisoire: NoyauGeometrique = {
   },
 }
 
+/** La matière ajoutée s'enfonce jusqu'au passage : l'enveloppe de l'anneau la borne. */
+function enfoncement(rayonInt: number, demiLargeur: number) {
+  const reste = rayonInt * rayonInt - demiLargeur * demiLargeur
+  return reste > 0 ? Math.sqrt(reste) : 0
+}
+
+function figures(
+  ajouts: Ajout[],
+  enlevements: Enlevement[],
+  rayonExt: number,
+  rayonInt: number,
+  hauteur: number,
+  parametres: Map<string, string>,
+): Frontiere['faces'] {
+  const faces: Frontiere['faces'] = []
+  const rectangle = ajouts.find((ajout) => ajout.sorte === 'rectangle')
+  const profilAjout = ajouts.find((ajout) => ajout.sorte === 'profil')
+  const corne = profilAjout ?? rectangle
+  if (corne) {
+    const interieur = corne.ecart / 2
+    const largeurBout = profilAjout?.largeurBout ?? (corne.sorte === 'rectangle' ? corne.largeur : 0)
+    const largeurRacine = profilAjout?.largeurRacine ?? (corne.sorte === 'rectangle' ? corne.largeur : largeurBout)
+    const rayonRacine = profilAjout?.rayonRacine ?? 0
+    const plan =
+      profilAjout && rayonRacine > 0
+        ? { largeurBout, largeurRacine, rayonRacine }
+        : undefined
+    const bout = rayonExt + corne.debord
+    const geo =
+      plan &&
+      geometriePlan({
+        a0: interieur,
+        u1: bout,
+        plan,
+        rayonPeau: rayonExt,
+      })
+    const exterieur = geo
+      ? Math.max(interieur + largeurRacine, geo.Qt[0], geo.peau[0]) + 0.05
+      : interieur + (corne.sorte === 'rectangle' ? corne.largeur : largeurRacine)
+    const depart = enfoncement(rayonInt, Math.min(exterieur, rayonInt - 1e-6))
+    for (const [xmin, xmax, zmin, zmax] of [
+      [interieur, exterieur, depart, bout],
+      [-exterieur, -interieur, depart, bout],
+      [interieur, exterieur, -bout, -depart],
+      [-exterieur, -interieur, -bout, -depart],
+    ]) {
+      faces.push({
+        sorte: 'boite',
+        xmin,
+        xmax,
+        ymin: 0,
+        ymax: corne.hauteur,
+        zmin,
+        zmax,
+        ...(plan ? { plan } : {}),
+      })
+      if (profilAjout) {
+        const haut = profilAjout.rayonBoutHaut
+        const bas = profilAjout.rayonBoutBas
+        const versPlus = zmax > 0
+        const a0 = Math.min(Math.abs(xmin), Math.abs(xmax))
+        const aBout = a0 + largeurBout
+        const debutCongé = xmin > 0 ? a0 : xmax < 0 ? -aBout : xmin
+        const finCongé = xmin > 0 ? aBout : xmax < 0 ? -a0 : xmax
+        if (haut > 0 && haut < corne.hauteur) {
+          faces.push({
+            sorte: 'conge',
+            debut: debutCongé,
+            fin: finCongé,
+            y: corne.hauteur - haut,
+            z: versPlus ? zmax - haut : zmin + haut,
+            rayon: haut,
+            angleDeb: versPlus ? 0 : -Math.PI / 2,
+            angleFin: versPlus ? Math.PI / 2 : 0,
+            dehors: 1,
+          })
+        }
+        if (bas > 0 && bas < corne.hauteur) {
+          faces.push({
+            sorte: 'conge',
+            debut: debutCongé,
+            fin: finCongé,
+            y: bas,
+            z: versPlus ? zmax - bas : zmin + bas,
+            rayon: bas,
+            angleDeb: versPlus ? Math.PI / 2 : Math.PI,
+            angleFin: versPlus ? Math.PI : (3 * Math.PI) / 2,
+            dehors: 1,
+          })
+        }
+      }
+    }
+    if (geo) {
+      for (const [tau, sigma] of [
+        [1, 1],
+        [-1, 1],
+        [1, -1],
+        [-1, -1],
+      ] as const) {
+        const x = tau * geo.C[0]
+        const z = sigma * geo.C[1]
+        const angleQtMonde = Math.atan2(sigma * (geo.Qt[1] - geo.C[1]), tau * (geo.Qt[0] - geo.C[0]))
+        const anglePeauMonde = Math.atan2(sigma * (geo.peau[1] - geo.C[1]), tau * (geo.peau[0] - geo.C[0]))
+        faces.push({
+          sorte: 'racine',
+          x,
+          z,
+          rayon: geo.Rr,
+          bas: 0,
+          haut: corne.hauteur,
+          angleDeb: Math.min(angleQtMonde, anglePeauMonde),
+          angleFin: Math.max(angleQtMonde, anglePeauMonde),
+          dehors: -1,
+        })
+      }
+    }
+    const barrette = enlevements.find((coupe) => coupe.traverse && coupe.support === 'plan.12h')
+    if (barrette) {
+      const recul = parametres.has('recul_barrette')
+        ? evaluateurProvisoire.evaluer('recul_barrette', parametres)
+        : corne.debord / 2
+      const z = bout - recul
+      const aFin = interieur + largeurBout
+      for (const [debut, fin, cote] of [
+        [interieur, aFin, z],
+        [-aFin, -interieur, z],
+        [interieur, aFin, -z],
+        [-aFin, -interieur, -z],
+      ] as const) {
+        faces.push({
+          sorte: 'traverse',
+          rayon: barrette.rayon,
+          debut,
+          fin,
+          y: hauteur / 2,
+          z: cote,
+          dehors: -1,
+        })
+      }
+    }
+  }
+  const tube = ajouts.find((ajout) => ajout.sorte === 'cercle' && ajout.support === 'plan.3h')
+  if (tube) {
+    faces.push({
+      sorte: 'traverse',
+      rayon: tube.rayon,
+      debut: enfoncement(rayonInt, tube.rayon),
+      fin: rayonExt + tube.longueur,
+      y: hauteur / 2,
+      z: 0,
+      dehors: 1,
+    })
+    const tige = enlevements.find((coupe) => coupe.traverse && coupe.support === 'plan.3h')
+    if (tige) {
+      faces.push({
+        sorte: 'traverse',
+        rayon: tige.rayon,
+        debut: 0,
+        fin: rayonExt + tube.longueur,
+        y: hauteur / 2,
+        z: 0,
+        dehors: -1,
+      })
+    }
+  }
+  return faces
+}
+
 /** Les plans d'origine sont au niveau zéro. Les faces d'un solide sont à ses bornes. */
 function hauteurDuPlan(support: string, solide: Solide | null, parametres: Map<string, string>) {
   if (!solide || support !== 'face.dessus') return 0
   return evaluateurProvisoire.evaluer('hauteur_carrure', parametres)
-}
-
-function anneau(rayonExt: number, rayonInt: number, hauteur: number): Maillage {
-  const segments = 8
-  const positions: number[] = []
-  const indices: number[] = []
-  const couronne = (rayon: number, y: number) => {
-    const debut = positions.length / 3
-    for (let i = 0; i < segments; i++) {
-      const angle = (i / segments) * Math.PI * 2
-      positions.push(Math.cos(angle) * rayon, y, Math.sin(angle) * rayon)
-    }
-    return debut
-  }
-  const basExt = couronne(rayonExt, 0)
-  const hautExt = couronne(rayonExt, hauteur)
-  couronne(rayonInt, 0)
-  couronne(rayonInt, hauteur)
-  for (let i = 0; i < segments; i++) {
-    const j = (i + 1) % segments
-    indices.push(basExt + i, hautExt + i, hautExt + j, basExt + i, hautExt + j, basExt + j)
-  }
-  return { positions, indices }
 }

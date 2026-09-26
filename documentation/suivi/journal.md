@@ -99,4 +99,94 @@ La règle de base du développement est le TDD, consignée dans [developpement.m
 
 ## 2026-09-25 — Cornes, barrette et tube consignés, sprint 12 prêt
 
-La portée du fond est déjà une lèvre : sur le premier millimètre l’ouverture fait 34 mm, puis le passage reprend 35 mm. [veille/cornes-barrette-tube.md](../veille/cornes-barrette-tube.md) fixe la suite. Quatre boîtes pour les cornes, quatre cylindres horizontaux pour la barrette, un tube et son trou de tige. Les cotes du rectangle sont retenues, l’extrusion copie le profil évalué. [sprints/sprint-12-cornes-barrette-tube.md](../sprints/sprint-12-cornes-barrette-tube.md) le code en TDD. La soustraction booléenne reste après.
+La portée du fond est déjà une lèvre : sur le premier millimètre l’ouverture fait 34 mm, puis le passage reprend 35 mm. [veille/cornes-barrette-tube.md](../veille/cornes-barrette-tube.md) fixe la suite. Quatre boîtes pour les cornes, quatre cylindres horizontaux pour la barrette, un tube et son trou de tige. Les cotes du rectangle sont retenues, l’extrusion copie le profil évalué. [sprints/sprint-12-cornes-barrette-tube.md](../sprints/sprint-12-cornes-barrette-tube.md) est codé. Quatre boîtes, quatre barrettes et le tube sont dans la frontière et dans le maillage. La face proche d’une corne est sur le cercle extérieur, à son coin le plus écarté, pour entrer dans la paroi. La soustraction booléenne reste après.
+
+## 2026-09-25 — Soustraction booléenne consignée, sprint 13 prêt
+
+Les trois figures sont posées côte à côte : la boîte d’une corne traverse l’anneau, le cylindre de barrette flotte, le trou de tige s’arrête dans le tube. [veille/booleen-carrure.md](../veille/booleen-carrure.md) fixe l’union et la différence. Un arbre BSP en TypeScript, sans dépendance nouvelle. `decrire` garde ses faces analytiques pour les cotes ; `mailler` rend un seul volume. Le trou de tige traverse la paroi jusqu’au passage. Le fil de fer tire ses arêtes vives du maillage. [sprints/sprint-13-booleen-carrure.md](../sprints/sprint-13-booleen-carrure.md) est codé. `csg.ts` porte l’arbre BSP, `volumes.ts` les primitives fermées. `mailler` rend un seul volume : les cornes se fondent dans l’anneau, les quatre trous de barrette sont ouverts, et le trou de tige perce la paroi jusqu’au passage. Le viewport lit ce maillage et en tire ses arêtes vives. Deux sens de rotation ont été corrigés : quatre faces de la boîte, et la paroi du cylindre d’axe Y. C’est le début du noyau géométrique. Les congés, la lunette et le fond restent après.
+
+## 2026-09-25 — Faces rognées consignées, sprint 14 prêt
+
+Le booléen de maillage rend le bon volume et une image grossière : la paroi se lit à facettes, et les cercles sont des polygones. La cause est mesurable : les normales sont posées par facette, la coque descend à 24 segments, et le fil de fer vient des arêtes du maillage. [veille/faces-rognees.md](../veille/faces-rognees.md) prend le chemin de Fusion 360, FreeCAD et Creo : le booléen porte sur les faces exactes, qui gardent leur surface et reçoivent des contours ; le maillage vient après, face par face, jusqu’à une flèche en millimètres ; la normale est celle de la surface ; les arêtes sont les courbes de la topologie. Les trois intersections de la carrure ont une forme fermée, le trou de tige compris. L’union des contours coplanaires, le dessus de l’anneau avec le dessus des cornes, est la pièce centrale. [sprints/sprint-14-faces-rognees.md](../sprints/sprint-14-faces-rognees.md) est commencé. `tesseler.ts` porte la flèche : le pas d’un cercle vaut `ceil(pi / acos(1 − f / r))`, donc un rayon de 20 mm prend une centaine de pans et un trou de 0,75 mm une vingtaine. `ombre.ts` tessellise chaque face sur sa surface, puis la rogne par les volumes voisins, et repose la normale de la surface sur chaque sommet : la paroi est ronde, les arêtes restent vives sans seuil d’angle. Le classement passe par un arbre bâti une fois par volume, d’où `classifieur` : le maillage complet est tombé de 1 s à 60 ms. Le fil de fer vient encore des arêtes du maillage ; les contours de faces restent à faire.
+
+Les cornes et le tube s’appuient maintenant sur l’enveloppe extérieure : le cylindre plein sous la peau borne la matière ajoutée, donc le passage et les portées gardent leurs faces entières. Les figures s’enfoncent jusqu’au passage, la face de départ d’une corne et le disque de départ du tube tombent sous l’enveloppe et disparaissent. Le jeu de classement de 0,05 mm dépasse le creux d’une corde, ce qui fait se recouper franchement les polygones de même pas.
+
+`documentCad` tire le fil de fer de `filDeFer(frontiere)`, donc des faces exactes. Les arêtes ouvertes laissées par la découpe BSP au milieu d’une face plane ne sont plus tracées. `aretesVives` reste disponible pour les tests de volume ; il sort du chemin d’affichage. Les contours de faces, et avec eux les arêtes d’intersection rognées, restent à faire.
+
+`filDeFer` coupe maintenant les arêtes des cornes à la peau extérieure : la part enterrée dans le passage disparaît. Les cercles d’une traverse dont le centre est sous la peau (trou de tige à l’axe, départ du tube) ne sont plus tracés. La paroi d’un perçage a le winding aligné sur la normale vers l’axe : le trou s’éclaire comme une cavité.
+
+Le tube ne perce plus la peau sur son rayon extérieur : seule la tige l’ouvre. L’anneau entre tige et tube reste sur la paroi — c’est la fermeture à la racine.
+
+`tesseler` porte aussi les traverses : la paroi du tube est une face, le bout est un anneau (disque percé par la tige). Le fil de fer trace le cercle extérieur du tube et le cercle du perçage au bout. Le winding de la paroi du tube suit la normale sortante.
+
+## 2026-09-25 — Chrome editor-ui consigné, sprint 15 prêt
+
+Le sous-module `vendor/w3dts` est encore sur `main`. La branche `develop` porte `@naanouff/w3dts-editor-ui` (`packages/editor-ui`) : thème, Dockview, `EditorDock`, sans store métier. [shell/editor-ui.md](../shell/editor-ui.md) fixe la suite : sync sur `develop`, chrome React via ce paquet, panneaux OpenCad (viewport, terminal, paramètres). Les patches caméra (`orthoZO`, `setViewUp`) restent une surcharge dans `packages/shell`, hors de `vendor/`. [sprints/sprint-15-editor-ui.md](../sprints/sprint-15-editor-ui.md) le code. `@naanouff/w3dts-viewer-editor`, le ruban et l’historique Dockview restent après.
+
+## 2026-09-25 — Sprint 15 codé : editor-ui base du shell
+
+`vendor/w3dts` est sur `develop` (`7a0651a9`). `@naanouff/w3dts-editor-ui` porte le chrome : styles, thème, `EditorDock`. Les panneaux viewport, terminal et paramètres sont dans `packages/shell`. La caméra OpenCad (`orthoZO`, `setViewUp`) est dans `packages/shell/src/surcharges/`, branchée par Vite, sans patch dans le sous-module. Les tests Vitest du shell passent. Le ruban et `@naanouff/w3dts-viewer-editor` restent après.
+
+## 2026-09-25 — Design system editor-ui branché dans le shell
+
+Tailwind scanne `packages/shell/src` et `vendor/w3dts/packages/editor-ui/src`. Les tokens viennent de `@naanouff/w3dts-editor-ui/styles.css`. Le panneau paramètres utilise la primitive `Panel`. Le polyfill `shell-layout.css` est retiré.
+
+## 2026-09-25 — Terminal Monaco
+
+Le panneau terminal reprend le geste du Script panel w3dts : journal + Monaco (`Entrée` exécute, `Maj+Entrée` ligne, ↑ historique), langue `opencad-commande` avec complétion des mots-clés.
+
+## 2026-09-25 — Panneau arbre de construction
+
+`Session.historique()` et `pieceCourante()` exposent l’historique paramétrique. Le shell ouvre un panneau Dockview **Construction** (à gauche, au-dessus des paramètres) : pièce → paramètres / esquisses / extrudes. Layout `opencad.shell.dockview.layout.v2`.
+
+## 2026-09-25 — Panneau Debug
+
+Panneau Dockview **Debug** (à droite) : bouton **Build carrure** qui joue `scriptCarrure.ts` via `storeShell.executer`. Layout `v3`.
+
+## 2026-09-26 — Profil des cornes consigné, sprint 16 prêt
+
+Les cornes restent des boîtes à angles droits. Les croquis demandent une joue courbe. [veille/profil-cornes.md](../veille/profil-cornes.md) fixe un contour fermé : segment intérieur, segment de bout, arc de joue (`rayon_joue`), arc d’appui sur la peau. Le geste reste esquisse → cotes → extrude. [sprints/sprint-16-profil-cornes.md](../sprints/sprint-16-profil-cornes.md) le code en TDD. Les entités `segment` et `arc`, l’ajout `profil`, le cylindre tronçonné et le fil de fer en arcs restent à écrire. Les congés et les cotes du profil à l’écran restent après.
+
+## 2026-09-26 — Sprint 16 : profil d’esquisse des cornes
+
+Le script de carrure extrude un profil `segment` / `arc` coté (`rayon_joue` 28). L’ajout `{ sorte: 'profil' }` produit quatre boîtes bornées par le cylindre de joue tronçonné (`angleDeb` / `angleFin`). `ombrer` et `filDeFer` tracent la cambrure ; le coin extérieur de l’ancien rectangle disparaît. Les barrettes, le tube et le perçage de tige restent. [sprints/sprint-16-profil-cornes.md](../sprints/sprint-16-profil-cornes.md) est codé. Les congés 3D et les cotes du profil à l’écran restent après.
+
+## 2026-09-26 — Profil d’élévation consigné, sprint 17 prêt
+
+La joue en plan à `rayon_joue` 27,5 mm est validée à l’œil. Vue de côté, les bouts restent à angles droits. [veille/profil-elevation-cornes.md](../veille/profil-elevation-cornes.md) fixe les congés de bout : `rayon_bout_haut` 2,5 mm, `rayon_bout_bas` 0,8 mm. [sprints/sprint-17-profil-elevation-cornes.md](../sprints/sprint-17-profil-elevation-cornes.md) le code en TDD. Les congés à la racine et l’esquisse d’élévation cotée restent après.
+
+## 2026-09-26 — Sprint 17 : congés de bout en élévation
+
+Le script porte `rayon_joue 27.5`, `rayon_bout_haut 2.5` et `rayon_bout_bas 0.8`. Huit faces `conge` (cylindre d’axe X) coupent les coins de bout ; `ombrer` et `filDeFer` les tracent. La joue en plan reste. Les barrettes restent ouvertes. [sprints/sprint-17-profil-elevation-cornes.md](../sprints/sprint-17-profil-elevation-cornes.md) est codé. Les congés à la racine restent après.
+
+## 2026-09-26 — Fil de fer des cornes profilées
+
+La forme ombrée des congés et de la joue est correcte ; le fil traçait encore les arêtes de la boîte entière. `filDeFer` coupe maintenant ces arêtes aux congés et à la joue : plus de coin de bout fantôme dans le dessin.
+
+## 2026-09-26 — Surface des cornes rétabli
+
+Le filtre de congé supprimait des quads entiers dès qu’un coin touchait la morsure, d’où des cornes trouées. Les plans de boîte sont subdivisés ; seuls les petits triangles dans le coin disparaissent, remplacés par la face `conge`.
+
+## 2026-09-26 - Faces exactes des cornes
+
+Chaque corne se construit en pans exacts, issus du profil en plan (joue à `rayon_joue`) et du profil en élévation (congés de bout). `pansDeCorne` (`corne.ts`) livre huit pans : dessus, dessous, deux côtés, bout plan, joue, congé haut, congé bas. Deux pans voisins partagent les mêmes sommets sur leur courbe commune : la surface est fermée, sans escalier ni fente. `ombrer` maille ces pans ; `filDeFer` trace leurs contours et le raccord sur la peau. Le filtre de triangles par morsure et la subdivision des plans de boîte sont retirés.
+
+## 2026-09-26 - Rendu ombré réparé
+
+Le maillage ombré comptait 151 809 sommets et le viewport les indexait en `Uint16Array` : les index débordaient, d'où des triangles errants dans l'anneau et deux cornes sans surface. Le viewport passe en `Uint32Array` au-delà de 65 535 sommets. Les pans de corne partent maintenant de la peau (`rayonPeau`) et chaque outil de rognage porte son encombrement : un outil loin d'une face la laisse entière. Le maillage tombe à 18 876 sommets.
+
+## 2026-09-26 - Géométrie des cornes estimée sur photos
+
+[veille/geometrie-cornes-references.md](../veille/geometrie-cornes-references.md) relève la forme des cornes Oyster des références : bout de 2,2 mm, flanc droit à 22°, racine de 6 mm raccordée par un congé creux, dessous creusé, chanfrein poli sur le flanc.
+
+## 2026-09-26 — Repère de surface du rendu ombré
+
+Le viewer construit pour chaque sommet une tangente et une bitangente orthonormées avec la normale (`repereSurface` dans `packages/shell/src/dessin.ts`). Le repère reste défini sur les faces horizontales, le haut des congés et la paroi du trou de barrette, où le repère fixe précédent dégénérait et produisait des sauts d'ombrage. Test : `packages/shell/tests/repere.test.ts`.
+
+## 2026-09-26 — Sprint 18 préparé : contour en plan Oyster
+
+[sprints/sprint-18-contour-cornes-oyster.md](../sprints/sprint-18-contour-cornes-oyster.md) reprend les cotes de [veille/geometrie-cornes-references.md](../veille/geometrie-cornes-references.md) : bout 2,2 mm, racine 6 mm, congé creux R3, débord noyau 4,2 mm, congé haut 1 mm, barrette Ø1,1 à 1,2 mm du bout. Le plan de flanc remplace la joue ; son angle découle des deux largeurs (17°). Le dessous creusé et la chute du dessus vont au sprint 19, le chanfrein poli au sprint 20.
+
+## 2026-09-26 — Sprint 18 codé : contour en plan Oyster
+
+Le script porte largeur_bout 2,2, largeur_racine 6, ayon_racine 3, longueur_corne 4,2, ayon_bout_haut 1, diametre_barrette 1,1 et ecul_barrette 1,2. Le plan de flanc remplace la joue ; le congé creux à la racine est un cylindre d'axe Y hors de la peau. pansDeCorne, ombrer et ilDeFer suivent ce profil. Les quatre barrettes restent ouvertes près du bout. [sprints/sprint-18-contour-cornes-oyster.md](../sprints/sprint-18-contour-cornes-oyster.md) est codé. Le dessous creusé et la chute du dessus restent au sprint 19.

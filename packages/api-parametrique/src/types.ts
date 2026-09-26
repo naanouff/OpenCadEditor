@@ -9,9 +9,13 @@ export type Operation = {
 
 export type EntiteEsquisse = {
   id: string
-  sorte: 'cercle' | 'rectangle'
+  sorte: 'cercle' | 'rectangle' | 'segment' | 'arc'
   degres: number
   diametre?: string
+  ecart?: string
+  debord?: string
+  largeur?: string
+  rayon?: string
 }
 
 export type Esquisse = {
@@ -26,11 +30,27 @@ export type Enlevement = {
   traverse: boolean
 }
 
+export type Ajout =
+  | { sorte: 'rectangle'; ecart: number; debord: number; largeur: number; hauteur: number }
+  | {
+      sorte: 'profil'
+      ecart: number
+      debord: number
+      largeurBout: number
+      largeurRacine: number
+      rayonRacine: number
+      rayonBoutHaut: number
+      rayonBoutBas: number
+      hauteur: number
+    }
+  | { sorte: 'cercle'; support: string; rayon: number; longueur: number }
+
 export type Solide = {
   faces: Set<string>
   extrusions: number
   enlevementsBorgnes: number
   enlevements: Enlevement[]
+  ajouts: Ajout[]
 }
 
 export type Piece = {
@@ -69,6 +89,9 @@ export type Maillage = {
   indices: number[]
 }
 
+/** Maillage d'affichage : chaque sommet porte la normale de sa surface. */
+export type MaillageOmbre = Maillage & { normales: number[] }
+
 /**
  * Sens de la normale, hors de la matière.
  * Cylindre : 1 loin de l'axe, -1 vers l'axe. Couronne : 1 vers le haut, -1 vers le bas.
@@ -76,8 +99,53 @@ export type Maillage = {
 export type Dehors = 1 | -1
 
 export type FaceExacte =
-  | { sorte: 'cylindre'; rayon: number; bas: number; haut: number; dehors: Dehors }
+  | {
+      sorte: 'cylindre'
+      rayon: number
+      bas: number
+      haut: number
+      dehors: Dehors
+      /** Tronçon : angles depuis +X, (x,z)=(r cos θ, r sin θ). Absent = tour complet. */
+      angleDeb?: number
+      angleFin?: number
+    }
   | { sorte: 'couronne'; rayonExt: number; rayonInt: number; y: number; dehors: Dehors }
+  | {
+      sorte: 'boite'
+      xmin: number
+      xmax: number
+      ymin: number
+      ymax: number
+      zmin: number
+      zmax: number
+      /** Contour en plan Oyster : absent = boîte rectangulaire. */
+      plan?: { largeurBout: number; largeurRacine: number; rayonRacine: number }
+    }
+  | {
+      /** Congé creux à la racine : cylindre d'axe Y, hors de la peau. */
+      sorte: 'racine'
+      x: number
+      z: number
+      rayon: number
+      bas: number
+      haut: number
+      angleDeb: number
+      angleFin: number
+      dehors: Dehors
+    }
+  | {
+      /** Congé de bout : cylindre d’axe X, angles dans le plan YZ. */
+      sorte: 'conge'
+      debut: number
+      fin: number
+      y: number
+      z: number
+      rayon: number
+      angleDeb: number
+      angleFin: number
+      dehors: Dehors
+    }
+  | { sorte: 'traverse'; rayon: number; debut: number; fin: number; y: number; z: number; dehors: Dehors }
 
 export type Frontiere = {
   faces: FaceExacte[]
@@ -90,10 +158,10 @@ export type EsquissePosee = {
 }
 
 export type NoyauGeometrique = {
-  extruder(solide: Solide | null): Solide
+  extruder(solide: Solide | null, ajout?: Ajout): Solide
   enlever(solide: Solide, coupe: Enlevement): Solide
   aFace(solide: Solide | null, face: string): boolean
-  mailler(solide: Solide | null, parametres: Map<string, string>): Maillage
+  mailler(solide: Solide | null, parametres: Map<string, string>): MaillageOmbre
   decrire(solide: Solide | null, parametres: Map<string, string>): Frontiere
   poser(esquisse: Esquisse, solide: Solide | null, parametres: Map<string, string>): EsquissePosee
 }

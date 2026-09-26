@@ -4,7 +4,7 @@ Même règles que l’API : TDD ([developpement.md](../developpement.md)), regis
 
 Le sprint qui démarre ce socle est [sprint 04](../sprints/sprint-04-shell.md). Le paquet est `packages/shell`.
 
-Le premier incrément est `packages/shell`, testé par Vitest, sans navigateur. L’adaptateur w3dts (`EXTENSION_ENTRIES`, `emitUi`) vient après, derrière le port viewport.
+Le premier incrément est `packages/shell`, testé par Vitest, sans navigateur. Le canvas WebGPU est derrière le port viewport. Le chrome UI (Dockview, thème) est décrit dans [editor-ui.md](editor-ui.md) et branché par [sprint 15](../sprints/sprint-15-editor-ui.md) via `@naanouff/w3dts-editor-ui`.
 
 ```mermaid
 flowchart LR
@@ -37,4 +37,4 @@ Le premier test rouge de `packages/api-parametrique` : après le script de la ca
 5. Test rouge : après le script, le viewport de test a reçu ce maillage ; une commande suivante le remplace.
 6. Panneau viewport branché sur `maillage()`.
 
-Hors de cet init : ruban, arbre, Electron, Dockview, fichier OpenCAD, solveur réel, branchement `EngineMain`.
+Hors de cet init : ruban, arbre, Electron, fichier OpenCAD, solveur réel. Dockview arrive avec [editor-ui.md](editor-ui.md), pas avec ce socle domaine.

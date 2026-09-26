@@ -1,28 +1,96 @@
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { defineConfig } from 'vite'
+import { defineConfig, type Plugin } from 'vite'
+import react from '@vitejs/plugin-react'
+import monacoEditorPluginPkg from 'vite-plugin-monaco-editor'
+
+const monacoEditorPlugin =
+  typeof monacoEditorPluginPkg === 'function'
+    ? monacoEditorPluginPkg
+    : (monacoEditorPluginPkg as { default: typeof monacoEditorPluginPkg }).default
 
 const ici = path.dirname(fileURLToPath(import.meta.url))
 const paquets = path.resolve(ici, '../../vendor/w3dts/packages')
+const coreSrc = path.resolve(paquets, 'core/src')
+const editorUi = path.resolve(paquets, 'editor-ui/src')
+
+function surchargeCamera(): Plugin {
+  const fichiers: Record<string, string> = {
+    buildCameraProjectionMatrix: path.resolve(ici, 'src/surcharges/buildCameraProjectionMatrix.ts'),
+    OrbitalCameraController: path.resolve(ici, 'src/surcharges/OrbitalCameraController.ts'),
+  }
+  return {
+    name: 'opencad-surcharge-camera',
+    enforce: 'pre',
+    resolveId(source) {
+      const base = source.split('?')[0]!.replace(/\\/g, '/')
+      for (const [nom, cible] of Object.entries(fichiers)) {
+        if (base.endsWith(`/${nom}.ts`) || base.endsWith(`/${nom}`)) return cible
+      }
+      return null
+    },
+  }
+}
 
 export default defineConfig({
+  plugins: [
+    react(),
+    monacoEditorPlugin({ languageWorkers: ['editorWorkerService'] }),
+    surchargeCamera(),
+  ],
   publicDir: path.resolve(paquets, 'viewer-editor/public'),
   resolve: {
-    alias: {
-      // Vite ne surveille pas la copie de node_modules : il servirait un module figé.
-      '@opencad/api-parametrique': path.resolve(ici, '../api-parametrique/src/index.ts'),
-      '@naanouff/w3dts-core': path.resolve(paquets, 'core/src/index.ts'),
-      '@naanouff/w3dts-logger': path.resolve(paquets, 'logger/src/index.ts'),
-      '@naanouff/w3dts-vector-lines': path.resolve(paquets, 'vector-lines/src/index.ts'),
-      '@naanouff/w3dts-text-mesh': path.resolve(paquets, 'text-mesh/src/index.ts'),
-      '@naanouff/w3dts-animation': path.resolve(paquets, 'animation/src/index.ts'),
-      '@naanouff/w3dts-loader-hdr': path.resolve(paquets, 'loader-hdr/src/index.ts'),
-      '@naanouff/w3dts-input': path.resolve(paquets, 'input/src/index.ts'),
-      'gl-matrix': path.resolve(ici, '../../vendor/w3dts/node_modules/gl-matrix'),
-    },
+    alias: [
+      {
+        find: '@naanouff/w3dts-editor-ui/styles.css',
+        replacement: path.resolve(editorUi, 'styles.css'),
+      },
+      {
+        find: /^@naanouff\/w3dts-editor-ui$/,
+        replacement: path.resolve(editorUi, 'index.ts'),
+      },
+      {
+        find: '@opencad/api-parametrique',
+        replacement: path.resolve(ici, '../api-parametrique/src/index.ts'),
+      },
+      { find: '@w3dts-core-src', replacement: coreSrc },
+      {
+        find: '@naanouff/w3dts-core',
+        replacement: path.resolve(paquets, 'core/src/index.ts'),
+      },
+      {
+        find: '@naanouff/w3dts-logger',
+        replacement: path.resolve(paquets, 'logger/src/index.ts'),
+      },
+      {
+        find: '@naanouff/w3dts-vector-lines',
+        replacement: path.resolve(paquets, 'vector-lines/src/index.ts'),
+      },
+      {
+        find: '@naanouff/w3dts-text-mesh',
+        replacement: path.resolve(paquets, 'text-mesh/src/index.ts'),
+      },
+      {
+        find: '@naanouff/w3dts-animation',
+        replacement: path.resolve(paquets, 'animation/src/index.ts'),
+      },
+      {
+        find: '@naanouff/w3dts-loader-hdr',
+        replacement: path.resolve(paquets, 'loader-hdr/src/index.ts'),
+      },
+      {
+        find: '@naanouff/w3dts-input',
+        replacement: path.resolve(paquets, 'input/src/index.ts'),
+      },
+      {
+        find: 'gl-matrix',
+        replacement: path.resolve(ici, '../../vendor/w3dts/node_modules/gl-matrix'),
+      },
+    ],
+    dedupe: ['react', 'react-dom'],
   },
   optimizeDeps: {
-    exclude: ['@opencad/api-parametrique'],
+    exclude: ['@opencad/api-parametrique', '@naanouff/w3dts-editor-ui'],
   },
   server: {
     fs: {

@@ -17,6 +17,7 @@ Suivi du projet et notes de travail. Ce dossier n’appartient pas au moteur : l
 | [veille/api-architecture.md](veille/api-architecture.md) | Socle modulaire de l’API, pile d’actions, domaines |
 | [sprints/sprint-03-api-carrure.md](sprints/sprint-03-api-carrure.md) | Socle de l’API carrure, tests du script et de la pile |
 | [shell/plan.md](shell/plan.md) | Shell : terminal, viewport, maillage, registres |
+| [shell/editor-ui.md](shell/editor-ui.md) | Chrome Dockview via `@naanouff/w3dts-editor-ui`, sync `develop` |
 | [sprints/sprint-04-shell.md](sprints/sprint-04-shell.md) | Shell testable : terminal, maillage de l’anneau, viewport |
 | [veille/portee-lunette.md](veille/portee-lunette.md) | Épaulement du dessus, après l’anneau |
 | [sprints/sprint-05-portee-lunette.md](sprints/sprint-05-portee-lunette.md) | Sprint de cette portée, test rouge puis `decrire` |
@@ -34,5 +35,16 @@ Suivi du projet et notes de travail. Ce dossier n’appartient pas au moteur : l
 | [sprints/sprint-11-vues-parametres.md](sprints/sprint-11-vues-parametres.md) | Sprint de cette suite, fond fixe compris |
 | [veille/cornes-barrette-tube.md](veille/cornes-barrette-tube.md) | Quatre cornes, trou de barrette, tube de couronne |
 | [sprints/sprint-12-cornes-barrette-tube.md](sprints/sprint-12-cornes-barrette-tube.md) | Sprint de ces trois figures, test rouge puis `decrire` |
+| [veille/booleen-carrure.md](veille/booleen-carrure.md) | Union et différence calculées, arbre BSP sans dépendance |
+| [sprints/sprint-13-booleen-carrure.md](sprints/sprint-13-booleen-carrure.md) | Sprint de ce booléen, maillage fermé et arêtes vives |
+| [veille/faces-rognees.md](veille/faces-rognees.md) | Booléen sur les faces exactes, tessellation à flèche |
+| [sprints/sprint-14-faces-rognees.md](sprints/sprint-14-faces-rognees.md) | Sprint de ces contours, paroi ronde et cercles nets |
+| [sprints/sprint-15-editor-ui.md](sprints/sprint-15-editor-ui.md) | Sprint chrome `editor-ui`, sync `develop`, surcharges caméra |
+| [veille/profil-cornes.md](veille/profil-cornes.md) | Cornes en profil fermé : segments, arcs, joue courbe |
+| [sprints/sprint-16-profil-cornes.md](sprints/sprint-16-profil-cornes.md) | Sprint de ce profil, test rouge puis `decrire` |
+| [veille/profil-elevation-cornes.md](veille/profil-elevation-cornes.md) | Congés de bout en élévation : haut large, bas petit |
+| [sprints/sprint-17-profil-elevation-cornes.md](sprints/sprint-17-profil-elevation-cornes.md) | Sprint de ces congés, test rouge puis `ombrer` |
+| [veille/geometrie-cornes-references.md](veille/geometrie-cornes-references.md) | Forme des cornes Oyster estimée sur les photos de `references/` |
+| [sprints/sprint-18-contour-cornes-oyster.md](sprints/sprint-18-contour-cornes-oyster.md) | Sprint du contour en plan : coin effilé, flanc droit, racine creuse |
 
 Le modeleur ne démarre pas tant que la veille n’est pas écrite. OpenCadEditor est l’éditeur. CADOM (`.cadom`) est le format d’assemblage OpenCAD, pas un logiciel. L’intention est dans `.cadompart`. Ce découpage est consigné dans le journal.

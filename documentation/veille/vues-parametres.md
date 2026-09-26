@@ -2,7 +2,7 @@
 
 La 3D est une isométrie. L’esquisse est dans son plan. Le document a une unité, les valeurs ont un type, et les paramètres s’affichent dans un panneau. Le sprint qui le code est [sprint 11](../sprints/sprint-11-vues-parametres.md).
 
-Les panneaux viennent de `@naanouff/w3dts-viewer-editor`, Dockview et ses styles. Il n’y a pas de paquet `w3dts-editor-ui`. Le shell ne reprend pas le ruban.
+Les panneaux métier sont dans `packages/shell`. Le chrome (Dockview, thème, `EditorDock`) vient de `@naanouff/w3dts-editor-ui` — voir [shell/editor-ui.md](../shell/editor-ui.md). Le shell ne reprend pas le ruban ni le store de `@naanouff/w3dts-viewer-editor`.
 
 ## Vues
 

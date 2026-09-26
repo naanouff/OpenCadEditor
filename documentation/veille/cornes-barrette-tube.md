@@ -32,11 +32,13 @@ Ces lignes sont dans l’historique. `decrire` ne les dessine pas. `FaceExacte` 
 
 Hors de cet incrément : soustraction booléenne, congés, chanfrein de lunette, verre, fond vissé, bracelet.
 
+La joue courbe des cornes, en profil d’esquisse, est dans [profil-cornes.md](profil-cornes.md).
+
 ## Géométrie
 
 Les figures sont écrites d’avance, comme les deux portées. Elles ne sont pas le résultat d’une soustraction.
 
-Les cornes sont quatre boîtes, de `y = 0` à `hauteur_carrure`. Elles partent du cercle extérieur (`diametre_boite / 2`) et dépassent de `longueur_corne`. L’écart intérieur d’une paire est `entrecorne`, la largeur `largeur_corne`. Une paire est à 12 h, l’autre à 6 h, par symétrie. `diametre_boite` repousse leur départ. `entrecorne` ne change que l’écart.
+Les cornes sont quatre boîtes, de `y = 0` à `hauteur_carrure`. Leur face proche est sur le cercle extérieur au coin le plus écarté, pour entrer dans la paroi. Le bout dépasse de `longueur_corne` au-delà du rayon. L’écart intérieur d’une paire est `entrecorne`, la largeur `largeur_corne`. Une paire est à 12 h, l’autre à 6 h, par symétrie. `diametre_boite` repousse leur départ. `entrecorne` ne change que l’écart.
 
 La barrette est un cylindre d’axe 3 h–9 h, diamètre `diametre_barrette` (1,5 mm), à travers chaque corne. L’axe passe au milieu de la hauteur et au milieu du débord. Le script n’a pas de cote de position : ce milieu est la position pédagogique. Quatre trous, un par corne.
 

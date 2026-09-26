@@ -1,6 +1,6 @@
-import type { EsquissePosee, Frontiere } from '@opencad/api-parametrique'
+import type { EsquissePosee, Frontiere, MaillageOmbre } from '@opencad/api-parametrique'
 import { documentCad } from './documentCad.ts'
-import { poseGlyphe, repere, vueDuPlan } from './dessin.ts'
+import { poseGlyphe, repere, repereSurface, vueDuPlan } from './dessin.ts'
 import { remplacementEsquisse } from './entree.ts'
 import policeUrl from '../../../vendor/w3dts/node_modules/.pnpm/@fontsource+open-sans@5.2.7/node_modules/@fontsource/open-sans/files/open-sans-latin-400-normal.woff?url'
 import { createTextMeshFromFont } from '@naanouff/w3dts-text-mesh'
@@ -114,20 +114,23 @@ class ProjetAnneau extends LitAbstractProject {
       max: vec3.fromValues(0.03, 0.02, 0.03),
     }
     if (!(controleur instanceof OrbitalCameraController)) return
+    const orbital = controleur as OrbitalCameraController & {
+      setViewUp?(up: vec3 | null): void
+    }
     const iso = Math.acos(1 / Math.sqrt(3))
-    controleur.setProjectionMode('orthographic')
+    orbital.setProjectionMode('orthographic')
     if (esquisse) {
       const plan = repere(esquisse.support)
-      controleur.setViewUp(Math.abs(plan.normale[1]) === 1 ? vec3.fromValues(...plan.axeV) : null)
+      orbital.setViewUp?.(Math.abs(plan.normale[1]) === 1 ? vec3.fromValues(...plan.axeV) : null)
       const vue = vueDuPlan(esquisse.support)
       const polaire = vue === 'negY' ? Math.PI : vue === 'posY' ? 0 : Math.PI / 2
       const azimut = vue === 'posX' ? Math.PI / 2 : 0
-      controleur.setOrbitAngles(azimut, polaire, true)
-      controleur.frameBoundingBox(boite, { resetViewAngles: false })
+      orbital.setOrbitAngles(azimut, polaire, true)
+      orbital.frameBoundingBox(boite, { resetViewAngles: false })
     } else {
-      controleur.setViewUp(null)
-      controleur.setOrbitAngles(Math.PI / 4, iso, true)
-      controleur.frameBoundingBox(boite, { resetViewAngles: false })
+      orbital.setViewUp?.(null)
+      orbital.setOrbitAngles(Math.PI / 4, iso, true)
+      orbital.frameBoundingBox(boite, { resetViewAngles: false })
     }
   }
 
@@ -147,13 +150,16 @@ function poserMaillage(
     const y = positions[i + 1]
     const z = positions[i + 2]
     const nx = document.maillage.normales[i]
-    const nz = document.maillage.normales[i + 2]
     const ny = document.maillage.normales[i + 1]
-    const tx = nz
-    const tz = -nx
-    sommets.push(x, y, z, 0, 0, 0, 0, nx, ny, nz, tx, 0, tz, 0, 1, 0, 0.78, 0.78, 0.78, 1)
+    const nz = document.maillage.normales[i + 2]
+    const { tangente, bitangente } = repereSurface([nx, ny, nz])
+    sommets.push(x, y, z, 0, 0, 0, 0, nx, ny, nz, ...tangente, ...bitangente, 0.78, 0.78, 0.78, 1)
   }
-  const mesh = new Mesh(new Float32Array(sommets), new Uint16Array(document.maillage.indices), 'anneau')
+  const indices =
+    positions.length / 3 > 0xffff
+      ? new Uint32Array(document.maillage.indices)
+      : new Uint16Array(document.maillage.indices)
+  const mesh = new Mesh(new Float32Array(sommets), indices, 'anneau')
   engine.resourceManager.uploadMesh(mesh)
   const matiere = new Material({
     name: 'anneau',
@@ -234,10 +240,25 @@ function poserFil(
 
 let projet: ProjetAnneau | null = null
 let demarrage: Promise<void> | null = null
+let canevasMoteur: HTMLCanvasElement | null = null
 let graphe: ShaderGraph | null = null
 let police: ArrayBuffer | null = null
 
+function attendreTaille(canevas: HTMLCanvasElement): Promise<void> {
+  if (canevas.clientWidth > 1 && canevas.clientHeight > 1) return Promise.resolve()
+  return new Promise((resolve) => {
+    const observer = new ResizeObserver(() => {
+      if (canevas.clientWidth > 1 && canevas.clientHeight > 1) {
+        observer.disconnect()
+        resolve()
+      }
+    })
+    observer.observe(canevas)
+  })
+}
+
 async function demarrer(canevas: HTMLCanvasElement) {
+  await attendreTaille(canevas)
   const reponse = await fetch('/shader-graphs/PBRGraph.json')
   if (!reponse.ok) throw new Error('PBRGraph introuvable')
   graphe = (await reponse.json()) as ShaderGraph
@@ -254,8 +275,17 @@ async function demarrer(canevas: HTMLCanvasElement) {
   await engine.start('ProjetAnneau')
 }
 
-export function afficher(canevas: HTMLCanvasElement, frontiere: Frontiere, esquisse: EsquissePosee | null = null) {
-  const document = documentCad(frontiere, esquisse)
-  if (!demarrage) demarrage = demarrer(canevas)
+export function afficher(
+  canevas: HTMLCanvasElement,
+  frontiere: Frontiere,
+  esquisse: EsquissePosee | null = null,
+  volume: MaillageOmbre | null = null,
+) {
+  const document = documentCad(frontiere, esquisse, volume)
+  if (canevasMoteur !== canevas || !demarrage) {
+    canevasMoteur = canevas
+    projet = null
+    demarrage = demarrer(canevas)
+  }
   return demarrage.then(() => projet?.montrer(document, esquisse))
 }

@@ -14,7 +14,7 @@ function rayonExterieur(maillage: Maillage) {
   return max
 }
 
-const script = `
+export const script = `
 piece carrure
 param diametre_boite 40
 param epaisseur_paroi 2.5
@@ -24,12 +24,17 @@ param profondeur_lunette 1.2
 param diametre_fond 34
 param profondeur_fond 1
 param entrecorne 20
-param longueur_corne 5
-param largeur_corne 4
-param diametre_barrette 1.5
+param longueur_corne 4.2
+param largeur_bout 2.2
+param largeur_racine 6
+param rayon_racine 3
+param diametre_barrette 1.1
+param recul_barrette 1.2
 param diametre_tube 4
 param longueur_tube 2
 param diametre_tige 1.2
+param rayon_bout_haut 1
+param rayon_bout_bas 0.8
 
 esquisse plan.dessus
 cercle
@@ -52,10 +57,17 @@ cote diametre diametre_fond
 enleve profondeur_fond
 
 esquisse plan.dessus
-rectangle
+segment
 cote ecart entrecorne
+segment
 cote debord longueur_corne
-cote largeur largeur_corne
+cote largeur largeur_bout
+segment
+cote largeur largeur_racine
+arc
+cote rayon rayon_racine
+arc
+concentrique cercle.exterieur
 symetrie vertical
 symetrie horizontal
 extrude hauteur_carrure
@@ -63,7 +75,7 @@ extrude hauteur_carrure
 esquisse plan.12h
 cercle
 cote diametre diametre_barrette
-enleve travers largeur_corne
+enleve travers largeur_racine
 symetrie horizontal
 
 esquisse plan.3h
@@ -228,7 +240,7 @@ cote diametre diametre_lunette
 
   it('décrit la portée du fond par une lèvre plus étroite que le passage', () => {
     const session = new Session()
-    session.executer(script.split('rectangle')[0])
+    session.executer(script.split('segment')[0])
     const faces = () => session.frontiere().faces
     const cylindre = (rayon: number) => faces().find((face) => face.sorte === 'cylindre' && face.rayon === rayon)
     const couronne = (y: number) => faces().find((face) => face.sorte === 'couronne' && face.y === y)
@@ -242,6 +254,127 @@ cote diametre diametre_lunette
     session.commande('param profondeur_fond 2')
     expect(cylindre(16)).toMatchObject({ haut: 2 })
     expect(cylindre(17.5)).toMatchObject({ bas: 2 })
+  })
+
+  it('décrit les cornes par un flanc et un congé de racine', () => {
+    const session = new Session()
+    session.executer(script.split('esquisse plan.12h')[0])
+    const racines = () => session.frontiere().faces.filter((face) => face.sorte === 'racine')
+    expect(racines()).toHaveLength(4)
+    expect(racines()[0]?.rayon).toBeCloseTo(3)
+    expect(Math.hypot(racines()[0]!.x, racines()[0]!.z)).toBeCloseTo(23, 5)
+    const conges = () => session.frontiere().faces.filter((face) => face.sorte === 'conge')
+    expect(conges()).toHaveLength(8)
+    expect(conges().filter((face) => face.rayon === 1)).toHaveLength(4)
+    expect(conges().filter((face) => face.rayon === 0.8)).toHaveLength(4)
+    const boites = () => session.frontiere().faces.filter((face) => face.sorte === 'boite')
+    expect(boites()).toHaveLength(4)
+    expect(boites()[0]?.plan).toMatchObject({ largeurBout: 2.2, largeurRacine: 6, rayonRacine: 3 })
+    const bout = () => boites().find((face) => face.zmax > 0)?.zmax ?? 0
+    expect(bout()).toBeCloseTo(24.2)
+    session.commande('param largeur_bout 2.5')
+    expect(boites()[0]?.plan?.largeurBout).toBeCloseTo(2.5)
+    session.commande('param entrecorne 22')
+    expect(boites().map((face) => Math.min(Math.abs(face.xmin), Math.abs(face.xmax))).sort((a, b) => a - b)[0]).toBeCloseTo(11)
+  })
+
+  it('effile le bout et coupe le coin extérieur du rectangle', () => {
+    const session = new Session()
+    session.executer(script.split('esquisse plan.12h')[0])
+    const { positions } = session.maillage()
+    let coin = 0
+    let auBout = 0
+    let horsFlanc = 0
+    const aBout = 10 + 2.2
+    for (let i = 0; i < positions.length; i += 3) {
+      const x = Math.abs(positions[i])
+      const z = Math.abs(positions[i + 2])
+      if (Math.abs(x - 16) < 0.35 && Math.abs(z - 24.2) < 0.35) coin += 1
+      if (z > 24 && x > aBout + 0.15) horsFlanc += 1
+      if (Math.abs(z - 24.2) < 0.2 && x > 9.5 && x < aBout + 0.15) auBout += 1
+    }
+    expect(coin).toBe(0)
+    expect(horsFlanc).toBe(0)
+    expect(auBout).toBeGreaterThan(0)
+  })
+
+  it('place les sommets du congé de racine sur son cylindre', () => {
+    const session = new Session()
+    session.executer(script.split('esquisse plan.12h')[0])
+    const racine = session.frontiere().faces.find((face) => face.sorte === 'racine' && face.x > 0 && face.z > 0)!
+    expect(racine.rayon).toBeCloseTo(3)
+    expect(Math.hypot(racine.x, racine.z)).toBeCloseTo(23, 5)
+    const { positions } = session.maillage()
+    let surRacine = 0
+    for (let i = 0; i < positions.length; i += 3) {
+      const d = Math.hypot(positions[i] - racine.x, positions[i + 2] - racine.z)
+      if (Math.abs(d - racine.rayon) < 0.25) surRacine += 1
+    }
+    expect(surRacine).toBeGreaterThan(0)
+  })
+
+  it('ombre les quatre cornes sous la limite des index 16 bits', () => {
+    const session = new Session()
+    session.executer(script)
+    const { positions, indices } = session.maillage()
+    expect(positions.length / 3).toBeLessThan(0x10000)
+    const parCorne = new Map<string, number>()
+    for (let t = 0; t < indices.length; t += 3) {
+      const centre = [0, 2].map(
+        (axe) => (positions[indices[t] * 3 + axe] + positions[indices[t + 1] * 3 + axe] + positions[indices[t + 2] * 3 + axe]) / 3,
+      )
+      if (Math.hypot(centre[0], centre[1]) < 20.5 || Math.abs(centre[0]) < 9) continue
+      const cle = `${Math.sign(centre[0])},${Math.sign(centre[1])}`
+      parCorne.set(cle, (parCorne.get(cle) ?? 0) + 1)
+    }
+    expect(parCorne.size).toBe(4)
+    for (const nombre of parCorne.values()) expect(nombre).toBeGreaterThan(100)
+  })
+
+  it('arrondit les coins de bout en élévation', () => {
+    const session = new Session()
+    session.executer(script.split('esquisse plan.12h')[0])
+    const { positions } = session.maillage()
+    let yMaxAuBout = 0
+    let yMinAuBout = 8
+    let surCongéHaut = 0
+    for (let i = 0; i < positions.length; i += 3) {
+      const y = positions[i + 1]
+      const z = Math.abs(positions[i + 2])
+      if (z > 24.05) {
+        yMaxAuBout = Math.max(yMaxAuBout, y)
+        yMinAuBout = Math.min(yMinAuBout, y)
+      }
+      const cy = 8 - 1
+      const cz = 24.2 - 1
+      if (Math.abs(Math.hypot(y - cy, z - cz) - 1) < 0.2 && y > 6.5 && z > 22.5) surCongéHaut += 1
+    }
+    expect(yMaxAuBout).toBeLessThan(7.6)
+    expect(yMinAuBout).toBeGreaterThan(0.1)
+    expect(yMinAuBout).toBeLessThan(1)
+    expect(surCongéHaut).toBeGreaterThan(0)
+    session.commande('param rayon_bout_haut 1.5')
+    expect(session.frontiere().faces.filter((face) => face.sorte === 'conge' && face.rayon === 1.5)).toHaveLength(4)
+  })
+
+  it('perce la barrette près du bout', () => {
+    const session = new Session()
+    session.executer(script.split('esquisse plan.3h')[0])
+    const trous = session.frontiere().faces.filter((face) => face.sorte === 'traverse' && face.rayon < 1)
+    expect(trous).toHaveLength(4)
+    expect(trous[0]).toMatchObject({ rayon: 0.55, y: 4 })
+    expect(Math.abs(trous[0]!.z)).toBeCloseTo(24.2 - 1.2, 5)
+    expect(Math.abs(trous[0]!.fin) - Math.abs(trous[0]!.debut)).toBeCloseTo(2.2, 5)
+  })
+
+  it('décrit le tube et le trou de tige le long de 3 h', () => {
+    const session = new Session()
+    session.executer(script)
+    const tube = session.frontiere().faces.find((face) => face.sorte === 'traverse' && face.rayon === 2)
+    const tige = session.frontiere().faces.find((face) => face.sorte === 'traverse' && face.rayon === 0.6)
+    expect(tube).toMatchObject({ fin: 22, y: 4, z: 0, dehors: 1 })
+    expect(Math.hypot(tube?.debut ?? 0, 2)).toBeCloseTo(17.5)
+    expect(tige).toMatchObject({ debut: 0, fin: 22, y: 4, z: 0, dehors: -1 })
   })
 
   it('arrête la paroi du passage au fond de la poche', () => {
@@ -269,9 +402,78 @@ enleve 2
     expect(session.expression('profondeur_lunette')).toBe('1.2')
   })
 
-  it('décrit l’anneau par un tube dont le rayon suit diametre_boite', () => {
+  it('réunit les cornes et l’anneau en un seul volume', () => {
+    const session = new Session()
+    session.executer(script.split('esquisse plan.12h')[0])
+    const { positions } = session.maillage()
+    let dedans = 0
+    for (let i = 0; i < positions.length; i += 3) {
+      const rayon = Math.hypot(positions[i], positions[i + 2])
+      const y = positions[i + 1]
+      if (rayon < 19.9 && rayon > 17.6 && y > 1.1 && y < 6.7) dedans += 1
+    }
+    expect(dedans).toBe(0)
+    session.commande('param entrecorne 22')
+    expect(session.maillage().indices.length).toBeGreaterThan(0)
+    session.commande('param diametre_boite 42')
+    expect(session.maillage().indices.length).toBeGreaterThan(0)
+  })
+
+  it('perce la paroi avec le trou de tige', () => {
     const session = new Session()
     session.executer(script)
+    const { positions } = session.maillage()
+    let auPassage = 0
+    for (let i = 0; i < positions.length; i += 3) {
+      const x = positions[i]
+      const ecart = Math.hypot(positions[i + 1] - 4, positions[i + 2])
+      if (x < 17.6 && x > 0 && ecart < 0.61) auPassage += 1
+    }
+    expect(auPassage).toBeGreaterThan(0)
+  })
+
+  it('laisse le passage libre sous les cornes et le tube', () => {
+    const session = new Session()
+    session.executer(script)
+    const { positions } = session.maillage()
+    let dedans = 0
+    for (let i = 0; i < positions.length; i += 3) {
+      const rayon = Math.hypot(positions[i], positions[i + 2])
+      if (rayon < 17.45 && positions[i + 1] > 1.05) dedans += 1
+    }
+    expect(dedans).toBe(0)
+  })
+
+  it('soude le tube à la paroi, un seul disque au bout', () => {
+    const session = new Session()
+    session.executer(script)
+    const { positions, normales } = session.maillage()
+    let depart = 0
+    for (let i = 0; i < positions.length; i += 3) {
+      const ecart = Math.hypot(positions[i + 1] - 4, positions[i + 2])
+      const rayon = Math.hypot(positions[i], positions[i + 2])
+      if (normales[i] > 0.99 && positions[i] < 20.5 && ecart < 2.1 && rayon > 20.05) depart += 1
+    }
+    expect(depart).toBe(0)
+  })
+
+  it('garde la fermeture du tube sur la peau', () => {
+    const session = new Session()
+    session.executer(script)
+    const { positions, normales } = session.maillage()
+    let fermeture = 0
+    for (let i = 0; i < positions.length; i += 3) {
+      const rayon = Math.hypot(positions[i], positions[i + 2])
+      const ecart = Math.hypot(positions[i + 1] - 4, positions[i + 2])
+      const radiale = Math.hypot(normales[i], normales[i + 2])
+      if (rayon > 19.7 && rayon < 20.3 && ecart > 0.7 && ecart < 1.9 && radiale > 0.9) fermeture += 1
+    }
+    expect(fermeture).toBeGreaterThan(0)
+  })
+
+  it('décrit l’anneau par un tube dont le rayon suit diametre_boite', () => {
+    const session = new Session()
+    session.executer(script.split('segment')[0])
     const rayon = rayonExterieur(session.maillage())
     expect(rayon).toBeCloseTo(20)
     session.commande('param diametre_boite 42')

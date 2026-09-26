@@ -1,3 +1,4 @@
+import { congesDe, contourPan, pansDeCorne } from '@opencad/api-parametrique'
 import type { Frontiere, Maillage } from '@opencad/api-parametrique'
 
 const PAS = 48
@@ -15,6 +16,25 @@ export function repere(support: string) {
   if (support === 'plan.12h') return { normale: [0, 0, 1], axeU: [1, 0, 0], axeV: [0, 1, 0] }
   if (support === 'face.dessous') return { normale: [0, -1, 0], axeU: [1, 0, 0], axeV: [0, 0, -1] }
   return { normale: [0, 1, 0], axeU: [1, 0, 0], axeV: [0, 0, -1] }
+}
+
+/**
+ * Tangente et bitangente d'un sommet, orthonormées avec sa normale.
+ * L'axe d'appui passe de X à Z quand la normale s'approche de X.
+ */
+export function repereSurface(normale: [number, number, number]) {
+  const [nx, ny, nz] = normale
+  const appui = Math.abs(nx) < 0.9 ? [1, 0, 0] : [0, 0, 1]
+  const scalaire = nx * appui[0] + ny * appui[1] + nz * appui[2]
+  const brute = [appui[0] - nx * scalaire, appui[1] - ny * scalaire, appui[2] - nz * scalaire]
+  const longueur = Math.hypot(brute[0], brute[1], brute[2])
+  const tangente: [number, number, number] = [brute[0] / longueur, brute[1] / longueur, brute[2] / longueur]
+  const bitangente: [number, number, number] = [
+    ny * tangente[2] - nz * tangente[1],
+    nz * tangente[0] - nx * tangente[2],
+    nx * tangente[1] - ny * tangente[0],
+  ]
+  return { tangente, bitangente }
 }
 
 /** Vue caméra qui regarde ce plan. */
@@ -214,16 +234,151 @@ export function cercleFerme(rayon: number, y: number, array: number[]) {
   chaine(cercle3(rayon, y), array)
 }
 
+/** Angle minimal entre deux triangles pour qu'une arête soit tracée. */
+const ANGLE_VIF = 25
+
+/** Arêtes vives d'un maillage : segments en millimètres, dans l'ordre du fil de fer. */
+export function aretesVives(maillage: Maillage, angleVif = ANGLE_VIF) {
+  const { positions, indices } = maillage
+  const cle = (rang: number) => {
+    const arrondi = (valeur: number) => Math.round(valeur * 1e4) / 1e4
+    return `${arrondi(positions[rang * 3])},${arrondi(positions[rang * 3 + 1])},${arrondi(positions[rang * 3 + 2])}`
+  }
+  const normale = (i: number) => {
+    const point = (rang: number) => [positions[rang * 3], positions[rang * 3 + 1], positions[rang * 3 + 2]]
+    const [a, b, c] = [point(indices[i]), point(indices[i + 1]), point(indices[i + 2])]
+    const u = [b[0] - a[0], b[1] - a[1], b[2] - a[2]]
+    const v = [c[0] - a[0], c[1] - a[1], c[2] - a[2]]
+    const brute = [u[1] * v[2] - u[2] * v[1], u[2] * v[0] - u[0] * v[2], u[0] * v[1] - u[1] * v[0]]
+    const longueur = Math.hypot(brute[0], brute[1], brute[2])
+    return longueur > 0 ? brute.map((valeur) => valeur / longueur) : null
+  }
+  const arretes = new Map<string, { points: [number[], number[]]; normales: number[][] }>()
+  for (let i = 0; i < indices.length; i += 3) {
+    const face = normale(i)
+    if (!face) continue
+    for (const [a, b] of [
+      [0, 1],
+      [1, 2],
+      [2, 0],
+    ]) {
+      const premier = indices[i + a]
+      const second = indices[i + b]
+      const cles = [cle(premier), cle(second)]
+      const nom = cles[0] < cles[1] ? `${cles[0]}|${cles[1]}` : `${cles[1]}|${cles[0]}`
+      const point = (rang: number) => [positions[rang * 3], positions[rang * 3 + 1], positions[rang * 3 + 2]]
+      const connue = arretes.get(nom)
+      if (connue) connue.normales.push(face)
+      else arretes.set(nom, { points: [point(premier), point(second)], normales: [face] })
+    }
+  }
+  const cosSeuil = Math.cos((angleVif * Math.PI) / 180)
+  const array: number[] = []
+  for (const arete of arretes.values()) {
+    const vive = arete.normales.some((une) =>
+      arete.normales.some((autre) => une[0] * autre[0] + une[1] * autre[1] + une[2] * autre[2] < cosSeuil),
+    )
+    if (arete.normales.length === 1 || vive) {
+      const [a, b] = arete.points
+      array.push(a[0], a[1], a[2], b[0], b[1], b[2])
+    }
+  }
+  return array
+}
+
 /** Polylignes exactes, même tableau que `brepWireframe.position` de w3dts. */
 export function filDeFer(frontiere: Frontiere) {
   const array: number[] = []
+  const peau = Math.max(
+    0,
+    ...frontiere.faces
+      .filter((face) => face.sorte === 'cylindre' && face.dehors > 0 && face.angleDeb === undefined)
+      .map((face) => face.rayon),
+  )
+  const conges = frontiere.faces.filter(
+    (face): face is Extract<Frontiere['faces'][number], { sorte: 'conge' }> => face.sorte === 'conge',
+  )
+  const segment = (a: Point3, b: Point3) => horsPeau(a, b, peau, array)
   for (const face of frontiere.faces) {
     if (face.sorte === 'couronne') {
       chaine(cercle3(face.rayonExt, face.y), array)
       chaine(cercle3(face.rayonInt, face.y), array)
     }
+    if (face.sorte === 'boite') {
+      const rayons = congesDe(face, conges)
+      const horsDesAxes = face.xmin * face.xmax > 0 && face.zmin * face.zmax > 0
+      if (horsDesAxes && (face.plan || rayons.haut > 0 || rayons.bas > 0)) {
+        for (const pan of pansDeCorne(face, rayons, face.plan, undefined, peau)) {
+          for (const [a, b] of contourPan(pan)) array.push(...a, ...b)
+        }
+        continue
+      }
+      const { xmin, xmax, ymin, ymax, zmin, zmax } = face
+      for (const y of [ymin, ymax]) {
+        segment([xmin, y, zmin], [xmax, y, zmin])
+        segment([xmax, y, zmin], [xmax, y, zmax])
+        segment([xmax, y, zmax], [xmin, y, zmax])
+        segment([xmin, y, zmax], [xmin, y, zmin])
+      }
+      for (const [x, z] of [
+        [xmin, zmin],
+        [xmax, zmin],
+        [xmax, zmax],
+        [xmin, zmax],
+      ]) {
+        segment([x, ymin, z], [x, ymax, z])
+      }
+    }
+    if (face.sorte === 'traverse') {
+      const cercle = (x: number) => {
+        if (peau > 0 && Math.hypot(x, face.z) < peau - 1e-6) return
+        const points: Point3[] = []
+        for (let i = 0; i < PAS; i++) {
+          const angle = (i / PAS) * Math.PI * 2
+          points.push([x, face.y + Math.cos(angle) * face.rayon, face.z + Math.sin(angle) * face.rayon])
+        }
+        chaine(points, array)
+      }
+      cercle(face.debut)
+      cercle(face.fin)
+    }
   }
   return { position: { array }, segmentCount: array.length / 6 }
+}
+
+/** Intersection segment / cylindre vertical d’axe Y. */
+function coupeCylindre(a: Point3, b: Point3, rayon: number): Point3 | undefined {
+  const dx = b[0] - a[0]
+  const dy = b[1] - a[1]
+  const dz = b[2] - a[2]
+  const A = dx * dx + dz * dz
+  const B = 2 * (a[0] * dx + a[2] * dz)
+  const C = a[0] * a[0] + a[2] * a[2] - rayon * rayon
+  const delta = B * B - 4 * A * C
+  if (A < 1e-12 || delta < 0) return
+  const racine = Math.sqrt(delta)
+  const t = [(-B - racine) / (2 * A), (-B + racine) / (2 * A)].find((valeur) => valeur >= 0 && valeur <= 1)
+  if (t === undefined) return
+  return [a[0] + t * dx, a[1] + t * dy, a[2] + t * dz]
+}
+
+/** Garde d'un segment la part hors du cylindre vertical de la peau. */
+function horsPeau(a: Point3, b: Point3, rayon: number, array: number[]) {
+  if (rayon <= 0) {
+    array.push(a[0], a[1], a[2], b[0], b[1], b[2])
+    return
+  }
+  const ra = Math.hypot(a[0], a[2])
+  const rb = Math.hypot(b[0], b[2])
+  if (ra < rayon && rb < rayon) return
+  if (ra >= rayon && rb >= rayon) {
+    array.push(a[0], a[1], a[2], b[0], b[1], b[2])
+    return
+  }
+  const coupe = coupeCylindre(a, b, rayon)
+  if (!coupe) return
+  if (ra >= rayon) array.push(a[0], a[1], a[2], coupe[0], coupe[1], coupe[2])
+  else array.push(coupe[0], coupe[1], coupe[2], b[0], b[1], b[2])
 }
 
 /** Faces remplies et arêtes visibles. Le maillage n’entre pas dans ce dessin. */

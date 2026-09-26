@@ -1,4 +1,74 @@
-import { ErreurApi, type Contexte, type Domaine } from '../types.ts'
+import { ErreurApi, type Ajout, type Contexte, type Domaine, type Operation } from '../types.ts'
+
+function profil(contexte: Contexte, operation: Operation): Ajout | undefined {
+  const esquisse = contexte.esquisse
+  if (!esquisse) return
+  const evaluer = (expression: string) => contexte.evaluateur.evaluer(expression, contexte.parametres)
+  const segments = esquisse.entites.filter((entite) => entite.sorte === 'segment')
+  const arcs = esquisse.entites.filter((entite) => entite.sorte === 'arc')
+  if (segments.length >= 3 && arcs.length >= 1) {
+    const ecart = segments.find((entite) => entite.ecart)?.ecart
+    const debord = segments.find((entite) => entite.debord)?.debord
+    const largeurs = segments.filter((entite) => entite.largeur).map((entite) => entite.largeur as string)
+    const rayon = arcs.find((entite) => entite.rayon)?.rayon
+    if (ecart && debord && largeurs.length >= 2 && rayon) {
+      const lire = (nom: string, defaut: number) =>
+        contexte.parametres.has(nom) ? evaluer(nom) : defaut
+      return {
+        sorte: 'profil',
+        ecart: evaluer(ecart),
+        debord: evaluer(debord),
+        largeurBout: evaluer(largeurs[0]),
+        largeurRacine: evaluer(largeurs[1]),
+        rayonRacine: evaluer(rayon),
+        rayonBoutHaut: lire('rayon_bout_haut', 0),
+        rayonBoutBas: lire('rayon_bout_bas', 0),
+        hauteur: evaluer(operation.arguments.expression),
+      }
+    }
+  }
+  if (segments.length >= 2 && arcs.length >= 1) {
+    const ecart = segments.find((entite) => entite.ecart)?.ecart
+    const debord = segments.find((entite) => entite.debord)?.debord
+    const largeur = segments.find((entite) => entite.largeur)?.largeur
+    const rayon = arcs.find((entite) => entite.rayon)?.rayon
+    if (ecart && debord && largeur && rayon) {
+      const lire = (nom: string, defaut: number) =>
+        contexte.parametres.has(nom) ? evaluer(nom) : defaut
+      const largeurBout = evaluer(largeur)
+      return {
+        sorte: 'profil',
+        ecart: evaluer(ecart),
+        debord: evaluer(debord),
+        largeurBout,
+        largeurRacine: largeurBout,
+        rayonRacine: 0,
+        rayonBoutHaut: lire('rayon_bout_haut', 0),
+        rayonBoutBas: lire('rayon_bout_bas', 0),
+        hauteur: evaluer(operation.arguments.expression),
+      }
+    }
+  }
+  const rectangle = [...esquisse.entites].reverse().find((entite) => entite.sorte === 'rectangle')
+  if (rectangle?.ecart && rectangle.debord && rectangle.largeur) {
+    return {
+      sorte: 'rectangle',
+      ecart: evaluer(rectangle.ecart),
+      debord: evaluer(rectangle.debord),
+      largeur: evaluer(rectangle.largeur),
+      hauteur: evaluer(operation.arguments.expression),
+    }
+  }
+  if (esquisse.support !== 'plan.3h') return
+  const cercle = [...esquisse.entites].reverse().find((entite) => entite.sorte === 'cercle' && entite.diametre)
+  if (!cercle?.diametre) return
+  return {
+    sorte: 'cercle',
+    support: esquisse.support,
+    rayon: evaluer(cercle.diametre) / 2,
+    longueur: evaluer(operation.arguments.expression),
+  }
+}
 
 function exigerEsquisse(contexte: Contexte) {
   if (!contexte.esquisse) throw new ErreurApi('aucune esquisse')
@@ -28,9 +98,8 @@ export const domaineSolide: Domaine = {
       dansHistorique: true,
       faire(contexte, operation) {
         exigerEsquisse(contexte)
-        contexte.evaluateur.evaluer(operation.arguments.expression, contexte.parametres)
         const support = contexte.esquisse?.support
-        contexte.solide = contexte.noyau.extruder(contexte.solide)
+        contexte.solide = contexte.noyau.extruder(contexte.solide, profil(contexte, operation))
         contexte.piece.solide = contexte.solide
         contexte.esquisse = null
         contexte.piece.esquisse = null

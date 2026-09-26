@@ -100,7 +100,7 @@ export class Session {
   }
 
   maillage() {
-    if (!this.active) return { positions: [], indices: [] }
+    if (!this.active) return { positions: [], normales: [], indices: [] }
     const piece = this.pieceActive()
     return noyauProvisoire.mailler(piece.solide, piece.parametres)
   }
@@ -118,6 +118,21 @@ export class Session {
   parametres() {
     if (!this.active) return [] as [string, string][]
     return [...this.pieceActive().parametres.entries()]
+  }
+
+  /** Nom de la pièce active, ou `null`. */
+  pieceCourante() {
+    return this.active
+  }
+
+  /** Copie de l'historique de reconstruction de la pièce active. */
+  historique() {
+    if (!this.active) return [] as Operation[]
+    return this.pieceActive().historique.map((operation) => ({
+      ...operation,
+      arguments: { ...operation.arguments },
+      noms: [...operation.noms],
+    }))
   }
 
   esquisseCourante() {

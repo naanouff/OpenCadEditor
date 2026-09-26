@@ -25,6 +25,8 @@ export const domaineEsquisse: Domaine = {
     esquisse: (reste) => ({ type: 'ouvrir', arguments: { support: reste }, noms: [] }),
     cercle: () => ({ type: 'cercle', arguments: {}, noms: [] }),
     rectangle: () => ({ type: 'rectangle', arguments: {}, noms: [] }),
+    segment: () => ({ type: 'segment', arguments: {}, noms: [] }),
+    arc: () => ({ type: 'arc', arguments: {}, noms: [] }),
     concentrique: (reste) => ({ type: 'concentrique', arguments: { cible: reste }, noms: [] }),
     cote: (reste) => {
       const espace = reste.indexOf(' ')
@@ -72,6 +74,31 @@ export const domaineEsquisse: Domaine = {
       },
       defaire() {},
     },
+    segment: {
+      dansHistorique: true,
+      faire(contexte) {
+        rouvrirSiBesoin(contexte)
+        const rang = contexte.esquisse!.entites.filter((entite) => entite.sorte === 'segment').length
+        contexte.esquisse!.entites.push({
+          id: `segment.${contexte.piece.compteur++}`,
+          sorte: 'segment',
+          degres: rang === 0 ? 1 : rang === 1 ? 2 : 1,
+        })
+      },
+      defaire() {},
+    },
+    arc: {
+      dansHistorique: true,
+      faire(contexte) {
+        rouvrirSiBesoin(contexte)
+        contexte.esquisse!.entites.push({
+          id: `arc.${contexte.piece.compteur++}`,
+          sorte: 'arc',
+          degres: 1,
+        })
+      },
+      defaire() {},
+    },
     concentrique: {
       dansHistorique: true,
       faire(contexte, operation) {
@@ -89,7 +116,12 @@ export const domaineEsquisse: Domaine = {
         contexte.evaluateur.evaluer(operation.arguments.expression, contexte.parametres)
         const entite = derniere(contexte)
         entite.degres = Math.max(0, entite.degres - 1)
-        if (operation.arguments.cible === 'diametre') entite.diametre = operation.arguments.expression
+        const cible = operation.arguments.cible
+        if (cible === 'diametre') entite.diametre = operation.arguments.expression
+        if (cible === 'ecart') entite.ecart = operation.arguments.expression
+        if (cible === 'debord') entite.debord = operation.arguments.expression
+        if (cible === 'largeur') entite.largeur = operation.arguments.expression
+        if (cible === 'rayon') entite.rayon = operation.arguments.expression
       },
       defaire() {},
     },
