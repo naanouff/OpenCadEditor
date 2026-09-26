@@ -25,8 +25,13 @@ function dansCorne([x, y, z]: number[]) {
   if (x < a0 - e || y < -e || y > 8 + e || z < 10.5 - e || z > u1 + e) return false
   const cote = geo.N[0] * (x - geo.Ptip[0]) + geo.N[1] * (z - geo.Ptip[1])
   const distRacine = Math.hypot(x - geo.C[0], z - geo.C[1])
-  if (cote > e && Math.abs(distRacine - geo.Rr) > e) return false
   if (distRacine < geo.Rr - e) return false
+  if (cote > e) {
+    // Hors du flanc, la matière est le coin comblé par la racine : secteur entre ses deux tangences.
+    const angle = Math.atan2(z - geo.C[1], x - geo.C[0])
+    const [bas, haut] = [geo.angleQt, geo.anglePeau].sort((p, q) => p - q)
+    if (angle < bas - e || angle > haut + e) return false
+  }
   if (z > u1 - RH && y > 8 - RH && Math.hypot(y - (8 - RH), z - (u1 - RH)) > RH + e) return false
   if (z > u1 - RB && y < RB && Math.hypot(y - RB, z - (u1 - RB)) > RB + e) return false
   return true
@@ -90,6 +95,40 @@ describe('pans de corne', () => {
     )
     expect(surArc.length).toBeGreaterThan(4)
     for (const p of surArc) expect(Math.hypot(p[1] - (8 - RH), p[2] - (u1 - RH))).toBeCloseTo(RH, 5)
+  })
+
+  const surFlanc = (u: number) => geo.Ptip[0] + ((geo.Ptip[1] - u) * (geo.Qt[0] - geo.Ptip[0])) / (geo.Ptip[1] - geo.Qt[1])
+  const sommets = (pan: (typeof pans)[number]) => pan.colonnes.flat()
+  const proche = (p: number[], q: number[]) => Math.hypot(p[0] - q[0], p[1] - q[1], p[2] - q[2]) < 1e-6
+  const dessus = pans.find((pan) => pan.normale([0, 0, 0])[1] === 1)!
+  const dessous = pans.find((pan) => pan.normale([0, 0, 0])[1] === -1)!
+
+  it('ferme le dessus et le dessous sur le flanc, au pied des congés de bout', () => {
+    expect(sommets(dessus).some((p) => proche(p, [surFlanc(u1 - RH), 8, u1 - RH]))).toBe(true)
+    expect(sommets(dessous).some((p) => proche(p, [surFlanc(u1 - RB), 0, u1 - RB]))).toBe(true)
+  })
+
+  it('étend le dessus et le dessous jusqu’au bout du congé de racine', () => {
+    expect(sommets(dessus).some((p) => proche(p, [geo.peau[0], 8, geo.peau[1]]))).toBe(true)
+    expect(sommets(dessous).some((p) => proche(p, [geo.peau[0], 0, geo.peau[1]]))).toBe(true)
+  })
+
+  it('partage les sommets du bord commun entre congés de bout et flanc', () => {
+    const flanc = pans.find((pan) => {
+      const n = pan.normale([0, 0, 0])
+      return Math.abs(n[0] - geo.N[0]) < 1e-6 && Math.abs(n[2] - geo.N[1]) < 1e-6
+    })!
+    const conges = pans.filter((pan) => {
+      const n = pan.normale([a0, 8, u1])
+      return Math.abs(n[0]) < 1e-9 && Math.abs(n[1]) > 1e-9 && Math.abs(n[2]) > 1e-9
+    })
+    expect(conges).toHaveLength(2)
+    for (const conge of conges) {
+      for (const [, tete] of conge.colonnes) {
+        if (tete[0] <= geo.aBout + 1e-9) continue
+        expect(sommets(flanc).some((p) => proche(p, tete))).toBe(true)
+      }
+    }
   })
 
   it('suit les miroirs de la carrure', () => {

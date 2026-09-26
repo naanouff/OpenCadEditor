@@ -364,7 +364,11 @@ cote diametre diametre_lunette
     expect(trous).toHaveLength(4)
     expect(trous[0]).toMatchObject({ rayon: 0.55, y: 4 })
     expect(Math.abs(trous[0]!.z)).toBeCloseTo(24.2 - 1.2, 5)
-    expect(Math.abs(trous[0]!.fin) - Math.abs(trous[0]!.debut)).toBeCloseTo(2.2, 5)
+    const flancAuTrou = 12.2 + (1.2 * (16 - 12.2)) / (24.2 - 12)
+    for (const trou of trous) {
+      expect(Math.min(Math.abs(trou.debut), Math.abs(trou.fin))).toBeLessThanOrEqual(10)
+      expect(Math.max(Math.abs(trou.debut), Math.abs(trou.fin))).toBeGreaterThan(flancAuTrou + 0.2)
+    }
   })
 
   it('décrit le tube et le trou de tige le long de 3 h', () => {

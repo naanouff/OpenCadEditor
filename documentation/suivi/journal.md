@@ -190,3 +190,15 @@ Le viewer construit pour chaque sommet une tangente et une bitangente orthonorm�
 ## 2026-09-26 — Sprint 18 codé : contour en plan Oyster
 
 Le script porte largeur_bout 2,2, largeur_racine 6, ayon_racine 3, longueur_corne 4,2, ayon_bout_haut 1, diametre_barrette 1,1 et ecul_barrette 1,2. Le plan de flanc remplace la joue ; le congé creux à la racine est un cylindre d'axe Y hors de la peau. pansDeCorne, ombrer et ilDeFer suivent ce profil. Les quatre barrettes restent ouvertes près du bout. [sprints/sprint-18-contour-cornes-oyster.md](../sprints/sprint-18-contour-cornes-oyster.md) est codé. Le dessous creusé et la chute du dessus restent au sprint 19.
+
+## 2026-09-26 — Jointures des cornes Oyster
+
+Le dessus et le dessous ferment sur le flanc au pied des congés de bout et vont jusqu'au bout du congé de racine. Le flanc reprend les sommets des congés de bout ; les bords communs coïncident et le fil de fer suit les mêmes points. Le trou de barrette traverse toute la corne, flanc compris. Tests : `packages/api-parametrique/tests/corne.test.ts`, `carrure.test.ts`.
+
+## 2026-09-26 — Sortie du perçage de barrette sur le flanc
+
+`filDeFer` trace la sortie du trou de barrette sur le flanc incliné : chaque point du cercle prend la position du flanc à son débord, le contour devient l'ellipse d'intersection. Test : `packages/shell/tests/figures.test.ts`.
+
+## 2026-09-26 — Arêtes lisses du congé de racine
+
+Le congé de racine raccorde le flanc et la peau en tangence : ses deux bords verticaux sont des arêtes lisses. Un `Pan` marque ses colonnes `lisses`, et `contourPan` les omet du fil de fer. Test : `packages/shell/tests/figures.test.ts`.

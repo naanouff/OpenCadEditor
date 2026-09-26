@@ -1,4 +1,4 @@
-import { congesDe, contourPan, pansDeCorne } from '@opencad/api-parametrique'
+import { congesDe, contourPan, geometriePlan, pansDeCorne } from '@opencad/api-parametrique'
 import type { Frontiere, Maillage } from '@opencad/api-parametrique'
 
 const PAS = 48
@@ -286,6 +286,29 @@ export function aretesVives(maillage: Maillage, angleVif = ANGLE_VIF) {
   return array
 }
 
+/**
+ * Flanc incliné que traverse ce perçage : `bout` est l'extrémité côté flanc,
+ * `x(z)` la position du flanc à ce débord.
+ */
+function flancTraverse(frontiere: Frontiere, trou: Extract<Frontiere['faces'][number], { sorte: 'traverse' }>, peau: number) {
+  for (const face of frontiere.faces) {
+    if (face.sorte !== 'boite' || !face.plan || peau <= 0) continue
+    if (trou.z < face.zmin || trou.z > face.zmax) continue
+    const tau = Math.sign(face.xmin + face.xmax) || 1
+    const sigma = Math.sign(face.zmin + face.zmax) || 1
+    const bout = tau > 0 ? trou.fin : trou.debut
+    if (bout < face.xmin - 1e-6 || bout > face.xmax + 1e-6) continue
+    const a0 = Math.min(Math.abs(face.xmin), Math.abs(face.xmax))
+    const u1 = Math.max(Math.abs(face.zmin), Math.abs(face.zmax))
+    const geo = geometriePlan({ a0, u1, plan: face.plan, rayonPeau: peau })
+    return {
+      bout,
+      x: (z: number) => tau * (geo.Ptip[0] - (geo.N[1] * (sigma * z - geo.Ptip[1])) / geo.N[0]),
+    }
+  }
+  return null
+}
+
 /** Polylignes exactes, même tableau que `brepWireframe.position` de w3dts. */
 export function filDeFer(frontiere: Frontiere) {
   const array: number[] = []
@@ -330,12 +353,14 @@ export function filDeFer(frontiere: Frontiere) {
       }
     }
     if (face.sorte === 'traverse') {
+      const flanc = face.dehors < 0 ? flancTraverse(frontiere, face, peau) : null
       const cercle = (x: number) => {
         if (peau > 0 && Math.hypot(x, face.z) < peau - 1e-6) return
         const points: Point3[] = []
         for (let i = 0; i < PAS; i++) {
           const angle = (i / PAS) * Math.PI * 2
-          points.push([x, face.y + Math.cos(angle) * face.rayon, face.z + Math.sin(angle) * face.rayon])
+          const z = face.z + Math.sin(angle) * face.rayon
+          points.push([flanc?.bout === x ? flanc.x(z) : x, face.y + Math.cos(angle) * face.rayon, z])
         }
         chaine(points, array)
       }

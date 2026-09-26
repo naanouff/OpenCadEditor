@@ -8,9 +8,14 @@ type Conge = Extract<FaceExacte, { sorte: 'conge' }>
 /**
  * Une face de corne, en bande de colonnes : chaque colonne va d'un bord de la face à l'autre.
  * Le maillage relie deux colonnes voisines ; le contour est la première et la dernière colonne,
- * plus la chaîne des pieds et celle des têtes.
+ * plus la chaîne des pieds et celle des têtes. Une colonne `lisse` raccorde la face en tangence
+ * à sa voisine : le contour l'omet.
  */
-export type Pan = { colonnes: [Point, Point][]; normale: (point: Point) => Point }
+export type Pan = {
+  colonnes: [Point, Point][]
+  normale: (point: Point) => Point
+  lisses?: { debut?: boolean; fin?: boolean }
+}
 
 /** Contour en plan Oyster : bout étroit, flanc droit, congé creux à la racine. */
 export type PlanCorne = {
@@ -174,24 +179,34 @@ export function pansDeCorne(
     echantillons(conge.debut, conge.debut + Math.PI / 2, conge.pans),
   )
 
-  const aMax = geo ? Math.max(geo.aBout, geo.Qt[0], geo.peau[0]) : Math.max(Math.abs(face.xmin), Math.abs(face.xmax))
+  // Arc de racine, de sa tangence au flanc jusqu'à la peau : le dessus, le dessous et le pan de racine le partagent.
+  let phisRacine: number[] = []
+  if (geo) {
+    let dAngle = geo.anglePeau - geo.angleQt
+    while (dAngle > Math.PI) dAngle -= 2 * Math.PI
+    while (dAngle < -Math.PI) dAngle += 2 * Math.PI
+    phisRacine = echantillons(0, 1, pansArc(geo.Rr, Math.abs(dAngle), fleche)).map((t) => geo.angleQt + t * dAngle)
+  }
+  const aMax = geo ? geo.peau[0] : Math.max(Math.abs(face.xmin), Math.abs(face.xmax))
   const cassuresA = geo
-    ? [geo.aBout, geo.Qt[0], a0 + (geo.aBout - a0) * 0.5]
+    ? [
+        geo.aBout,
+        aPlan(u1 - rh),
+        aPlan(u1 - rb),
+        ...phisRacine.map((phi) => geo.C[0] + geo.Rr * Math.cos(phi)),
+      ]
     : []
-  const largeurs = echantillons(a0, Math.min(aMax, geo?.Qt[0] ?? aMax), 6, cassuresA)
+  const largeurs = echantillons(a0, aMax, 6, cassuresA)
 
   for (const [y, limite, sens] of [
     [H, u1 - rh, 1],
     [y0, u1 - rb, -1],
   ] as const) {
-    const colonnes = largeurs
-      .map((a): [Point, Point] | null => {
-        const depart = uDepart(a)
-        const fin = Math.max(depart, Math.min(uPlan(a), limite))
-        if (fin - depart < 1e-6) return null
-        return [monde(a, y, depart), monde(a, y, fin)]
-      })
-      .filter((colonne): colonne is [Point, Point] => colonne !== null)
+    // La dernière colonne se réduit au point où la racine touche la peau : elle ferme la bande.
+    const colonnes = largeurs.map((a): [Point, Point] => {
+      const depart = uDepart(a)
+      return [monde(a, y, depart), monde(a, y, Math.max(depart, Math.min(uPlan(a), limite)))]
+    })
     if (colonnes.length > 1) pans.push({ colonnes, normale: planNormale([0, sens, 0]) })
   }
 
@@ -206,7 +221,8 @@ export function pansDeCorne(
   }
 
   if (geo) {
-    const usFlanc = echantillons(geo.Qt[1], u1, 6, [u1 - rh, u1 - rb].filter((u) => u > geo.Qt[1]))
+    const usCongés = congesBout.flatMap((conge, rang) => angles[rang].map((phi) => pointDe(conge, phi).u))
+    const usFlanc = echantillons(geo.Qt[1], u1, 6, usCongés)
     const colonnesFlanc = usFlanc.map((u): [Point, Point] => {
       const a = aPlan(u)
       return [monde(a, yBas(u), u), monde(a, yHaut(u), u)]
@@ -214,14 +230,10 @@ export function pansDeCorne(
     pans.push({
       colonnes: colonnesFlanc,
       normale: () => [tau * geo.N[0], 0, sigma * geo.N[1]],
+      lisses: { debut: true },
     })
 
-    let dAngle = geo.anglePeau - geo.angleQt
-    while (dAngle > Math.PI) dAngle -= 2 * Math.PI
-    while (dAngle < -Math.PI) dAngle += 2 * Math.PI
-    const pansRacine = pansArc(geo.Rr, Math.abs(dAngle), fleche)
-    const phis = echantillons(0, 1, pansRacine).map((t) => geo.angleQt + t * dAngle)
-    const colonnesRacine = phis.map((phi): [Point, Point] => {
+    const colonnesRacine = phisRacine.map((phi): [Point, Point] => {
       const a = geo.C[0] + geo.Rr * Math.cos(phi)
       const u = geo.C[1] + geo.Rr * Math.sin(phi)
       return [monde(a, yBas(u), u), monde(a, yHaut(u), u)]
@@ -234,6 +246,7 @@ export function pansDeCorne(
         const longueurN = Math.hypot(dx, dz) || 1
         return [-dx / longueurN, 0, -dz / longueurN]
       },
+      lisses: { debut: true, fin: true },
     })
   }
 
@@ -287,12 +300,13 @@ export function maillerPan(pan: Pan) {
   return { positions, indices }
 }
 
-/** Contour d'un pan : première et dernière colonne, chaîne des pieds, chaîne des têtes. */
+/** Contour d'un pan : première et dernière colonne hors colonnes lisses, chaîne des pieds, chaîne des têtes. */
 export function contourPan(pan: Pan): [Point, Point][] {
   const segments: [Point, Point][] = []
   const { colonnes } = pan
   if (colonnes.length === 0) return segments
-  segments.push(colonnes[0], colonnes[colonnes.length - 1])
+  if (!pan.lisses?.debut) segments.push(colonnes[0])
+  if (!pan.lisses?.fin) segments.push(colonnes[colonnes.length - 1])
   for (let i = 0; i < colonnes.length - 1; i++) {
     segments.push([colonnes[i][0], colonnes[i + 1][0]], [colonnes[i][1], colonnes[i + 1][1]])
   }

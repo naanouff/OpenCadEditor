@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { Frontiere, MaillageOmbre } from '@opencad/api-parametrique'
 import { documentCad } from '../src/documentCad.ts'
+import { geometriePlan } from '@opencad/api-parametrique'
 import { aretesVives, filDeFer } from '../src/dessin.ts'
 
 const figures: Frontiere = {
@@ -107,6 +108,48 @@ describe('boîte et traversée', () => {
     }
     expect(surFlanc).toBeGreaterThan(4)
     expect(surRacine).toBeGreaterThan(2)
+  })
+
+  it('omet les arêtes lisses du congé de racine, tangent au flanc et à la peau', () => {
+    const plan = { largeurBout: 2.2, largeurRacine: 6, rayonRacine: 3 }
+    const geo = geometriePlan({ a0: 10, u1: 24.2, plan, rayonPeau: 20 })
+    const corne: Frontiere = {
+      faces: [
+        { sorte: 'cylindre', rayon: 20, bas: 0, haut: 8, dehors: 1 },
+        { sorte: 'boite', xmin: 10, xmax: 16.3, ymin: 0, ymax: 8, zmin: 10.5, zmax: 24.2, plan },
+      ],
+    }
+    const { position } = filDeFer(corne)
+    let verticales = 0
+    for (let i = 0; i < position.array.length; i += 6) {
+      const [ax, ay, az, bx, by, bz] = position.array.slice(i, i + 6)
+      if (Math.abs(ax - bx) > 1e-9 || Math.abs(az - bz) > 1e-9 || Math.abs(ay - by) < 1e-9) continue
+      for (const [x, z] of [geo.Qt, geo.peau]) {
+        if (Math.hypot(ax - x, az - z) < 1e-6) verticales += 1
+      }
+    }
+    expect(verticales).toBe(0)
+  })
+
+  it('colle le cercle de sortie du perçage sur le flanc incliné', () => {
+    const plan = { largeurBout: 2.2, largeurRacine: 6, rayonRacine: 3 }
+    const geo = geometriePlan({ a0: 10, u1: 24.2, plan, rayonPeau: 20 })
+    const trou: Frontiere = {
+      faces: [
+        { sorte: 'cylindre', rayon: 20, bas: 0, haut: 8, dehors: 1 },
+        { sorte: 'boite', xmin: 10, xmax: 16.3, ymin: 0, ymax: 8, zmin: 10.5, zmax: 24.2, plan },
+        { sorte: 'traverse', rayon: 0.55, debut: 10, fin: 16.3, y: 4, z: 23, dehors: -1 },
+      ],
+    }
+    const { position } = filDeFer(trou)
+    let autourDuTrou = 0
+    for (let i = 0; i < position.array.length; i += 3) {
+      const [x, y, z] = [position.array[i], position.array[i + 1], position.array[i + 2]]
+      if (Math.abs(Math.hypot(y - 4, z - 23) - 0.55) > 1e-6 || x < 10.5) continue
+      autourDuTrou += 1
+      expect(geo.N[0] * (x - geo.Ptip[0]) + geo.N[1] * (z - geo.Ptip[1])).toBeCloseTo(0, 6)
+    }
+    expect(autourDuTrou).toBeGreaterThan(8)
   })
 
   it('trace les arcs de congé de bout', () => {

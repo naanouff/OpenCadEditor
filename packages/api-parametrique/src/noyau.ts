@@ -211,7 +211,7 @@ function figures(
         ? evaluateurProvisoire.evaluer('recul_barrette', parametres)
         : corne.debord / 2
       const z = bout - recul
-      const aFin = interieur + largeurBout
+      const aFin = exterieur
       for (const [debut, fin, cote] of [
         [interieur, aFin, z],
         [-aFin, -interieur, z],
