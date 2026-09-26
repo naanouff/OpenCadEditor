@@ -216,3 +216,48 @@ Le script porte `chute_dessus` 1,5 et `epaisseur_bout` 3,2. `geometrieElevation`
 [references/plan01.jpg](../references/plan01.jpg) donne des cotes directes, relevées dans [veille/geometrie-cornes-references.md](../veille/geometrie-cornes-references.md). Le script de carrure les porte : `diametre_boite` 36, `longueur_corne` 4,5 pour un corne à corne de 45 mm, `diametre_barrette` 0,9, `diametre_tige` 3 pour l’alésage du tube de couronne, `epaisseur_bout` 2. `diametre_lunette` et `diametre_fond` suivent à 32 et 30 pour rester dans la carrure.
 
 `chute_dessus` devient `plongee_bout`, la hauteur du bas du bout au-dessus du fond : le bout plonge vers le bracelet, comme sur ref12 et sur la vue de côté du plan. `geometrieElevation` en déduit la chute du dessus. Un arc tangent au dessus descend au plus de son propre débord, la chute est donc bornée à 80 % du débord utile et la plongée remonte d’autant : avec `hauteur_carrure` 8, la plongée s’arrête à 3,2 mm. La plongée franche des références demande l’épaisseur de racine de la coupe A-A (4,00 mm), qui ouvre le sprint suivant. Tests : `packages/api-parametrique/tests/carrure.test.ts`, `packages/shell/tests/scriptCarrure.test.ts`.
+
+## 2026-09-26 — Sprint 20 codé : élévation elliptique
+
+La comparaison du rendu et de la vue de côté du plan tranche la question laissée ouverte : l’arête haute de la corne quitte le flanc en haut de la carrure, la corne occupe donc toute la hauteur à la racine, et le dessus descend de 5,5 mm sur 4,5 mm de débord. L’épaisseur de racine de 4,00 mm lue sur la coupe A-A était une largeur, pas une épaisseur.
+
+Le dessus et le dessous deviennent des quarts d’ellipse de demi-axes le débord utile et la chute : ils descendent autant que voulu, restent tangents à l’horizontale à la peau et arrivent verticaux au bout. Le cercle du sprint 19 en est le cas particulier chute = débord, et la borne `MARGE_ARC` disparaît. `geometrieElevation` rend aussi les pentes, que les normales des pans emploient, et les pans échantillonnent par angle pour que le bout presque vertical reste lisse.
+
+`volumes.ts` gagne `prisme`, un prisme fermé le long de x décrit colonne par colonne : il rogne un profil quelconque, là où un cylindre ne rendait qu’un arc de cercle. `rayonsDeBout` sort de `pansDeCorne` pour que les pans et les volumes de rognage partagent exactement la même ellipse. Le script porte `plongee_bout` 0,5 et `epaisseur_bout` 2. [sprints/sprint-20-elevation-elliptique-cornes.md](../sprints/sprint-20-elevation-elliptique-cornes.md) est codé. Restent le chanfrein poli du flanc et les gradins de lunette et de fond visibles de profil.
+
+## 2026-09-26 — Le trait descend sur la boîte
+
+De profil, le contour est le cylindre. Il restait plat jusqu’à la peau, et la corne tombait ensuite. Le trait relevé descend déjà sur la boîte. `amorce_dessus` 3,5 mm fait partir la courbe avant la peau, et deux prismes descendent le haut du cylindre le long de 12 h et de 6 h. `plongee_bout` passe à 1,2 mm : le dessous de la corne rejoint cette hauteur en 1,6 mm, puis reste plat. Le plat central de la boîte reste à `hauteur_carrure`.
+
+## 2026-09-26 — Arche du dessus, bout en lame
+
+Le quart d’ellipse arrivait vertical au bout : le dessus restait haut sur presque tout le débord, puis tombait d’un coup, et les congés de bout (1 mm et 0,8 mm) fermaient cette chute en une boule autour du trou de barrette. Le trait relevé sur la vue trois-quarts est une arche, haute à la peau et plate au bout. `geometrieElevation` suit `(1 + cos πt) / 2` : tangente horizontale aux deux extrémités, à mi-chute à mi-débord. Le script porte `rayon_bout_haut` 0,4 et `rayon_bout_bas` 0,2, ce qui laisse le trou dans la lame de 2 mm. Tests : `packages/api-parametrique/tests/carrure.test.ts`, `packages/shell/tests/scriptCarrure.test.ts`.
+
+## 2026-09-26 — Biseau de l’arête haute
+
+La vue de côté du plan montre un profil étagé en haut de la carrure : un plat, un biseau, puis le flanc vertical. Le script porte `chanfrein_dessus` 0,5. La peau extérieure s’arrête à `hauteur_carrure - chanfrein_dessus`, et une couronne conique (`pente` sur la face `couronne`) relie ce palier au plat du dessus, qui s’arrête donc à `rayonExt - chanfrein_dessus`. Le tesseler monte le bord extérieur de la couronne de `pente` et incline sa normale. Tests : `packages/api-parametrique/tests/carrure.test.ts`. Reste le creux à la base des cornes.
+
+## 2026-09-26 — Le dessus de la boîte suit la corne
+
+Le mur, le biseau et la jupe de lunette prennent la hauteur de l’arche, y compris sur les 3,5 mm d’amorce. Le plat central reste à `hauteur_carrure`. Le trou de lunette reste dégagé. La courbe du dessus de la corne est celle déjà retenue. Test : `packages/shell/tests/scriptCarrure.test.ts`.
+
+## 2026-09-26 — Arête haute vive
+
+`chanfrein_dessus` sort du script. Le flanc extérieur monte jusqu’à `hauteur_carrure` et le plat du dessus part du rayon extérieur. Tests : `packages/api-parametrique/tests/carrure.test.ts`, `packages/shell/tests/scriptCarrure.test.ts`.
+
+## 2026-09-26 — Entrecorne droite
+
+L’arche n’abaisse que la zone des cornes, là où la largeur dépasse l’entrecorne. Entre les cornes, le mur et le plat restent à `hauteur_carrure`. La courbe du dessus de la corne est inchangée. Test : `packages/shell/tests/scriptCarrure.test.ts`.
+
+## 2026-09-26 — Flanc cousu au dessus
+
+Le dessus et le dessous de la corne reprennent les sommets du flanc et du congé de racine. Le bord commun est une seule ligne. Test : `packages/api-parametrique/tests/corne.test.ts`.
+
+## 2026-09-26 — Sprint 21 préparé : document et repère
+
+[veille/modele-document.md](../veille/modele-document.md) pose le premier palier du modèle. La session tiendra un document : unité en millimètres, repère identité, Y vertical, X vers 3 h, Z vers 12 h. `unite` écrira cette unité. Les pièces, l’historique et l’esquisse restent sur la session. [sprints/sprint-21-document-repere.md](../sprints/sprint-21-document-repere.md) le code. Les plans d’esquisse, le format `.cadompart` et le déplacement du repère restent après.
+
+## 2026-09-26 — Joint du dessus fermé
+
+Le dessus de la corne passe par le sommet de la face intérieure au coin de l’entrecorne, et l’habillage de la boîte reprend ces sommets sur le cylindre. Le triangle ouvert au départ de la chute se referme. La courbe du dessus reste celle déjà retenue. Test : `packages/api-parametrique/tests/corne.test.ts`.
+

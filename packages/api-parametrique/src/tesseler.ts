@@ -45,7 +45,12 @@ export function tesseler(faces: FaceExacte[], fleche = FLECHE): MaillageOmbre {
 
 /** Normale exacte de la surface en ce point, hors de la matière. */
 export function normaleDe(face: FaceExacte, point: Point): Point {
-  if (face.sorte === 'couronne') return [0, face.dehors, 0]
+  if (face.sorte === 'couronne') {
+    if (!face.pente) return [0, face.dehors, 0]
+    const rayon = Math.hypot(point[0], point[2]) || 1
+    const longueur = Math.hypot(face.pente, face.rayonExt - face.rayonInt) || 1
+    return [(-point[0] / rayon) * face.pente / longueur, face.dehors * (face.rayonExt - face.rayonInt) / longueur, (-point[2] / rayon) * face.pente / longueur]
+  }
   if (face.sorte === 'cylindre') {
     const rayon = Math.hypot(point[0], point[2]) || 1
     return [(point[0] / rayon) * face.dehors, 0, (point[2] / rayon) * face.dehors]
@@ -96,8 +101,17 @@ function paroi(piece: Piece, face: Extract<FaceExacte, { sorte: 'cylindre' }>, f
 
 function couronne(piece: Piece, face: Extract<FaceExacte, { sorte: 'couronne' }>, fleche: number) {
   const pans = pasFleche(face.rayonExt, fleche)
-  const normale: Point = [0, face.dehors, 0]
-  const point = (rayon: number, angle: number): Point => [Math.cos(angle) * rayon, face.y, Math.sin(angle) * rayon]
+  const pente = face.pente ?? 0
+  const longueur = Math.hypot(pente, face.rayonExt - face.rayonInt) || 1
+  const point = (rayon: number, angle: number): Point => [
+    Math.cos(angle) * rayon,
+    face.y + ((face.rayonExt - rayon) / (face.rayonExt - face.rayonInt || 1)) * pente,
+    Math.sin(angle) * rayon,
+  ]
+  const normale = (angle: number): Point =>
+    pente === 0
+      ? [0, face.dehors, 0]
+      : [(-Math.cos(angle) * pente) / longueur, (face.dehors * (face.rayonExt - face.rayonInt)) / longueur, (-Math.sin(angle) * pente) / longueur]
   for (let i = 0; i < pans; i++) {
     const angle = (i / pans) * Math.PI * 2
     const suivant = ((i + 1) / pans) * Math.PI * 2
@@ -107,7 +121,7 @@ function couronne(piece: Piece, face: Extract<FaceExacte, { sorte: 'couronne' }>
       point(face.rayonExt, suivant),
       point(face.rayonExt, angle),
     ]
-    const sens: [Point, Point, Point, Point] = [normale, normale, normale, normale]
+    const sens: [Point, Point, Point, Point] = [normale(angle), normale(suivant), normale(suivant), normale(angle)]
     if (face.dehors > 0) bande(piece, coins, sens)
     else bande(piece, [coins[3], coins[2], coins[1], coins[0]], sens)
   }

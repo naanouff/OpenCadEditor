@@ -131,6 +131,64 @@ describe('pans de corne', () => {
     }
   })
 
+  it('coud le dessus et le dessous sur le flanc et la racine', () => {
+    const face = {
+      ...boite,
+      ymin: 0,
+      ymax: 8,
+      elevation: { plongee: 1.2, epaisseurBout: 2, amorce: 3.5 },
+    }
+    const releves = pansDeCorne(face, { haut: 0.4, bas: 0.2 }, plan, undefined, Rp)
+    const bandes = releves.filter((pan) =>
+      pan.colonnes.every(([pied, tete]) => Math.abs(pied[1] - tete[1]) < 1e-6),
+    )
+    const moyenne = (pan: (typeof bandes)[number]) =>
+      pan.colonnes.reduce((somme, [pied]) => somme + pied[1], 0) / pan.colonnes.length
+    const dessus = bandes.reduce((a, b) => (moyenne(a) > moyenne(b) ? a : b))
+    const dessous = bandes.reduce((a, b) => (moyenne(a) < moyenne(b) ? a : b))
+    const flanc = releves.find((pan) => {
+      const n = pan.normale([0, 0, 0])
+      return Math.abs(n[0] - geo.N[0]) < 1e-6 && Math.abs(n[2] - geo.N[1]) < 1e-6
+    })!
+    const racine = releves.find((pan) =>
+      pan.colonnes.every(([p, q]) => {
+        const dp = Math.hypot(p[0] - geo.C[0], p[2] - geo.C[1])
+        const dq = Math.hypot(q[0] - geo.C[0], q[2] - geo.C[1])
+        return Math.abs(dp - geo.Rr) < 1e-6 && Math.abs(dq - geo.Rr) < 1e-6
+      }),
+    )!
+    const bord = [...flanc.colonnes.flat(), ...racine.colonnes.flat()]
+    const exterieur = (pan: (typeof bandes)[number]) =>
+      pan.colonnes.map(([pied, tete]) => (pied[0] > tete[0] ? pied : tete))
+    const ecart = (p: number[]) => Math.min(...bord.map((q) => Math.hypot(p[0] - q[0], p[1] - q[1], p[2] - q[2])))
+    for (const p of exterieur(dessus)) expect(ecart(p)).toBeLessThan(1e-4)
+    for (const p of exterieur(dessous)) expect(ecart(p)).toBeLessThan(1e-4)
+  })
+
+  it('ferme le dessus sur la face intérieure au coin de l’entrecorne', () => {
+    const face = {
+      ...boite,
+      ymin: 0,
+      ymax: 8,
+      elevation: { plongee: 1.2, epaisseurBout: 2, amorce: 3.5 },
+    }
+    const releves = pansDeCorne(face, { haut: 0.4, bas: 0.2 }, plan, undefined, Rp)
+    const interieur = releves.find((pan) =>
+      pan.colonnes.every(([pied, tete]) => Math.abs(Math.abs(pied[0]) - a0) < 1e-6 && Math.abs(Math.abs(tete[0]) - a0) < 1e-6),
+    )!
+    const bandes = releves.filter((pan) => pan.colonnes.every(([pied, tete]) => Math.abs(pied[1] - tete[1]) < 1e-6))
+    const moyenne = (pan: (typeof bandes)[number]) =>
+      pan.colonnes.reduce((somme, [pied]) => somme + pied[1], 0) / pan.colonnes.length
+    const dessus = bandes.reduce((a, b) => (moyenne(a) > moyenne(b) ? a : b))
+    const sommets = dessus.colonnes.flat()
+    const rh = 0.4
+    for (const [, tete] of interieur.colonnes) {
+      if (Math.abs(tete[2]) > u1 - rh - 1e-6) continue
+      const ecart = Math.min(...sommets.map((point) => Math.hypot(point[0] - tete[0], point[1] - tete[1], point[2] - tete[2])))
+      expect(ecart).toBeLessThan(1e-4)
+    }
+  })
+
   it('suit les miroirs de la carrure', () => {
     const miroir = { ...boite, xmin: -boite.xmax, xmax: -boite.xmin, zmin: -boite.zmax, zmax: -boite.zmin }
     for (const pan of pansDeCorne(miroir, { haut: RH, bas: RB }, plan, undefined, Rp)) {

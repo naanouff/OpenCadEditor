@@ -18,9 +18,10 @@ param recul_barrette 1.2
 param diametre_tube 4
 param longueur_tube 2
 param diametre_tige 3
-param rayon_bout_haut 1
-param rayon_bout_bas 0.8
-param plongee_bout 3.2
+param rayon_bout_haut 0.4
+param rayon_bout_bas 0.2
+param plongee_bout 1.2
+param amorce_dessus 3.5
 param epaisseur_bout 2
 
 esquisse plan.dessus

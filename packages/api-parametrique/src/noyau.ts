@@ -118,7 +118,11 @@ function figures(
         : undefined
     const elevation =
       profilAjout && profilAjout.epaisseurBout > 0
-        ? { plongee: profilAjout.plongeeBout, epaisseurBout: profilAjout.epaisseurBout }
+        ? {
+            plongee: profilAjout.plongeeBout,
+            epaisseurBout: profilAjout.epaisseurBout,
+            amorce: profilAjout.amorceDessus,
+          }
         : undefined
     const bout = rayonExt + corne.debord
     const geo =

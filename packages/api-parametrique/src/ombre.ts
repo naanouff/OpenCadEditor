@@ -1,7 +1,7 @@
-import { congesDe, geometrieElevation, geometriePlan, maillerPan, pansDeCorne } from './corne.ts'
+import { congesDe, geometrieElevation, geometriePlan, maillerPan, pansDeCorne, rayonsDeBout } from './corne.ts'
 import { classifieur, difference } from './csg.ts'
 import { FLECHE, normaleDe, pasFleche, tesseler } from './tesseler.ts'
-import { boite as boiteVolume, coque, cylindre as cylindreVolume } from './volumes.ts'
+import { boite as boiteVolume, coque, cylindre as cylindreVolume, prisme as prismeVolume } from './volumes.ts'
 import type { FaceExacte, Maillage, MaillageOmbre } from './types.ts'
 import type { ElevationCorne, PlanCorne } from './corne.ts'
 
@@ -149,98 +149,72 @@ function horsDuFlanc(face: Boite, plan: PlanCorne, rayonPeau: number): Maillage 
   return { positions, indices }
 }
 
-/** Demi-cylindre sous l’arc du dessous, limité au débord. */
-function sousLeDessous(face: Boite, elevation: ElevationCorne, rayonPeau: number, fleche: number): Maillage {
-  const sigma = Math.sign(face.zmin + face.zmax) || 1
-  const u1 = Math.max(Math.abs(face.zmin), Math.abs(face.zmax))
-  const elev = geometrieElevation({
+/** Profil d'élévation d'une corne, avec les rayons de congé de bout que les pans emploient. */
+function elevationDe(face: Boite, elevation: ElevationCorne, rayonPeau: number, conges: Conge[]) {
+  const { rh, rb } = rayonsDeBout(face, congesDe(face, conges))
+  return geometrieElevation({
     uPeau: rayonPeau,
-    u1,
+    u1: Math.max(Math.abs(face.zmin), Math.abs(face.zmax)),
     H: face.ymax,
     y0: face.ymin,
     elevation,
-    rh: 0,
-    rb: 0,
+    rh,
+    rb,
   })
-  if (!(elev.RBas < 1e12) || elev.yTipBas <= face.ymin + 1e-9) return { positions: [], indices: [] }
-  const xmin = Math.min(face.xmin, face.xmax) - JEU
-  const xmax = Math.max(face.xmin, face.xmax) + JEU
-  const centreY = face.ymin + elev.RBas
-  const centreZ = sigma * rayonPeau
-  const R = elev.RBas + JEU * 0.1
-  const cylindre = cylindreVolume({
-    axe: 'x',
-    rayon: R,
-    debut: xmin,
-    fin: xmax,
-    a: centreY,
-    b: centreZ,
-    segments: Math.max(24, pasFleche(elev.RBas, fleche)),
-  })
-  const hautPlein = boiteVolume({
-    xmin: xmin - JEU,
-    xmax: xmax + JEU,
-    ymin: centreY - JEU,
-    ymax: centreY + R + JEU,
-    zmin: Math.min(face.zmin, face.zmax) - R - JEU,
-    zmax: Math.max(face.zmin, face.zmax) + R + JEU,
-  })
-  const versCentre = boiteVolume({
-    xmin: xmin - JEU,
-    xmax: xmax + JEU,
-    ymin: face.ymin - R - JEU,
-    ymax: face.ymax + R + JEU,
-    zmin: sigma > 0 ? Math.min(face.zmin, face.zmax) - R - JEU : -rayonPeau + JEU,
-    zmax: sigma > 0 ? rayonPeau - JEU : Math.max(face.zmin, face.zmax) + R + JEU,
-  })
-  return difference(difference(cylindre, hautPlein), versCentre)
 }
 
-/** Demi-cylindre au-dessus de l’arc du dessus, limité au débord. */
-function horsDuDessus(face: Boite, elevation: ElevationCorne, rayonPeau: number, fleche: number): Maillage {
+/** Débords répartis sur l'arche, de la peau jusqu'au-delà du bout. */
+function debordsArche(rayonPeau: number, demi: number, ampleur: number, u1: number, fleche: number) {
+  const nombre = Math.max(16, pasFleche(Math.hypot(demi, ampleur), fleche) / 4)
+  const pas = Math.ceil(nombre)
+  const us = Array.from({ length: pas + 1 }, (_, rang) => rayonPeau + (demi * rang) / pas)
+  return [...us, u1 + JEU]
+}
+
+/** Prisme sous l’arche du dessous, à partir de la peau : l’anneau reste entier. */
+function sousLeDessous(
+  face: Boite,
+  elevation: ElevationCorne,
+  rayonPeau: number,
+  fleche: number,
+  conges: Conge[],
+): Maillage {
   const sigma = Math.sign(face.zmin + face.zmax) || 1
   const u1 = Math.max(Math.abs(face.zmin), Math.abs(face.zmax))
-  const elev = geometrieElevation({
-    uPeau: rayonPeau,
-    u1,
-    H: face.ymax,
-    y0: face.ymin,
-    elevation,
-    rh: 0,
-    rb: 0,
+  const elev = elevationDe(face, elevation, rayonPeau, conges)
+  if (elev.plongee <= 0) return { positions: [], indices: [] }
+  return prismeVolume({
+      colonnes: debordsArche(rayonPeau, elev.demiBas, elev.plongee, u1, fleche).map((u) => ({
+      z: sigma * u,
+      bas: face.ymin - JEU,
+      haut: Math.max(elev.yBasPlan(u), face.ymin),
+    })),
+    debut: Math.min(face.xmin, face.xmax) - JEU,
+    fin: Math.max(face.xmin, face.xmax) + JEU,
   })
-  if (elev.chute <= 0 || !(elev.RHaut < 1e12)) return { positions: [], indices: [] }
-  const xmin = Math.min(face.xmin, face.xmax) - JEU
-  const xmax = Math.max(face.xmin, face.xmax) + JEU
-  const centreY = face.ymax - elev.RHaut
-  const centreZ = sigma * rayonPeau
-  const R = elev.RHaut + JEU * 0.1
-  const cylindre = cylindreVolume({
-    axe: 'x',
-    rayon: R,
-    debut: xmin,
-    fin: xmax,
-    a: centreY,
-    b: centreZ,
-    segments: Math.max(24, pasFleche(elev.RHaut, fleche)),
+}
+
+/** Prisme au-dessus de l’arche du dessus, à partir de la peau : l’anneau reste entier. */
+function horsDuDessus(
+  face: Boite,
+  elevation: ElevationCorne,
+  rayonPeau: number,
+  fleche: number,
+  conges: Conge[],
+): Maillage {
+  const sigma = Math.sign(face.zmin + face.zmax) || 1
+  const u1 = Math.max(Math.abs(face.zmin), Math.abs(face.zmax))
+  const elev = elevationDe(face, elevation, rayonPeau, conges)
+  if (elev.chute <= 0) return { positions: [], indices: [] }
+  return prismeVolume({
+      colonnes: debordsArche(rayonPeau, elev.demiHaut, elev.chute, u1, fleche).map((u) => ({
+      z: sigma * u,
+      bas: Math.min(elev.yHautPlan(u), face.ymax),
+      haut: face.ymax + JEU,
+    })),
+    debut: Math.min(face.xmin, face.xmax) - JEU,
+    fin: Math.max(face.xmin, face.xmax) + JEU,
   })
-  const basPlein = boiteVolume({
-    xmin: xmin - JEU,
-    xmax: xmax + JEU,
-    ymin: centreY - R - JEU,
-    ymax: centreY + JEU,
-    zmin: Math.min(face.zmin, face.zmax) - R - JEU,
-    zmax: Math.max(face.zmin, face.zmax) + R + JEU,
-  })
-  const versCentre = boiteVolume({
-    xmin: xmin - JEU,
-    xmax: xmax + JEU,
-    ymin: face.ymin - R - JEU,
-    ymax: face.ymax + R + JEU,
-    zmin: sigma > 0 ? Math.min(face.zmin, face.zmax) - R - JEU : -rayonPeau + JEU,
-    zmax: sigma > 0 ? rayonPeau - JEU : Math.max(face.zmin, face.zmax) + R + JEU,
-  })
-  return difference(difference(cylindre, basPlein), versCentre)
 }
 
 /** Les six plans d'une boîte, chacun avec sa normale constante. */
@@ -309,6 +283,170 @@ function paroiDeTrou(face: Traverse, fleche: number): Facette {
 }
 
 /**
+ * Sommets du dessus de corne posés sur le cylindre.
+ * L'habillage reprend ces points pour que le joint soit une seule ligne.
+ */
+function jonctionsDessus(face: Boite, conges: Conge[], fleche: number, rayon: number): Point[] {
+  const pans = pansDeCorne(face, congesDe(face, conges), face.plan, fleche, rayon)
+  const bandes = pans.filter((pan) => pan.colonnes.every(([pied, tete]) => Math.abs(pied[1] - tete[1]) < 1e-6))
+  if (bandes.length === 0) return []
+  const moyenne = (pan: (typeof bandes)[number]) =>
+    pan.colonnes.reduce((somme, [pied]) => somme + pied[1], 0) / pan.colonnes.length
+  const dessus = bandes.reduce((a, b) => (moyenne(a) > moyenne(b) ? a : b))
+  const points: Point[] = []
+  for (const [pied, tete] of dessus.colonnes) {
+    const bord = Math.hypot(pied[0], pied[2]) <= Math.hypot(tete[0], tete[2]) ? pied : tete
+    if (Math.abs(Math.hypot(bord[0], bord[2]) - rayon) < 1e-4) points.push(bord)
+  }
+  const miroirs: Point[] = []
+  for (const [x, y, z] of points) {
+    for (const sx of [1, -1]) {
+      for (const sz of [1, -1]) miroirs.push([sx * Math.abs(x), y, sz * Math.abs(z)])
+    }
+  }
+  return miroirs
+}
+
+/**
+ * Haut de la boîte quand la courbe commence avant la peau.
+ * L'entrecorne (|x| < a0) reste droite, à pleine hauteur.
+ * Le mur, le rebord et la jupe de lunette partagent les mêmes hauteurs sur les cornes.
+ */
+function habillageDessus(
+  rayon: number,
+  hauteur: number,
+  rayonJupe: number,
+  basJupe: number,
+  a0: number,
+  elev: ReturnType<typeof geometrieElevation>,
+  fleche: number,
+  jonctions: Point[] = [],
+): { murs: Facette; dessus: Facette; jupe: Facette } | null {
+  if (elev.amorce <= 0 || rayonJupe >= rayon - 0.2) return null
+  const pans = Math.max(96, pasFleche(rayon, fleche))
+  const yDe = (u: number) => Math.min(hauteur, elev.yHautPlan(u))
+  const rayons = [rayonJupe, rayon]
+  const bord = (r: number, theta: number) =>
+    Math.abs(r * Math.cos(theta)) < a0 ? hauteur : yDe(Math.abs(r * Math.sin(theta)))
+  const angles = Array.from({ length: pans + 1 }, (_, i) => (i / pans) * Math.PI * 2)
+  if (a0 < rayon) {
+    const limite = Math.acos(a0 / rayon)
+    const tour = Math.PI * 2
+    for (const base of [0, Math.PI]) {
+      for (const theta of [base - limite, base + limite]) {
+        let angle = theta % tour
+        if (angle < 0) angle += tour
+        if (angle > 1e-8 && angle < tour - 1e-8) angles.push(angle)
+      }
+    }
+  }
+  angles.sort((a, b) => a - b)
+  const tour = Math.PI * 2
+  const normaliser = (theta: number) => {
+    let angle = theta % tour
+    if (angle < 0) angle += tour
+    return angle
+  }
+  const anglesJonction = jonctions.map(([x, , z]) => normaliser(Math.atan2(z, x)))
+  const parQuadrant = new Map<string, number[]>()
+  for (const [x, , z] of jonctions) {
+    const cle = `${Math.sign(x) || 1},${Math.sign(z) || 1}`
+    const liste = parQuadrant.get(cle) ?? []
+    liste.push(normaliser(Math.atan2(z, x)))
+    parQuadrant.set(cle, liste)
+  }
+  const secteurs: [number, number][] = []
+  for (const liste of parQuadrant.values()) {
+    liste.sort((p, q) => p - q)
+    if (liste[liste.length - 1] - liste[0] > 1e-6) secteurs.push([liste[0], liste[liste.length - 1]])
+  }
+  const dansSecteur = (theta: number) => secteurs.some(([bas, haut]) => theta > bas + 1e-7 && theta < haut - 1e-7)
+  const estJonction = (theta: number) => anglesJonction.some((angle) => Math.abs(angle - theta) < 1e-7)
+  for (const angle of anglesJonction) angles.push(angle)
+  const anglesJoints = angles.filter((theta) => !dansSecteur(theta) || estJonction(theta))
+  anglesJoints.sort((a, b) => a - b)
+  const thetas = anglesJoints.filter((theta, rang) => rang === 0 || theta - anglesJoints[rang - 1] > 1e-8)
+  const positions: number[] = []
+  const mur: number[] = []
+  const dessus: number[] = []
+  const jupe: number[] = []
+  const poser = (x: number, y: number, z: number) => {
+    const rang = positions.length / 3
+    positions.push(x, y, z)
+    return rang
+  }
+  const ajouter = (indices: number[], a: number, b: number, c: number, sens: Point) => {
+    const pa = positions.slice(a * 3, a * 3 + 3)
+    const pb = positions.slice(b * 3, b * 3 + 3)
+    const pc = positions.slice(c * 3, c * 3 + 3)
+    const u = [pb[0] - pa[0], pb[1] - pa[1], pb[2] - pa[2]]
+    const v = [pc[0] - pa[0], pc[1] - pa[1], pc[2] - pa[2]]
+    const n = [u[1] * v[2] - u[2] * v[1], u[2] * v[0] - u[0] * v[2], u[0] * v[1] - u[1] * v[0]]
+    if (Math.hypot(n[0], n[1], n[2]) < 1e-8) return
+    if (n[0] * sens[0] + n[1] * sens[1] + n[2] * sens[2] >= 0) indices.push(a, b, c)
+    else indices.push(a, c, b)
+  }
+  for (let i = 0; i < thetas.length - 1; i++) {
+    const t0 = thetas[i]
+    const t1 = thetas[i + 1]
+    const c0 = Math.cos(t0)
+    const s0 = Math.sin(t0)
+    const c1 = Math.cos(t1)
+    const s1 = Math.sin(t1)
+    const joint0 = jonctions.find((_, index) => Math.abs(anglesJonction[index] - normaliser(t0)) < 1e-7)
+    const joint1 = jonctions.find((_, index) => Math.abs(anglesJonction[index] - normaliser(t1)) < 1e-7)
+    const yHaut0 = joint0 ? joint0[1] : bord(rayon, t0)
+    const yHaut1 = joint1 ? joint1[1] : bord(rayon, t1)
+    const bas0 = poser(c0 * rayon, 0, s0 * rayon)
+    const haut0 = poser(joint0 ? joint0[0] : c0 * rayon, yHaut0, joint0 ? joint0[2] : s0 * rayon)
+    const haut1 = poser(joint1 ? joint1[0] : c1 * rayon, yHaut1, joint1 ? joint1[2] : s1 * rayon)
+    const bas1 = poser(c1 * rayon, 0, s1 * rayon)
+    const sensMur: Point = [c0 + c1, 0, s0 + s1]
+    ajouter(mur, bas0, haut0, haut1, sensMur)
+    ajouter(mur, bas0, haut1, bas1, sensMur)
+    const poserRayon = (r: number, theta: number, c: number, s: number, joint: Point | undefined) =>
+      Math.abs(r - rayon) < 1e-9 && joint ? poser(joint[0], joint[1], joint[2]) : poser(c * r, bord(r, theta), s * r)
+    const ligne0 = rayons.map((r) => poserRayon(r, t0, c0, s0, joint0))
+    const ligne1 = rayons.map((r) => poserRayon(r, t1, c1, s1, joint1))
+    for (let j = 0; j < rayons.length - 1; j++) {
+      const sens: Point = [0, 1, 0]
+      ajouter(dessus, ligne0[j], ligne1[j], ligne1[j + 1], sens)
+      ajouter(dessus, ligne0[j], ligne1[j + 1], ligne0[j + 1], sens)
+    }
+    const yJ0 = Math.max(basJupe, bord(rayonJupe, t0))
+    const yJ1 = Math.max(basJupe, bord(rayonJupe, t1))
+    const jBas0 = poser(c0 * rayonJupe, basJupe, s0 * rayonJupe)
+    const jHaut0 = poser(c0 * rayonJupe, yJ0, s0 * rayonJupe)
+    const jHaut1 = poser(c1 * rayonJupe, yJ1, s1 * rayonJupe)
+    const jBas1 = poser(c1 * rayonJupe, basJupe, s1 * rayonJupe)
+    const sensJupe: Point = [-(c0 + c1), 0, -(s0 + s1)]
+    ajouter(jupe, jBas0, jHaut1, jHaut0, sensJupe)
+    ajouter(jupe, jBas0, jBas1, jHaut1, sensJupe)
+  }
+  const face = (indices: number[], normale: (point: Point) => Point): Facette => ({
+    maillage: { positions: positions.slice(), indices },
+    normale,
+  })
+  return {
+    murs: face(mur, (point) => {
+      const rayonPoint = Math.hypot(point[0], point[2]) || 1
+      return [point[0] / rayonPoint, 0, point[2] / rayonPoint]
+    }),
+    dessus: face(dessus, (point) => {
+      if (Math.abs(point[0]) < a0) return [0, 1, 0]
+      const signe = Math.sign(point[2]) || 1
+      const p = elev.penteHaut(Math.abs(point[2]))
+      const longueur = Math.hypot(1, p) || 1
+      return [0, 1 / longueur, (-signe * p) / longueur]
+    }),
+    jupe: face(jupe, (point) => {
+      const rayonPoint = Math.hypot(point[0], point[2]) || 1
+      return [-point[0] / rayonPoint, 0, -point[2] / rayonPoint]
+    }),
+  }
+}
+
+/**
  * Maillage d'affichage de la frontière : chaque face est tessellée sur sa surface,
  * puis rognée par les volumes voisins. Le classement est un détail interne.
  */
@@ -353,9 +491,9 @@ export function ombrer(faces: FaceExacte[], fleche = FLECHE): MaillageOmbre {
         )
       }
       if (face.elevation && rayonPeau > 0) {
-        const dessus = horsDuDessus(face, face.elevation, rayonPeau, fleche)
+        const dessus = horsDuDessus(face, face.elevation, rayonPeau, fleche, conges)
         if (dessus.indices.length > 0) volume = difference(volume, dessus)
-        const dessous = sousLeDessous(face, face.elevation, rayonPeau, fleche)
+        const dessous = sousLeDessous(face, face.elevation, rayonPeau, fleche, conges)
         if (dessous.indices.length > 0) volume = difference(volume, dessous)
       }
       for (const conge of conges) {
@@ -372,6 +510,46 @@ export function ombrer(faces: FaceExacte[], fleche = FLECHE): MaillageOmbre {
     ...pleines.map((face) => ({ face, outil: outil(hors(volumeTraverse(face, fleche, 0))) })),
   ]
   const vides = creuses.map((face) => outil(volumeTraverse(face, fleche, MARGE)))
+  const boiteAmorce = boites.find((face) => (face.elevation?.amorce ?? 0) > 0 && face.zmax > 0)
+  const elevDessus =
+    boiteAmorce?.elevation && rayonPeau > 0
+      ? elevationDe(boiteAmorce, boiteAmorce.elevation, rayonPeau, conges)
+      : null
+  const rebord =
+    elevDessus && boiteAmorce
+      ? rondes.find(
+          (face) =>
+            face.sorte === 'couronne' &&
+            !face.pente &&
+            Math.abs(face.y - boiteAmorce.ymax) < 1e-6 &&
+            Math.abs(face.rayonExt - rayonPeau) < 1e-6,
+        )
+      : undefined
+  const jupe =
+    rebord?.sorte === 'couronne'
+      ? rondes.find(
+          (face) =>
+            face.sorte === 'cylindre' &&
+            face.dehors < 0 &&
+            Math.abs(face.rayon - rebord.rayonInt) < 1e-6 &&
+            Math.abs(face.haut - (rebord.sorte === 'couronne' ? rebord.y : 0)) < 1e-6,
+        )
+      : undefined
+  const peauExt = rondes.find((face) => face.sorte === 'cylindre' && face.dehors > 0 && face.angleDeb === undefined)
+  const habillage =
+    elevDessus && boiteAmorce && rebord?.sorte === 'couronne' && jupe?.sorte === 'cylindre' && peauExt
+      ? habillageDessus(
+          rayonPeau,
+          boiteAmorce.ymax,
+          rebord.rayonInt,
+          jupe.bas,
+          Math.min(Math.abs(boiteAmorce.xmin), Math.abs(boiteAmorce.xmax)),
+          elevDessus,
+          fleche,
+          jonctionsDessus(boiteAmorce, conges, fleche, rayonPeau),
+        )
+      : null
+  const remplaces = new Set<FaceExacte>(habillage ? [peauExt!, rebord!, jupe!] : [])
 
   const facettes: Facette[] = []
   const horsDe = (facette: Facette, outils: Outil[]) => {
@@ -384,12 +562,17 @@ export function ombrer(faces: FaceExacte[], fleche = FLECHE): MaillageOmbre {
     return { maillage: reste, normale: facette.normale }
   }
 
+  const outilsCornes = pleins.filter((plein) => plein.face.sorte === 'boite').map((plein) => plein.outil)
   for (const face of rondes) {
-    const outils = [
-      ...pleins.filter((plein) => plein.face.sorte === 'boite').map((plein) => plein.outil),
-      ...vides,
-    ]
-    facettes.push(horsDe(surSurface(face, fleche), outils))
+    if (remplaces.has(face)) continue
+    facettes.push(horsDe(surSurface(face, fleche), [...outilsCornes, ...vides]))
+  }
+  if (habillage) {
+    // La corne est hors de la peau : rogner le mur avec son volume ouvre un jour
+    // que le pan ne referme pas. Les trous (barrette, tige) restent à découper.
+    facettes.push(horsDe(habillage.murs, vides))
+    facettes.push(horsDe(habillage.dessus, vides))
+    facettes.push(horsDe(habillage.jupe, vides))
   }
   for (const { face, outil } of pleins) {
     const autres = [...pleins.filter((plein) => plein.outil !== outil).map((plein) => plein.outil), ...vides]

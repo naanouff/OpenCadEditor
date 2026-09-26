@@ -36,8 +36,8 @@ param longueur_tube 2
 param diametre_tige 1.2
 param rayon_bout_haut 1
 param rayon_bout_bas 0.8
-param plongee_bout 3.3
-param epaisseur_bout 3.2
+param plongee_bout 0.5
+param epaisseur_bout 2
 
 esquisse plan.dessus
 cercle
@@ -164,7 +164,7 @@ describe('carrure', () => {
     const dessus = () =>
       session.frontiere().faces.find((face) => face.sorte === 'couronne' && face.y === 8)
     const poche = () =>
-      session.frontiere().faces.find((face) => face.sorte === 'couronne' && face.y < 8 && face.y > 0)
+      session.frontiere().faces.find((face) => face.sorte === 'couronne' && face.y < 7.5 && face.y > 0)
     expect(epaulement()).toMatchObject({ rayon: 18, bas: 6.8 })
     expect(dessus()).toMatchObject({ rayonInt: 18, rayonExt: 20 })
     expect(poche()).toMatchObject({ rayonInt: 17.5, rayonExt: 18, y: 6.8 })
@@ -334,67 +334,96 @@ cote diametre diametre_lunette
     for (const nombre of parCorne.values()) expect(nombre).toBeGreaterThan(100)
   })
 
+  it('laisse l’arête haute vive', () => {
+    const session = new Session()
+    session.executer(script.split('esquisse plan.12h')[0])
+    const peau = session
+      .frontiere()
+      .faces.find((face) => face.sorte === 'cylindre' && face.dehors > 0 && face.angleDeb === undefined)!
+    expect(peau.haut).toBeCloseTo(8, 5)
+    expect(session.frontiere().faces.some((face) => face.sorte === 'couronne' && face.pente)).toBe(false)
+    const { positions } = session.maillage()
+    let surArete = 0
+    for (let i = 0; i < positions.length; i += 3) {
+      const rayon = Math.hypot(positions[i], positions[i + 2])
+      const y = positions[i + 1]
+      if (rayon > 19.7 && Math.abs(y - 8) < 0.05) surArete += 1
+    }
+    expect(surArete).toBeGreaterThan(0)
+  })
+
   it('abaisse le dessus et remonte le dessous au bout', () => {
     const session = new Session()
     session.executer(script.split('esquisse plan.12h')[0])
     const boites = session.frontiere().faces.filter((face) => face.sorte === 'boite')
-    expect(boites[0]?.elevation).toMatchObject({ plongee: 3.3, epaisseurBout: 3.2 })
+    expect(boites[0]?.elevation).toMatchObject({ plongee: 0.5, epaisseurBout: 2 })
     const { positions } = session.maillage()
     let yMaxAuBout = 0
     let yMinAuBout = 8
+    let auHautDeLaRacine = 0
     for (let i = 0; i < positions.length; i += 3) {
       const y = positions[i + 1]
       const z = Math.abs(positions[i + 2])
+      if (z > 20.05 && Math.abs(y - 8) < 0.05) auHautDeLaRacine += 1
       if (z < 24.05) continue
       yMaxAuBout = Math.max(yMaxAuBout, y)
       yMinAuBout = Math.min(yMinAuBout, y)
     }
-    expect(yMaxAuBout).toBeLessThan(6.6)
-    expect(yMaxAuBout).toBeGreaterThan(5.3)
-    expect(yMinAuBout).toBeGreaterThan(3.0)
-    expect(yMinAuBout).toBeLessThan(4.0)
+    expect(auHautDeLaRacine).toBeGreaterThan(0)
+    expect(yMaxAuBout).toBeLessThan(2.1)
+    expect(yMaxAuBout).toBeGreaterThan(1.4)
+    expect(yMinAuBout).toBeGreaterThan(0.6)
+    expect(yMinAuBout).toBeLessThan(1.1)
   })
 
-  it('fait plonger le bout quand plongee_bout descend', () => {
+  it('fait remonter le bout quand plongee_bout monte', () => {
     const session = new Session()
     session.executer(script.split('esquisse plan.12h')[0])
     session.commande('param plongee_bout 2.5')
     const boite = session.frontiere().faces.find((face) => face.sorte === 'boite')!
-    expect(boite.elevation).toMatchObject({ plongee: 2.5, epaisseurBout: 3.2 })
+    expect(boite.elevation).toMatchObject({ plongee: 2.5, epaisseurBout: 2 })
     const { positions } = session.maillage()
-    let yMaxAuBout = 0
     let yMinAuBout = 8
     for (let i = 0; i < positions.length; i += 3) {
-      const y = positions[i + 1]
       if (Math.abs(positions[i + 2]) < 24.05) continue
-      yMaxAuBout = Math.max(yMaxAuBout, y)
-      yMinAuBout = Math.min(yMinAuBout, y)
+      yMinAuBout = Math.min(yMinAuBout, positions[i + 1])
     }
-    expect(yMaxAuBout).toBeLessThan(5.5)
-    expect(yMinAuBout).toBeLessThan(3.1)
+    expect(yMinAuBout).toBeGreaterThan(2.5)
   })
 
-  it('retient la plongée au débord que l’arc du dessus peut descendre', () => {
+  it('descend le dessus en arche, tangent à l’horizontale à la peau et au bout', () => {
     const elev = geometrieElevation({
       uPeau: 20,
       u1: 24.2,
       H: 8,
       y0: 0,
-      elevation: { plongee: 0, epaisseurBout: 3.2 },
+      elevation: { plongee: 0.5, epaisseurBout: 2 },
       rh: 1,
       rb: 0.8,
     })
-    expect(elev.chute).toBeCloseTo(0.8 * (24.2 - 1 - 20), 5)
-    expect(elev.plongee).toBeCloseTo(8 - 3.2 - elev.chute, 5)
-    expect(elev.RHaut).toBeGreaterThan(elev.chute)
-    expect(elev.yHautPlan(elev.uFinHaut)).toBeCloseTo(elev.yTipHaut, 5)
+    expect(elev.chute).toBeCloseTo(5.5, 5)
+    expect(elev.demiHaut).toBeCloseTo(3.2, 5)
+    expect(elev.chute).toBeGreaterThan(elev.demiHaut)
+    const milieuHaut = 20 + elev.demiHaut / 2
+    const milieuBas = 20 + elev.demiBas / 2
+    expect(elev.yHautPlan(20)).toBeCloseTo(8, 5)
+    expect(elev.yHautPlan(elev.uFinHaut)).toBeCloseTo(2.5, 5)
+    expect(elev.yHautPlan(milieuHaut)).toBeCloseTo(2.5 + 5.5 / 2, 5)
+    expect(elev.penteHaut(20)).toBeCloseTo(0, 5)
+    expect(elev.penteHaut(elev.uFinHaut)).toBeCloseTo(0, 5)
+    expect(elev.penteHaut(milieuHaut)).toBeLessThan(-1)
+    expect(elev.yBasPlan(20)).toBeCloseTo(0, 5)
+    expect(elev.yBasPlan(elev.uFinBas)).toBeCloseTo(0.5, 5)
+    expect(elev.yBasPlan(milieuBas)).toBeCloseTo(0.25, 5)
+    expect(elev.penteBas(20)).toBeCloseTo(0, 5)
+    expect(elev.penteBas(elev.uFinBas)).toBeCloseTo(0, 5)
   })
 
-  it('suit l’arc du dessous entre la peau et le bout', () => {
+  it('suit l’ellipse du dessous entre la peau et le bout', () => {
     const session = new Session()
     session.executer(script.split('esquisse plan.12h')[0])
     const boite = session.frontiere().faces.find((face) => face.sorte === 'boite' && face.zmax > 0)!
-    expect(boite.elevation).toMatchObject({ plongee: 3.3, epaisseurBout: 3.2 })
+    expect(boite.elevation).toMatchObject({ plongee: 0.5, epaisseurBout: 2 })
     const elev = geometrieElevation({
       uPeau: 20,
       u1: 24.2,
@@ -433,8 +462,8 @@ cote diametre diametre_lunette
     let yMaxAuBout = 0
     let yMinAuBout = 8
     let surCongéHaut = 0
-    const yTipBas = 3.3
-    const yTipHaut = yTipBas + 3.2
+    const yTipBas = 0.5
+    const yTipHaut = yTipBas + 2
     for (let i = 0; i < positions.length; i += 3) {
       const y = positions[i + 1]
       const z = Math.abs(positions[i + 2])
@@ -460,7 +489,7 @@ cote diametre diametre_lunette
     const trous = session.frontiere().faces.filter((face) => face.sorte === 'traverse' && face.rayon < 1)
     expect(trous).toHaveLength(4)
     expect(trous[0]).toMatchObject({ rayon: 0.55 })
-    expect(trous[0]!.y).toBeCloseTo(3.3 + 3.2 / 2, 5)
+    expect(trous[0]!.y).toBeCloseTo(0.5 + 2 / 2, 5)
     expect(Math.abs(trous[0]!.z)).toBeCloseTo(24.2 - 1.2, 5)
     const flancAuTrou = 12.2 + (1.2 * (16 - 12.2)) / (24.2 - 12)
     for (const trou of trous) {
@@ -497,7 +526,7 @@ cote diametre 38
 enleve 2
 `)
     const epaulement = session.frontiere().faces.find((face) => face.sorte === 'cylindre' && face.bas > 0)
-    const poche = session.frontiere().faces.find((face) => face.sorte === 'couronne' && face.y < 8 && face.y > 0)
+    const poche = session.frontiere().faces.find((face) => face.sorte === 'couronne' && face.y < 7.5 && face.y > 0)
     expect(epaulement).toMatchObject({ rayon: 19, bas: 6 })
     expect(poche).toMatchObject({ y: 6, rayonExt: 19 })
     expect(session.expression('diametre_lunette')).toBe('36')

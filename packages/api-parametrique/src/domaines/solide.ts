@@ -25,6 +25,7 @@ function profil(contexte: Contexte, operation: Operation): Ajout | undefined {
         rayonBoutBas: lire('rayon_bout_bas', 0),
         plongeeBout: lire('plongee_bout', 0),
         epaisseurBout: lire('epaisseur_bout', 0),
+        amorceDessus: lire('amorce_dessus', 0),
         hauteur: evaluer(operation.arguments.expression),
       }
     }
@@ -49,6 +50,7 @@ function profil(contexte: Contexte, operation: Operation): Ajout | undefined {
         rayonBoutBas: lire('rayon_bout_bas', 0),
         plongeeBout: lire('plongee_bout', 0),
         epaisseurBout: lire('epaisseur_bout', 0),
+        amorceDessus: lire('amorce_dessus', 0),
         hauteur: evaluer(operation.arguments.expression),
       }
     }

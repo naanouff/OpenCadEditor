@@ -43,6 +43,7 @@ export type Ajout =
       rayonBoutBas: number
       plongeeBout: number
       epaisseurBout: number
+      amorceDessus: number
       hauteur: number
     }
   | { sorte: 'cercle'; support: string; rayon: number; longueur: number }
@@ -111,7 +112,15 @@ export type FaceExacte =
       angleDeb?: number
       angleFin?: number
     }
-  | { sorte: 'couronne'; rayonExt: number; rayonInt: number; y: number; dehors: Dehors }
+  | {
+      sorte: 'couronne'
+      rayonExt: number
+      rayonInt: number
+      y: number
+      dehors: Dehors
+      /** Montée du bord intérieur au bord extérieur : biseau conique, absent = plat. */
+      pente?: number
+    }
   | {
       sorte: 'boite'
       xmin: number
@@ -123,7 +132,7 @@ export type FaceExacte =
       /** Contour en plan Oyster : absent = boîte rectangulaire. */
       plan?: { largeurBout: number; largeurRacine: number; rayonRacine: number }
       /** Profil d’élévation Oyster : bout plongeant, dessus en pente, dessous creusé. */
-      elevation?: { plongee: number; epaisseurBout: number }
+      elevation?: { plongee: number; epaisseurBout: number; amorce?: number }
     }
   | {
       /** Congé creux à la racine : cylindre d'axe Y, hors de la peau. */

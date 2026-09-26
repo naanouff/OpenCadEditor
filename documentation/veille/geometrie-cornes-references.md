@@ -20,18 +20,19 @@ Annotations lisibles, à retenir :
 | Épaisseur au bout de corne | 2,00 mm | `epaisseur_bout` |
 | Trous de barrette percés | Ø0,90 mm | `diametre_barrette` |
 | Alésage tube couronne | Ø3,00 mm | `diametre_tige`, le perçage traversant qui reçoit le tube |
-| Épaisseur de corne à la racine (coupe A-A) | 4,00 mm | à venir, voir plus bas |
+| Largeur de corne en coupe A-A | 4,00 mm | contrôle du contour en plan, `largeur_bout` 2,2 au bout |
 | Filetage fond de boîtier | M28 × 0,5 | à venir |
 | Dépassement du tube de couronne | 1,50 mm | à venir |
+| Biseau de l’arête haute | 0,50 mm sur le plan | arête vive dans le modèle |
 | Matière et finitions | acier 904L, flancs polis glacé, cornes brossées | rendu, hors géométrie |
 
 Les cotes verticales de la vue de côté (75,00 mm, 58,00 mm, 15,00 mm) ne se recoupent pas avec un diamètre de 36 mm : le plan les porte à une autre échelle. La hauteur de carrure reste estimée sur photo, à 8 mm.
 
-## Plongée du bout et épaisseur de racine
+## Plongée du bout et courbe du dessus
 
-Sur ref12 et sur la vue de côté du plan, le bout de corne descend au ras du fond : la corne plonge nettement vers le bracelet. Le profil d’élévation porte donc `plongee_bout`, la hauteur du bas du bout au-dessus du fond.
+Sur ref12 et sur la vue de côté du plan, le bout de corne descend au ras du fond : la corne plonge nettement vers le bracelet. Le profil d’élévation porte donc `plongee_bout`, la hauteur du bas du bout au-dessus du fond, mesurée à **0,5 mm**.
 
-Un arc tangent au dessus de la carrure descend au plus de son propre débord : avec `hauteur_carrure` 8 et un débord utile de 3,5 mm, la chute plafonne à 2,8 mm et la plongée s’arrête à 3,2 mm, soit un bout centré à 4,2 mm, au-dessus de la mi-hauteur. La plongée franche des références vient de l’épaisseur de racine que donne la coupe A-A : la corne est une lame de 4,00 mm qui sort du flanc, et non un bloc de la hauteur entière. Le dessus part alors de 4,00 mm et descend jusqu’à 2,50 mm, une chute de 1,50 mm largement dans la limite de l’arc. Cette épaisseur de racine ouvre le sprint suivant.
+La vue de côté montre aussi que l’arête haute quitte le flanc **en haut de la carrure** : la corne occupe toute la hauteur à la racine. Avec un bout à 0,5 mm et 2,00 mm d’épaisseur, le dessus descend donc de 5,5 mm sur 4,5 mm de débord. La courbe des références est une **arche** : tangente à l’horizontale à la peau, à mi-hauteur à mi-débord, et de nouveau horizontale au bout, où la corne est une lame mince. Le trou de barrette perce cette lame. Le congé de bout reste petit (`rayon_bout_haut` 0,4, `rayon_bout_bas` 0,2) pour que le bout reste une lame autour du trou. Le [sprint 20](../sprints/sprint-20-elevation-elliptique-cornes.md) code cette arche.
 
 | Photo | Vue | Sert à |
 |-------|-----|--------|
@@ -57,10 +58,10 @@ La corne est donc un coin effilé. Le modèle actuel pose une largeur constante 
 
 Sur ref10–ref12, chaque corne dessine un **croissant** :
 
-- **Dessus** : arc convexe, tangent à l’horizontale à la peau, qui descend vers le bout. La chute au bout vaut environ **1,5 mm** (plus marquée que l’estimation 0,8 mm sur ref06/ref07). Le fini est brossé.
-- **Dessous** : arc creux, tangent à y = 0 à la peau, qui remonte vers le bout. Le bout se relève nettement au-dessus du plan du fond.
-- **Bout** : les deux arcs se rejoignent sur **2,00 mm** d’épaisseur, cote du plan. Petit congé haut (~1 mm) ; arête basse vive ou presque.
-- **Silhouette** : vue de côté, la corne est une aile : pas de pan vertical au bout, le dessus et le dessous convergent.
+- **Dessus** : arche `(1 + cos πt) / 2`, tangente à l’horizontale à la peau et au bout. Il part de `hauteur_carrure`, passe à mi-chute à mi-débord, et arrive à `plongee_bout + epaisseur_bout`. Le fini est brossé.
+- **Dessous** : même arche, tangente à y = 0 à la peau, qui remonte jusqu’à `plongee_bout` au bout.
+- **Bout** : lame de **2,00 mm**, cote du plan. Le congé haut fait 0,4 mm et le congé bas 0,2 mm, en deçà du trou de barrette, qui reste dans la lame.
+- **Silhouette** : vue de côté, la corne est une aile. Le dessus et le dessous convergent sur une lame, et le trou de barrette perce cette lame.
 
 ## Facettes
 
@@ -78,10 +79,10 @@ Le trou est percé depuis le flanc extérieur, environ **1,2 mm** avant le bout,
 | `largeur_racine` | Largeur de la corne à la peau | `6` |
 | `rayon_racine` | Congé creux flanc / anneau | `3` |
 | `longueur_corne` | Débord au-delà de la peau | `4.5` |
-| `plongee_bout` | Hauteur du bas du bout au-dessus du fond | `3.2` |
+| `plongee_bout` | Hauteur du bas du bout au-dessus du fond | `0.5` |
 | `epaisseur_bout` | Épaisseur au bout | `2` |
-| `epaisseur_racine` | Épaisseur de la corne à la peau | `4` |
-| `rayon_bout_haut` | Congé haut du bout | `1` |
+| `rayon_bout_haut` | Congé haut du bout, en deçà du trou | `0.4` |
+| `rayon_bout_bas` | Congé bas du bout, arête presque vive | `0.2` |
 | `chanfrein_flanc` | Largeur du chanfrein poli | `1.5` |
 | `diametre_barrette` | Trou de barrette | `0.9` |
 

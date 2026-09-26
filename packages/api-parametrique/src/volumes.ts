@@ -37,6 +37,44 @@ export function boite(bornes: { xmin: number; xmax: number; ymin: number; ymax: 
 }
 
 /**
+ * Prisme fermé le long de x, décrit colonne par colonne : à chaque `z`, la matière va de `bas`
+ * à `haut`. La section peut suivre n'importe quel profil, l'ellipse comprise.
+ */
+export function prisme(forme: {
+  colonnes: { z: number; bas: number; haut: number }[]
+  debut: number
+  fin: number
+}): Maillage {
+  const { debut, fin } = forme
+  const colonnes = [...forme.colonnes].sort((une, autre) => une.z - autre.z)
+  const { positions, indices, quadrilatere } = assembler()
+  if (colonnes.length < 2) return { positions, indices }
+  for (let i = 0; i < colonnes.length - 1; i++) {
+    const ici = colonnes[i]
+    const la = colonnes[i + 1]
+    quadrilatere([debut, ici.haut, ici.z], [debut, la.haut, la.z], [fin, la.haut, la.z], [fin, ici.haut, ici.z])
+    quadrilatere([debut, ici.bas, ici.z], [fin, ici.bas, ici.z], [fin, la.bas, la.z], [debut, la.bas, la.z])
+    quadrilatere([fin, ici.bas, ici.z], [fin, ici.haut, ici.z], [fin, la.haut, la.z], [fin, la.bas, la.z])
+    quadrilatere([debut, la.bas, la.z], [debut, la.haut, la.z], [debut, ici.haut, ici.z], [debut, ici.bas, ici.z])
+  }
+  const premiere = colonnes[0]
+  const derniere = colonnes[colonnes.length - 1]
+  quadrilatere(
+    [debut, premiere.bas, premiere.z],
+    [debut, premiere.haut, premiere.z],
+    [fin, premiere.haut, premiere.z],
+    [fin, premiere.bas, premiere.z],
+  )
+  quadrilatere(
+    [debut, derniere.bas, derniere.z],
+    [fin, derniere.bas, derniere.z],
+    [fin, derniere.haut, derniere.z],
+    [debut, derniere.haut, derniere.z],
+  )
+  return { positions, indices }
+}
+
+/**
  * Cylindre fermé le long d'un axe. `a` et `b` sont les deux autres coordonnées du centre,
  * dans l'ordre du repère : axe x donne (y, z), axe y donne (x, z), axe z donne (x, y).
  */
