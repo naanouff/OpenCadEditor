@@ -2,20 +2,22 @@
 
 Premier palier du modèle de données. La session tient déjà les pièces, l’historique et l’esquisse. Elle ne tient pas encore de document. Le sprint qui le code est [sprint 21](../sprints/sprint-21-document-repere.md).
 
-Le socle décrit dans [api-architecture.md](api-architecture.md) annonçait un document de plusieurs pièces. Ce palier n’en pose que l’enveloppe : l’unité et le repère dans lequel tout le reste s’exprime. Les pièces restent sur la session.
+Le socle décrit dans [api-architecture.md](api-architecture.md) annonçait un document de plusieurs pièces. Ce palier n’en pose que l’enveloppe : l’auteur, la version, l’unité et le repère dans lequel tout le reste s’exprime. Les pièces restent sur la session.
 
 ## Document
 
-Un document porte une unité et un repère.
+Un document porte un auteur, une version, une unité et un repère.
 
 ```ts
 type Document = {
+  auteur: string
+  version: string
   unite: string
   repere: Repere
 }
 ```
 
-L’unité est le millimètre. Sans commande, elle vaut `mm`. Après `piece`, `unite` l’écrit sur le document, et `Session.unite()` la lit. Le champ `Piece.unite` sort : il n’y a qu’une unité.
+L’auteur est vide tant qu’on ne l’a pas nommé. `auteur` écrit le reste de la ligne sur le document, espaces compris. Annuler restaure le nom précédent. La version suit semver 2.0.0. Sans commande, elle vaut `0.0.0`. `version` n’accepte que `MAJEUR.MINEUR.CORRECTIF`, avec une préversion facultative (`2.0.0-alpha.1`). Un texte hors de ce format est refusé et laisse la version en place. Annuler restaure la version précédente. L’unité est le millimètre. Sans commande, elle vaut `mm`. Après `piece`, `unite` l’écrit sur le document, et `Session.unite()` la lit. Le champ `Piece.unite` sort : il n’y a qu’une unité.
 
 `Session.document()` rend une copie. Les pièces, l’historique, les noms et l’esquisse ne sont pas des champs du document.
 

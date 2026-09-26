@@ -56,6 +56,33 @@ export type Solide = {
   ajouts: Ajout[]
 }
 
+export type Vecteur = readonly [number, number, number]
+
+/** Repère orthonormé direct. L'origine est dans l'unité du document. */
+export type Repere = {
+  origine: Vecteur
+  x: Vecteur
+  y: Vecteur
+  z: Vecteur
+}
+
+/** Origine au centre, X vers 3 h, Y vertical, Z vers 12 h. */
+export const REPERE_REFERENCE: Repere = {
+  origine: [0, 0, 0],
+  x: [1, 0, 0],
+  y: [0, 1, 0],
+  z: [0, 0, 1],
+}
+
+export type Document = {
+  /** Nom de l’auteur. Vide tant que `auteur` n’a pas été commandé. */
+  auteur: string
+  /** Semver 2.0.0. `0.0.0` tant que `version` n’a pas été commandé. */
+  version: string
+  unite: string
+  repere: Repere
+}
+
 export type Piece = {
   nom: string
   historique: Operation[]
@@ -65,7 +92,6 @@ export type Piece = {
   dernierSupport: string | null
   solide: Solide | null
   compteur: number
-  unite: string
 }
 
 export type Contexte = {

@@ -257,7 +257,23 @@ Le dessus et le dessous de la corne reprennent les sommets du flanc et du congé
 
 [veille/modele-document.md](../veille/modele-document.md) pose le premier palier du modèle. La session tiendra un document : unité en millimètres, repère identité, Y vertical, X vers 3 h, Z vers 12 h. `unite` écrira cette unité. Les pièces, l’historique et l’esquisse restent sur la session. [sprints/sprint-21-document-repere.md](../sprints/sprint-21-document-repere.md) le code. Les plans d’esquisse, le format `.cadompart` et le déplacement du repère restent après.
 
+## 2026-09-26 — Sprint 21 codé : document et repère
+
+La session tient un document. `document()` en rend une copie : unité `mm`, origine au centre, X vers 3 h, Y vertical, Z vers 12 h, trièdre direct. `unite` écrit cette unité sur le document ; `Piece.unite` sort. Les pièces, l’historique et l’esquisse restent sur la session. [sprints/sprint-21-document-repere.md](../sprints/sprint-21-document-repere.md) est codé. Test : `packages/api-parametrique/tests/document.test.ts`.
+
 ## 2026-09-26 — Joint du dessus fermé
 
 Le dessus de la corne passe par le sommet de la face intérieure au coin de l’entrecorne, et l’habillage de la boîte reprend ces sommets sur le cylindre. Le triangle ouvert au départ de la chute se referme. La courbe du dessus reste celle déjà retenue. Test : `packages/api-parametrique/tests/corne.test.ts`.
+
+## 2026-09-26 — Panneau Document
+
+Panneau Dockview **Document**, sous les paramètres : unité et repère de référence, lus sur `session.document()`. Il suit la commande `unite`. Layout `v4`.
+
+## 2026-09-26 — Auteur du document
+
+Le document porte un auteur, vide au départ. `auteur` écrit le reste de la ligne, espaces compris. Annuler restaure le nom précédent. Le panneau Document l’affiche. Test : `packages/api-parametrique/tests/document.test.ts`.
+
+## 2026-09-26 — Version semantique du document
+
+Le document porte une version semver 2.0.0, `0.0.0` au départ. `version` n’accepte que `MAJEUR.MINEUR.CORRECTIF`, préversion comprise. Un texte hors format est refusé. Annuler restaure la version précédente. Le panneau Document l’affiche. Test : `packages/api-parametrique/tests/document.test.ts`.
 

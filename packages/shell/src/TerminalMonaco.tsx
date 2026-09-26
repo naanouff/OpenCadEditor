@@ -8,6 +8,8 @@ const LANGUE = 'opencad-commande'
 const MOTS = [
   'piece',
   'unite',
+  'auteur',
+  'version',
   'param',
   'esquisse',
   'cercle',

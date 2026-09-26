@@ -9,12 +9,13 @@ import {
 } from '@naanouff/w3dts-editor-ui'
 import { ArbreConstructionVue } from './ArbreConstructionVue.tsx'
 import { DebugVue } from './DebugVue.tsx'
+import { DocumentVue } from './DocumentVue.tsx'
 import { storeShell } from './storeShell.ts'
 import { TerminalMonaco } from './TerminalMonaco.tsx'
 import { afficher } from './viewportW3dts.ts'
 
-const STORAGE_KEY = 'opencad.shell.dockview.layout.v3'
-const REQUIRED = ['viewport', 'terminal', 'parametres', 'historique', 'debug'] as const
+const STORAGE_KEY = 'opencad.shell.dockview.layout.v4'
+const REQUIRED = ['viewport', 'terminal', 'parametres', 'historique', 'document', 'debug'] as const
 
 function useStoreShell() {
   const [revision, setRevision] = useState(() => storeShell.revision())
@@ -45,6 +46,13 @@ function buildDefaultLayout(api: DockviewApi): void {
     component: 'parametres',
     title: 'Paramètres',
     position: { referencePanel: 'historique', direction: 'below' },
+    params: { hideClose: true },
+  })
+  api.addPanel({
+    id: 'document',
+    component: 'document',
+    title: 'Document',
+    position: { referencePanel: 'parametres', direction: 'below' },
     params: { hideClose: true },
   })
   api.addPanel({
@@ -100,6 +108,10 @@ function DebugPanel(_props: IDockviewPanelProps) {
   return <DebugVue />
 }
 
+function DocumentPanel(_props: IDockviewPanelProps) {
+  return <DocumentVue />
+}
+
 function ParametresVue(_props: IDockviewPanelProps) {
   const { hote, revision } = useStoreShell()
   const liste = useMemo(() => [...hote.session.parametres()], [hote, revision])
@@ -145,6 +157,7 @@ export function App() {
       terminal: TerminalVue,
       parametres: ParametresVue,
       historique: HistoriqueVue,
+      document: DocumentPanel,
       debug: DebugPanel,
     }),
     [],

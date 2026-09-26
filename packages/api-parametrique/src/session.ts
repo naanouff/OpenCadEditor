@@ -4,13 +4,17 @@ import { domaineSolide } from './domaines/solide.ts'
 import { evaluateurProvisoire } from './evaluateur.ts'
 import { noyauProvisoire } from './noyau.ts'
 import { solveurProvisoire } from './solveur.ts'
+import { versionSemantique } from './versionSemantique.ts'
 import {
   ErreurApi,
+  REPERE_REFERENCE,
   type Contexte,
+  type Document,
   type Domaine,
   type Handler,
   type Operation,
   type Piece,
+  type Vecteur,
 } from './types.ts'
 
 type Action = {
@@ -28,11 +32,15 @@ function pieceVide(nom: string): Piece {
     dernierSupport: null,
     solide: null,
     compteur: 0,
-    unite: 'mm',
   }
 }
 
+function copieVecteur(vecteur: Vecteur): Vecteur {
+  return [vecteur[0], vecteur[1], vecteur[2]]
+}
+
 export class Session {
+  private readonly modele: Document = { auteur: '', version: '0.0.0', unite: 'mm', repere: REPERE_REFERENCE }
   private readonly pieces = new Map<string, Piece>()
   private active: string | null = null
   private readonly handlers = new Map<string, Handler>()
@@ -111,8 +119,36 @@ export class Session {
     return noyauProvisoire.decrire(piece.solide, piece.parametres)
   }
 
+  /** Copie du document : auteur, version, unité et repère de référence. */
+  document(): Document {
+    const { repere } = this.modele
+    return {
+      auteur: this.modele.auteur,
+      version: this.modele.version,
+      unite: this.modele.unite,
+      repere: {
+        origine: copieVecteur(repere.origine),
+        x: copieVecteur(repere.x),
+        y: copieVecteur(repere.y),
+        z: copieVecteur(repere.z),
+      },
+    }
+  }
+
   unite() {
-    return this.active ? this.pieceActive().unite : 'mm'
+    return this.modele.unite
+  }
+
+  definirUnite(nom: string) {
+    this.modele.unite = nom || 'mm'
+  }
+
+  definirAuteur(nom: string) {
+    this.modele.auteur = nom
+  }
+
+  definirVersion(nom: string) {
+    this.modele.version = versionSemantique(nom)
   }
 
   parametres() {
@@ -255,6 +291,11 @@ function domainePiece(session: Session): Domaine {
     verbes: {
       piece: (reste) => ({ type: 'piece', arguments: { nom: reste }, noms: [reste] }),
       unite: (reste) => ({ type: 'unite', arguments: { nom: reste }, noms: [] }),
+      auteur: (reste) => ({ type: 'auteur', arguments: { nom: reste }, noms: [] }),
+      version: (reste) => {
+        versionSemantique(reste)
+        return { type: 'version', arguments: { nom: reste }, noms: [] }
+      },
     },
     operations: {
       piece: {
@@ -268,11 +309,31 @@ function domainePiece(session: Session): Domaine {
       },
       unite: {
         dansHistorique: false,
-        faire(contexte, operation) {
-          contexte.piece.unite = operation.arguments.nom || 'mm'
+        faire(_contexte, operation) {
+          session.definirUnite(operation.arguments.nom)
         },
-        defaire(contexte) {
-          contexte.piece.unite = 'mm'
+        defaire() {
+          session.definirUnite('mm')
+        },
+      },
+      auteur: {
+        dansHistorique: false,
+        faire(_contexte, operation) {
+          operation.arguments.avant = session.document().auteur
+          session.definirAuteur(operation.arguments.nom)
+        },
+        defaire(_contexte, operation) {
+          session.definirAuteur(operation.arguments.avant ?? '')
+        },
+      },
+      version: {
+        dansHistorique: false,
+        faire(_contexte, operation) {
+          operation.arguments.avant = session.document().version
+          session.definirVersion(operation.arguments.nom)
+        },
+        defaire(_contexte, operation) {
+          session.definirVersion(operation.arguments.avant ?? '0.0.0')
         },
       },
     },

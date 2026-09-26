@@ -39,11 +39,12 @@ Ils vivent dans `packages/shell/src/surcharges/`. Un plugin Vite redirige les mo
 - Styles : `@naanouff/w3dts-editor-ui/styles.css` (tokens + Dockview) **avant** le premier rendu
 - Tailwind : `src/tailwind.css` scanne `src/` et `vendor/w3dts/packages/editor-ui/src` (primitives)
 - Thème : `loadThemeFromStorage`, `applyResolvedThemeToDocument`, `subscribeResolvedTheme`
-- `EditorDock` : clé `opencad.shell.dockview.layout.v1`, panneaux requis `viewport`, `terminal`, `parametres`
-- Layout par défaut : construction à gauche, paramètres sous l’arbre, viewport au centre, terminal en bas
+- `EditorDock` : clé `opencad.shell.dockview.layout.v4`, panneaux requis `viewport`, `terminal`, `parametres`, `historique`, `document`, `debug`
+- Layout par défaut : construction à gauche, paramètres sous l’arbre, document sous les paramètres, viewport au centre, terminal en bas
 - Panneaux métier : tokens CSS + primitive `Panel` (pas le store `viewer-editor`)
 - Terminal : Monaco comme le Script panel w3dts (`Entrée` exécute, `Maj+Entrée` nouvelle ligne, ↑ historique)
 - Construction : arbre de `session.historique()` (pièce → paramètres / esquisses / fonctions)
+- Document : auteur, version semantique, unité et repère de référence (`session.document()`)
 - Debug : bouton **Build carrure** (`scriptCarrure.ts`)
 
 `Hote` et les tests Vitest restent hors React. La page Vite est le consommateur UI.
