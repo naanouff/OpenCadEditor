@@ -23,6 +23,8 @@ function profil(contexte: Contexte, operation: Operation): Ajout | undefined {
         rayonRacine: evaluer(rayon),
         rayonBoutHaut: lire('rayon_bout_haut', 0),
         rayonBoutBas: lire('rayon_bout_bas', 0),
+        plongeeBout: lire('plongee_bout', 0),
+        epaisseurBout: lire('epaisseur_bout', 0),
         hauteur: evaluer(operation.arguments.expression),
       }
     }
@@ -45,6 +47,8 @@ function profil(contexte: Contexte, operation: Operation): Ajout | undefined {
         rayonRacine: 0,
         rayonBoutHaut: lire('rayon_bout_haut', 0),
         rayonBoutBas: lire('rayon_bout_bas', 0),
+        plongeeBout: lire('plongee_bout', 0),
+        epaisseurBout: lire('epaisseur_bout', 0),
         hauteur: evaluer(operation.arguments.expression),
       }
     }

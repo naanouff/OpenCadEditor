@@ -1,9 +1,9 @@
-import { congesDe, geometriePlan, maillerPan, pansDeCorne } from './corne.ts'
+import { congesDe, geometrieElevation, geometriePlan, maillerPan, pansDeCorne } from './corne.ts'
 import { classifieur, difference } from './csg.ts'
 import { FLECHE, normaleDe, pasFleche, tesseler } from './tesseler.ts'
 import { boite as boiteVolume, coque, cylindre as cylindreVolume } from './volumes.ts'
 import type { FaceExacte, Maillage, MaillageOmbre } from './types.ts'
-import type { PlanCorne } from './corne.ts'
+import type { ElevationCorne, PlanCorne } from './corne.ts'
 
 /** Marge des volumes de classement : deux surfaces confondues ne se classent pas. */
 const MARGE = 0.5
@@ -149,6 +149,100 @@ function horsDuFlanc(face: Boite, plan: PlanCorne, rayonPeau: number): Maillage 
   return { positions, indices }
 }
 
+/** Demi-cylindre sous l’arc du dessous, limité au débord. */
+function sousLeDessous(face: Boite, elevation: ElevationCorne, rayonPeau: number, fleche: number): Maillage {
+  const sigma = Math.sign(face.zmin + face.zmax) || 1
+  const u1 = Math.max(Math.abs(face.zmin), Math.abs(face.zmax))
+  const elev = geometrieElevation({
+    uPeau: rayonPeau,
+    u1,
+    H: face.ymax,
+    y0: face.ymin,
+    elevation,
+    rh: 0,
+    rb: 0,
+  })
+  if (!(elev.RBas < 1e12) || elev.yTipBas <= face.ymin + 1e-9) return { positions: [], indices: [] }
+  const xmin = Math.min(face.xmin, face.xmax) - JEU
+  const xmax = Math.max(face.xmin, face.xmax) + JEU
+  const centreY = face.ymin + elev.RBas
+  const centreZ = sigma * rayonPeau
+  const R = elev.RBas + JEU * 0.1
+  const cylindre = cylindreVolume({
+    axe: 'x',
+    rayon: R,
+    debut: xmin,
+    fin: xmax,
+    a: centreY,
+    b: centreZ,
+    segments: Math.max(24, pasFleche(elev.RBas, fleche)),
+  })
+  const hautPlein = boiteVolume({
+    xmin: xmin - JEU,
+    xmax: xmax + JEU,
+    ymin: centreY - JEU,
+    ymax: centreY + R + JEU,
+    zmin: Math.min(face.zmin, face.zmax) - R - JEU,
+    zmax: Math.max(face.zmin, face.zmax) + R + JEU,
+  })
+  const versCentre = boiteVolume({
+    xmin: xmin - JEU,
+    xmax: xmax + JEU,
+    ymin: face.ymin - R - JEU,
+    ymax: face.ymax + R + JEU,
+    zmin: sigma > 0 ? Math.min(face.zmin, face.zmax) - R - JEU : -rayonPeau + JEU,
+    zmax: sigma > 0 ? rayonPeau - JEU : Math.max(face.zmin, face.zmax) + R + JEU,
+  })
+  return difference(difference(cylindre, hautPlein), versCentre)
+}
+
+/** Demi-cylindre au-dessus de l’arc du dessus, limité au débord. */
+function horsDuDessus(face: Boite, elevation: ElevationCorne, rayonPeau: number, fleche: number): Maillage {
+  const sigma = Math.sign(face.zmin + face.zmax) || 1
+  const u1 = Math.max(Math.abs(face.zmin), Math.abs(face.zmax))
+  const elev = geometrieElevation({
+    uPeau: rayonPeau,
+    u1,
+    H: face.ymax,
+    y0: face.ymin,
+    elevation,
+    rh: 0,
+    rb: 0,
+  })
+  if (elev.chute <= 0 || !(elev.RHaut < 1e12)) return { positions: [], indices: [] }
+  const xmin = Math.min(face.xmin, face.xmax) - JEU
+  const xmax = Math.max(face.xmin, face.xmax) + JEU
+  const centreY = face.ymax - elev.RHaut
+  const centreZ = sigma * rayonPeau
+  const R = elev.RHaut + JEU * 0.1
+  const cylindre = cylindreVolume({
+    axe: 'x',
+    rayon: R,
+    debut: xmin,
+    fin: xmax,
+    a: centreY,
+    b: centreZ,
+    segments: Math.max(24, pasFleche(elev.RHaut, fleche)),
+  })
+  const basPlein = boiteVolume({
+    xmin: xmin - JEU,
+    xmax: xmax + JEU,
+    ymin: centreY - R - JEU,
+    ymax: centreY + JEU,
+    zmin: Math.min(face.zmin, face.zmax) - R - JEU,
+    zmax: Math.max(face.zmin, face.zmax) + R + JEU,
+  })
+  const versCentre = boiteVolume({
+    xmin: xmin - JEU,
+    xmax: xmax + JEU,
+    ymin: face.ymin - R - JEU,
+    ymax: face.ymax + R + JEU,
+    zmin: sigma > 0 ? Math.min(face.zmin, face.zmax) - R - JEU : -rayonPeau + JEU,
+    zmax: sigma > 0 ? rayonPeau - JEU : Math.max(face.zmin, face.zmax) + R + JEU,
+  })
+  return difference(difference(cylindre, basPlein), versCentre)
+}
+
 /** Les six plans d'une boîte, chacun avec sa normale constante. */
 function plansDeBoite(face: Boite): Facette[] {
   const { xmin, xmax, ymin, ymax, zmin, zmax } = face
@@ -257,6 +351,12 @@ export function ombrer(faces: FaceExacte[], fleche = FLECHE): MaillageOmbre {
             segments: Math.max(24, pasFleche(geo.Rr, fleche)),
           }),
         )
+      }
+      if (face.elevation && rayonPeau > 0) {
+        const dessus = horsDuDessus(face, face.elevation, rayonPeau, fleche)
+        if (dessus.indices.length > 0) volume = difference(volume, dessus)
+        const dessous = sousLeDessous(face, face.elevation, rayonPeau, fleche)
+        if (dessous.indices.length > 0) volume = difference(volume, dessous)
       }
       for (const conge of conges) {
         const a0 = Math.min(Math.abs(face.xmin), Math.abs(face.xmax))

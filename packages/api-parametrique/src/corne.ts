@@ -45,10 +45,10 @@ export function congesDe(face: Boite, conges: Conge[]) {
     const fin = Math.max(Math.abs(conge.debut), Math.abs(conge.fin))
     return debut >= a0 - 1e-6 && fin <= a1 + 1e-6 && Math.sign(conge.debut + conge.fin) === Math.sign(face.xmin + face.xmax)
   })
-  const milieu = (face.ymin + face.ymax) / 2
+  const parY = [...lies].sort((a, b) => a.y - b.y)
   return {
-    haut: lies.find((conge) => conge.y > milieu)?.rayon ?? 0,
-    bas: lies.find((conge) => conge.y <= milieu)?.rayon ?? 0,
+    haut: parY[parY.length - 1]?.rayon ?? 0,
+    bas: parY.length > 1 ? parY[0].rayon : parY[0]?.y <= (face.ymin + face.ymax) / 2 ? parY[0].rayon : 0,
   }
 }
 
@@ -88,6 +88,81 @@ export function geometriePlan(opts: {
   return { aBout, aRacine, Ptip, N, Vh, C, Qt, peau, angleQt, anglePeau, Rr, rayonPeau }
 }
 
+/** Part du débord que la chute du dessus occupe au plus : au-delà, l'arc tangent se redresse à la verticale. */
+const MARGE_ARC = 0.8
+
+/**
+ * Profil d’élévation Oyster : le bout de corne plonge vers le bracelet.
+ * `plongee` est la hauteur du bas du bout au-dessus du fond, `epaisseurBout` son épaisseur.
+ * La chute du dessus en découle : `hauteur - plongee - epaisseurBout`.
+ */
+export type ElevationCorne = {
+  plongee: number
+  epaisseurBout: number
+}
+
+/**
+ * Géométrie du profil en élévation le long du débord :
+ * dessus et dessous en arcs tangents à la peau (croissant Oyster).
+ */
+export function geometrieElevation(opts: {
+  uPeau: number
+  u1: number
+  H: number
+  y0: number
+  elevation: ElevationCorne
+  rh: number
+  rb: number
+}) {
+  const { uPeau, u1, H, y0, elevation, rh, rb } = opts
+  const uFinHaut = Math.max(uPeau + 1e-9, u1 - Math.max(rh, 0))
+  const uFinBas = Math.max(uPeau + 1e-9, u1 - Math.max(rb, 0))
+  const epaisseur = Math.max(0, Math.min(elevation.epaisseurBout, H - y0 - 0.1))
+  // Un arc tangent au dessus descend au plus de son propre débord ; la marge garde une pente finie au bout.
+  const chuteMax = MARGE_ARC * (uFinHaut - uPeau)
+  const plongeeMin = Math.max(0, H - y0 - epaisseur - chuteMax)
+  const plongeeMax = Math.max(0, H - y0 - epaisseur - 0.1)
+  const plongee = Math.min(Math.max(elevation.plongee, plongeeMin), plongeeMax)
+  const yTipBas = y0 + plongee
+  const yTipHaut = yTipBas + epaisseur
+  const chute = H - yTipHaut
+  const arc = (du: number, dy: number) =>
+    Math.abs(dy) > 1e-9 ? (du * du + dy * dy) / (2 * Math.abs(dy)) : Number.POSITIVE_INFINITY
+  const duHaut = uFinHaut - uPeau
+  const duBas = uFinBas - uPeau
+  const RHaut = arc(duHaut, chute)
+  const RBas = arc(duBas, yTipBas - y0)
+  const yHautPlan = (u: number) => {
+    if (!(RHaut < 1e12) || chute <= 0 || u <= uPeau) return H
+    const d = Math.min(u, uFinHaut) - uPeau
+    if (d <= 0) return H
+    if (d >= RHaut) return yTipHaut
+    return H - (RHaut - Math.sqrt(RHaut * RHaut - d * d))
+  }
+  const yBasPlan = (u: number) => {
+    if (!(RBas < 1e12) || u <= uPeau) return y0
+    const d = Math.min(u, uFinBas) - uPeau
+    if (d <= 0) return y0
+    if (d >= RBas) return yTipBas
+    return y0 + RBas - Math.sqrt(RBas * RBas - d * d)
+  }
+  return {
+    plongee,
+    chute,
+    epaisseur,
+    yTipHaut,
+    yTipBas,
+    RHaut,
+    RBas,
+    R: RBas,
+    uPeau,
+    uFinHaut,
+    uFinBas,
+    yHautPlan,
+    yBasPlan,
+  }
+}
+
 /**
  * Faces d'une corne : profil en plan (flanc droit et congé de racine) et profil en élévation
  * (congés de bout). Chaque face est bornée sur ses courbes exactes.
@@ -106,8 +181,24 @@ export function pansDeCorne(
   const u1 = Math.max(Math.abs(face.zmin), Math.abs(face.zmax))
   const y0 = face.ymin
   const H = face.ymax
-  const rh = Math.min(conges.haut, (H - y0) / 2, u1 - u0)
-  const rb = Math.min(conges.bas, (H - y0) / 2, u1 - u0)
+  const yTipBasProv = face.elevation ? face.ymin + Math.max(0, face.elevation.plongee) : face.ymin
+  const yTipHautProv = face.elevation
+    ? yTipBasProv + Math.max(0, Math.min(face.elevation.epaisseurBout, face.ymax - yTipBasProv))
+    : face.ymax
+  const rh = Math.min(conges.haut, (yTipHautProv - yTipBasProv) / 2, u1 - u0)
+  const rb = Math.min(conges.bas, (yTipHautProv - yTipBasProv) / 2, u1 - u0)
+  const elev =
+    face.elevation && rayonPeau > 0
+      ? geometrieElevation({
+          uPeau: rayonPeau,
+          u1,
+          H,
+          y0,
+          elevation: face.elevation,
+          rh,
+          rb,
+        })
+      : undefined
   const monde = (a: number, y: number, u: number): Point => [tau * a, y, sigma * u]
 
   const geo =
@@ -147,11 +238,25 @@ export function pansDeCorne(
     return geo.C[0] - Math.sqrt(reste)
   }
 
-  const yHaut = (u: number) => (rh > 0 && u > u1 - rh ? H - rh + racine(rh, u - (u1 - rh)) : H)
-  const yBas = (u: number) => (rb > 0 && u > u1 - rb ? y0 + rb - racine(rb, u - (u1 - rb)) : y0)
+  const yHautPlan = (u: number) => (elev ? elev.yHautPlan(u) : H)
+  const yBasPlan = (u: number) => (elev ? elev.yBasPlan(u) : y0)
+  const yHaut = (u: number) => {
+    if (rh > 0 && u > u1 - rh) {
+      const cy = yHautPlan(u1) - rh
+      return cy + racine(rh, u - (u1 - rh))
+    }
+    return yHautPlan(u)
+  }
+  const yBas = (u: number) => {
+    if (rb > 0 && u > u1 - rb) {
+      const cy = yBasPlan(u1) + rb
+      return cy - racine(rb, u - (u1 - rb))
+    }
+    return yBasPlan(u)
+  }
   const uElevation = (y: number) => {
-    if (rh > 0 && y > H - rh) return u1 - rh + racine(rh, y - (H - rh))
-    if (rb > 0 && y < y0 + rb) return u1 - rb + racine(rb, y0 + rb - y)
+    if (rh > 0 && y > yHautPlan(u1) - rh) return u1 - rh + racine(rh, y - (yHautPlan(u1) - rh))
+    if (rb > 0 && y < yBasPlan(u1) + rb) return u1 - rb + racine(rb, yBasPlan(u1) + rb - y)
     return u1
   }
 
@@ -164,13 +269,9 @@ export function pansDeCorne(
   }
 
   const congesBout = [
-    { rayon: rh, centreY: H - rh, debut: 0, pans: pansHaut },
-    { rayon: rb, centreY: y0 + rb, debut: Math.PI / 2, pans: pansBas },
+    { rayon: rh, centreY: yHautPlan(u1) - rh, debut: 0, pans: pansHaut },
+    { rayon: rb, centreY: yBasPlan(u1) + rb, debut: Math.PI / 2, pans: pansBas },
   ].filter((conge) => conge.rayon > 0)
-  const angleDe = (conge: (typeof congesBout)[number], u: number) => {
-    const sinus = Math.min(1, Math.max(0, (u - (u1 - conge.rayon)) / conge.rayon))
-    return conge.debut === 0 ? Math.asin(sinus) : Math.PI - Math.asin(sinus)
-  }
   const pointDe = (conge: (typeof congesBout)[number], phi: number) => ({
     y: conge.centreY + conge.rayon * Math.cos(phi),
     u: u1 - conge.rayon + conge.rayon * Math.sin(phi),
@@ -198,24 +299,90 @@ export function pansDeCorne(
     : []
   const largeurs = echantillons(a0, aMax, 6, cassuresA)
 
-  for (const [y, limite, sens] of [
-    [H, u1 - rh, 1],
-    [y0, u1 - rb, -1],
-  ] as const) {
-    // La dernière colonne se réduit au point où la racine touche la peau : elle ferme la bande.
-    const colonnes = largeurs.map((a): [Point, Point] => {
-      const depart = uDepart(a)
-      return [monde(a, y, depart), monde(a, y, Math.max(depart, Math.min(uPlan(a), limite)))]
+  // Dessus : arc le long de u, colonnes selon u pour suivre la courbure.
+  {
+    const uMin = Math.min(...largeurs.map((a) => uDepart(a)))
+    const usHaut = echantillons(
+      uMin,
+      u1 - rh,
+      Math.max(6, pansArc(elev?.RHaut && elev.RHaut < 1e12 ? elev.RHaut : 20, Math.PI / 4, fleche)),
+      [],
+    )
+    const aAu = (u: number) => {
+      const surPeau = rayonPeau > u ? racine(rayonPeau, u) : 0
+      return Math.max(a0, surPeau)
+    }
+    const colonnes = usHaut.map((u): [Point, Point] => {
+      const aDeb = aAu(u)
+      const aFin = Math.max(aDeb, Math.min(aPlan(u), aMax))
+      return [monde(aDeb, yHautPlan(u), u), monde(aFin, yHautPlan(u), u)]
     })
-    if (colonnes.length > 1) pans.push({ colonnes, normale: planNormale([0, sens, 0]) })
+    if (colonnes.length > 1) {
+      pans.push({
+        colonnes,
+        normale: (point) => {
+          const u = Math.abs(point[2])
+          if (!elev || !(elev.RHaut < 1e12) || u <= elev.uPeau) return [0, 1, 0]
+          const d = Math.min(u, elev.uFinHaut) - elev.uPeau
+          const reste = elev.RHaut * elev.RHaut - d * d
+          const deriv = reste > 1e-12 ? -d / Math.sqrt(reste) : 0
+          const longueurN = Math.hypot(1, deriv) || 1
+          return [0, 1 / longueurN, sigma * (-deriv / longueurN)]
+        },
+      })
+    }
+  }
+
+  // Dessous : arc le long de u, colonnes selon u pour suivre la courbure.
+  {
+    const uMin = Math.min(...largeurs.map((a) => uDepart(a)))
+    const usBas = echantillons(
+      uMin,
+      u1 - rb,
+      Math.max(6, pansArc(elev?.RBas && elev.RBas < 1e12 ? elev.RBas : 20, Math.PI / 4, fleche)),
+      [],
+    )
+    const aAu = (u: number) => {
+      const surPeau = rayonPeau > u ? racine(rayonPeau, u) : 0
+      return Math.max(a0, surPeau)
+    }
+    const colonnes = usBas.map((u): [Point, Point] => {
+      const aDeb = aAu(u)
+      const aFin = Math.max(aDeb, Math.min(aPlan(u), aMax))
+      return [monde(aDeb, yBasPlan(u), u), monde(aFin, yBasPlan(u), u)]
+    })
+    if (colonnes.length > 1) {
+      pans.push({
+        colonnes,
+        normale: (point) => {
+          const u = Math.abs(point[2])
+          if (!elev || !(elev.RBas < 1e12) || u <= elev.uPeau) return [0, -1, 0]
+          const d = Math.min(u, elev.uFinBas) - elev.uPeau
+          const reste = elev.RBas * elev.RBas - d * d
+          const deriv = reste > 1e-12 ? d / Math.sqrt(reste) : 0
+          const longueurN = Math.hypot(1, deriv) || 1
+          return [0, -1 / longueurN, sigma * (deriv / longueurN)]
+        },
+      })
+    }
   }
 
   const hauteurs = congesBout.flatMap((conge, rang) => angles[rang].map((phi) => pointDe(conge, phi).y))
   {
     const depart = uDepart(a0)
-    const colonnes = echantillons(y0, H, 1, hauteurs).map((y): [Point, Point] => [
-      monde(a0, y, depart),
-      monde(a0, y, Math.max(depart, Math.min(uElevation(y), uPlan(a0)))),
+    const usInterieur = echantillons(
+      depart,
+      Math.min(uPlan(a0), u1),
+      6,
+      [
+        ...hauteurs.map((y) => uElevation(y)),
+        u1 - rh,
+        u1 - rb,
+      ],
+    )
+    const colonnes = usInterieur.map((u): [Point, Point] => [
+      monde(a0, yBas(u), u),
+      monde(a0, yHaut(u), u),
     ])
     pans.push({ colonnes, normale: planNormale([-1, 0, 0]) })
   }
@@ -251,11 +418,13 @@ export function pansDeCorne(
   }
 
   const aBout = geo?.aBout ?? Math.max(Math.abs(face.xmin), Math.abs(face.xmax))
-  if (aBout > a0 + 1e-9 && H - rh > y0 + rb + 1e-9) {
+  const yBoutBas = yBasPlan(u1) + rb
+  const yBoutHaut = yHautPlan(u1) - rh
+  if (aBout > a0 + 1e-9 && yBoutHaut > yBoutBas + 1e-9) {
     pans.push({
       colonnes: [
-        [monde(a0, y0 + rb, u1), monde(a0, H - rh, u1)],
-        [monde(aBout, y0 + rb, u1), monde(aBout, H - rh, u1)],
+        [monde(a0, yBoutBas, u1), monde(a0, yBoutHaut, u1)],
+        [monde(aBout, yBoutBas, u1), monde(aBout, yBoutHaut, u1)],
       ],
       normale: planNormale([0, 0, 1]),
     })

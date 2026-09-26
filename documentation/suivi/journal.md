@@ -202,3 +202,17 @@ Le dessus et le dessous ferment sur le flanc au pied des congés de bout et vont
 ## 2026-09-26 — Arêtes lisses du congé de racine
 
 Le congé de racine raccorde le flanc et la peau en tangence : ses deux bords verticaux sont des arêtes lisses. Un `Pan` marque ses colonnes `lisses`, et `contourPan` les omet du fil de fer. Test : `packages/shell/tests/figures.test.ts`.
+
+## 2026-09-26 — Sprint 19 préparé : profil d’élévation Oyster
+
+[sprints/sprint-19-elevation-cornes-oyster.md](../sprints/sprint-19-elevation-cornes-oyster.md) reprend les cotes de [veille/geometrie-cornes-references.md](../veille/geometrie-cornes-references.md) d’après ref10–ref12 : croissant, chute du dessus 1,5 mm, épaisseur au bout 3,2 mm. Le dessus et le dessous sont des arcs tangents à la peau. Le chanfrein poli reste au sprint 20.
+
+## 2026-09-26 — Sprint 19 codé : croissant d’élévation
+
+Le script porte `chute_dessus` 1,5 et `epaisseur_bout` 3,2. `geometrieElevation` calcule les deux arcs ; `pansDeCorne` maille le dessus et le dessous le long du débord ; `ombrer` rogne le volume par demi-cylindres limités au débord. La barrette est à mi-épaisseur du bout. [sprints/sprint-19-elevation-cornes-oyster.md](../sprints/sprint-19-elevation-cornes-oyster.md) est codé. Le chanfrein poli reste au sprint 20.
+
+## 2026-09-26 — Cotes du plan Oyster et plongée du bout
+
+[references/plan01.jpg](../references/plan01.jpg) donne des cotes directes, relevées dans [veille/geometrie-cornes-references.md](../veille/geometrie-cornes-references.md). Le script de carrure les porte : `diametre_boite` 36, `longueur_corne` 4,5 pour un corne à corne de 45 mm, `diametre_barrette` 0,9, `diametre_tige` 3 pour l’alésage du tube de couronne, `epaisseur_bout` 2. `diametre_lunette` et `diametre_fond` suivent à 32 et 30 pour rester dans la carrure.
+
+`chute_dessus` devient `plongee_bout`, la hauteur du bas du bout au-dessus du fond : le bout plonge vers le bracelet, comme sur ref12 et sur la vue de côté du plan. `geometrieElevation` en déduit la chute du dessus. Un arc tangent au dessus descend au plus de son propre débord, la chute est donc bornée à 80 % du débord utile et la plongée remonte d’autant : avec `hauteur_carrure` 8, la plongée s’arrête à 3,2 mm. La plongée franche des références demande l’épaisseur de racine de la coupe A-A (4,00 mm), qui ouvre le sprint suivant. Tests : `packages/api-parametrique/tests/carrure.test.ts`, `packages/shell/tests/scriptCarrure.test.ts`.

@@ -41,6 +41,8 @@ export type Ajout =
       rayonRacine: number
       rayonBoutHaut: number
       rayonBoutBas: number
+      plongeeBout: number
+      epaisseurBout: number
       hauteur: number
     }
   | { sorte: 'cercle'; support: string; rayon: number; longueur: number }
@@ -120,6 +122,8 @@ export type FaceExacte =
       zmax: number
       /** Contour en plan Oyster : absent = boîte rectangulaire. */
       plan?: { largeurBout: number; largeurRacine: number; rayonRacine: number }
+      /** Profil d’élévation Oyster : bout plongeant, dessus en pente, dessous creusé. */
+      elevation?: { plongee: number; epaisseurBout: number }
     }
   | {
       /** Congé creux à la racine : cylindre d'axe Y, hors de la peau. */

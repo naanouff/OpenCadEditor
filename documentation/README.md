@@ -46,5 +46,6 @@ Suivi du projet et notes de travail. Ce dossier n’appartient pas au moteur : l
 | [sprints/sprint-17-profil-elevation-cornes.md](sprints/sprint-17-profil-elevation-cornes.md) | Sprint de ces congés, test rouge puis `ombrer` |
 | [veille/geometrie-cornes-references.md](veille/geometrie-cornes-references.md) | Forme des cornes Oyster estimée sur les photos de `references/` |
 | [sprints/sprint-18-contour-cornes-oyster.md](sprints/sprint-18-contour-cornes-oyster.md) | Sprint du contour en plan : coin effilé, flanc droit, racine creuse |
+| [sprints/sprint-19-elevation-cornes-oyster.md](sprints/sprint-19-elevation-cornes-oyster.md) | Sprint du profil d’élévation : dessus en pente, dessous creusé |
 
 Le modeleur ne démarre pas tant que la veille n’est pas écrite. OpenCadEditor est l’éditeur. CADOM (`.cadom`) est le format d’assemblage OpenCAD, pas un logiciel. L’intention est dans `.cadompart`. Ce découpage est consigné dans le journal.

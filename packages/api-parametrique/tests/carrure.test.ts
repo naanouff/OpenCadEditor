@@ -3,6 +3,7 @@ import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
 import { ErreurApi, Session, valeurTypee, type Maillage } from '../src/index.ts'
+import { congesDe, geometrieElevation, pansDeCorne } from '../src/corne.ts'
 
 function rayonExterieur(maillage: Maillage) {
   let max = 0
@@ -35,6 +36,8 @@ param longueur_tube 2
 param diametre_tige 1.2
 param rayon_bout_haut 1
 param rayon_bout_bas 0.8
+param plongee_bout 3.3
+param epaisseur_bout 3.2
 
 esquisse plan.dessus
 cercle
@@ -331,6 +334,98 @@ cote diametre diametre_lunette
     for (const nombre of parCorne.values()) expect(nombre).toBeGreaterThan(100)
   })
 
+  it('abaisse le dessus et remonte le dessous au bout', () => {
+    const session = new Session()
+    session.executer(script.split('esquisse plan.12h')[0])
+    const boites = session.frontiere().faces.filter((face) => face.sorte === 'boite')
+    expect(boites[0]?.elevation).toMatchObject({ plongee: 3.3, epaisseurBout: 3.2 })
+    const { positions } = session.maillage()
+    let yMaxAuBout = 0
+    let yMinAuBout = 8
+    for (let i = 0; i < positions.length; i += 3) {
+      const y = positions[i + 1]
+      const z = Math.abs(positions[i + 2])
+      if (z < 24.05) continue
+      yMaxAuBout = Math.max(yMaxAuBout, y)
+      yMinAuBout = Math.min(yMinAuBout, y)
+    }
+    expect(yMaxAuBout).toBeLessThan(6.6)
+    expect(yMaxAuBout).toBeGreaterThan(5.3)
+    expect(yMinAuBout).toBeGreaterThan(3.0)
+    expect(yMinAuBout).toBeLessThan(4.0)
+  })
+
+  it('fait plonger le bout quand plongee_bout descend', () => {
+    const session = new Session()
+    session.executer(script.split('esquisse plan.12h')[0])
+    session.commande('param plongee_bout 2.5')
+    const boite = session.frontiere().faces.find((face) => face.sorte === 'boite')!
+    expect(boite.elevation).toMatchObject({ plongee: 2.5, epaisseurBout: 3.2 })
+    const { positions } = session.maillage()
+    let yMaxAuBout = 0
+    let yMinAuBout = 8
+    for (let i = 0; i < positions.length; i += 3) {
+      const y = positions[i + 1]
+      if (Math.abs(positions[i + 2]) < 24.05) continue
+      yMaxAuBout = Math.max(yMaxAuBout, y)
+      yMinAuBout = Math.min(yMinAuBout, y)
+    }
+    expect(yMaxAuBout).toBeLessThan(5.5)
+    expect(yMinAuBout).toBeLessThan(3.1)
+  })
+
+  it('retient la plongée au débord que l’arc du dessus peut descendre', () => {
+    const elev = geometrieElevation({
+      uPeau: 20,
+      u1: 24.2,
+      H: 8,
+      y0: 0,
+      elevation: { plongee: 0, epaisseurBout: 3.2 },
+      rh: 1,
+      rb: 0.8,
+    })
+    expect(elev.chute).toBeCloseTo(0.8 * (24.2 - 1 - 20), 5)
+    expect(elev.plongee).toBeCloseTo(8 - 3.2 - elev.chute, 5)
+    expect(elev.RHaut).toBeGreaterThan(elev.chute)
+    expect(elev.yHautPlan(elev.uFinHaut)).toBeCloseTo(elev.yTipHaut, 5)
+  })
+
+  it('suit l’arc du dessous entre la peau et le bout', () => {
+    const session = new Session()
+    session.executer(script.split('esquisse plan.12h')[0])
+    const boite = session.frontiere().faces.find((face) => face.sorte === 'boite' && face.zmax > 0)!
+    expect(boite.elevation).toMatchObject({ plongee: 3.3, epaisseurBout: 3.2 })
+    const elev = geometrieElevation({
+      uPeau: 20,
+      u1: 24.2,
+      H: 8,
+      y0: 0,
+      elevation: boite.elevation!,
+      rh: 1,
+      rb: 0.8,
+    })
+    expect(elev.yBasPlan(20)).toBeCloseTo(0, 5)
+    expect(elev.yBasPlan(elev.uFinBas)).toBeCloseTo(elev.yTipBas, 5)
+    expect(elev.yHautPlan(elev.uFinHaut)).toBeCloseTo(elev.yTipHaut, 5)
+    const conges = session.frontiere().faces.filter((face) => face.sorte === 'conge')
+    const pans = pansDeCorne(boite, congesDe(boite, conges as never), boite.plan, undefined, 20)
+    const dessous = pans.find((pan) => {
+      if (pan.normale(pan.colonnes[0][0])[1] >= -0.5) return false
+      const us = pan.colonnes.map((c) => Math.abs(c[0][2]))
+      return Math.max(...us) - Math.min(...us) > 2
+    })!
+    let surArc = 0
+    for (const [pied, tete] of dessous.colonnes) {
+      for (const p of [pied, tete]) {
+        const u = Math.abs(p[2])
+        if (u <= 20.2 || u >= elev.uFinBas - 0.05) continue
+        expect(p[1]).toBeCloseTo(elev.yBasPlan(u), 3)
+        surArc += 1
+      }
+    }
+    expect(surArc).toBeGreaterThan(0)
+  })
+
   it('arrondit les coins de bout en élévation', () => {
     const session = new Session()
     session.executer(script.split('esquisse plan.12h')[0])
@@ -338,6 +433,8 @@ cote diametre diametre_lunette
     let yMaxAuBout = 0
     let yMinAuBout = 8
     let surCongéHaut = 0
+    const yTipBas = 3.3
+    const yTipHaut = yTipBas + 3.2
     for (let i = 0; i < positions.length; i += 3) {
       const y = positions[i + 1]
       const z = Math.abs(positions[i + 2])
@@ -345,13 +442,13 @@ cote diametre diametre_lunette
         yMaxAuBout = Math.max(yMaxAuBout, y)
         yMinAuBout = Math.min(yMinAuBout, y)
       }
-      const cy = 8 - 1
+      const cy = yTipHaut - 1
       const cz = 24.2 - 1
-      if (Math.abs(Math.hypot(y - cy, z - cz) - 1) < 0.2 && y > 6.5 && z > 22.5) surCongéHaut += 1
+      if (Math.abs(Math.hypot(y - cy, z - cz) - 1) < 0.25 && y > yTipHaut - 1.6 && z > 22.5) surCongéHaut += 1
     }
-    expect(yMaxAuBout).toBeLessThan(7.6)
-    expect(yMinAuBout).toBeGreaterThan(0.1)
-    expect(yMinAuBout).toBeLessThan(1)
+    expect(yMaxAuBout).toBeLessThan(yTipHaut - 0.05)
+    expect(yMinAuBout).toBeGreaterThan(yTipBas - 0.4)
+    expect(yMinAuBout).toBeLessThan(yTipBas + 1.2)
     expect(surCongéHaut).toBeGreaterThan(0)
     session.commande('param rayon_bout_haut 1.5')
     expect(session.frontiere().faces.filter((face) => face.sorte === 'conge' && face.rayon === 1.5)).toHaveLength(4)
@@ -362,7 +459,8 @@ cote diametre diametre_lunette
     session.executer(script.split('esquisse plan.3h')[0])
     const trous = session.frontiere().faces.filter((face) => face.sorte === 'traverse' && face.rayon < 1)
     expect(trous).toHaveLength(4)
-    expect(trous[0]).toMatchObject({ rayon: 0.55, y: 4 })
+    expect(trous[0]).toMatchObject({ rayon: 0.55 })
+    expect(trous[0]!.y).toBeCloseTo(3.3 + 3.2 / 2, 5)
     expect(Math.abs(trous[0]!.z)).toBeCloseTo(24.2 - 1.2, 5)
     const flancAuTrou = 12.2 + (1.2 * (16 - 12.2)) / (24.2 - 12)
     for (const trou of trous) {

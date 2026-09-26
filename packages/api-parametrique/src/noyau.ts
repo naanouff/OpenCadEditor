@@ -1,5 +1,5 @@
 import { evaluateurProvisoire } from './evaluateur.ts'
-import { geometriePlan } from './corne.ts'
+import { geometrieElevation, geometriePlan } from './corne.ts'
 import { ombrer } from './ombre.ts'
 import type { Ajout, Enlevement, Frontiere, NoyauGeometrique, Solide } from './types.ts'
 
@@ -116,6 +116,10 @@ function figures(
       profilAjout && rayonRacine > 0
         ? { largeurBout, largeurRacine, rayonRacine }
         : undefined
+    const elevation =
+      profilAjout && profilAjout.epaisseurBout > 0
+        ? { plongee: profilAjout.plongeeBout, epaisseurBout: profilAjout.epaisseurBout }
+        : undefined
     const bout = rayonExt + corne.debord
     const geo =
       plan &&
@@ -124,6 +128,17 @@ function figures(
         u1: bout,
         plan,
         rayonPeau: rayonExt,
+      })
+    const elev =
+      elevation &&
+      geometrieElevation({
+        uPeau: rayonExt,
+        u1: bout,
+        H: corne.hauteur,
+        y0: 0,
+        elevation,
+        rh: profilAjout?.rayonBoutHaut ?? 0,
+        rb: profilAjout?.rayonBoutBas ?? 0,
       })
     const exterieur = geo
       ? Math.max(interieur + largeurRacine, geo.Qt[0], geo.peau[0]) + 0.05
@@ -144,6 +159,7 @@ function figures(
         zmin,
         zmax,
         ...(plan ? { plan } : {}),
+        ...(elevation ? { elevation } : {}),
       })
       if (profilAjout) {
         const haut = profilAjout.rayonBoutHaut
@@ -153,12 +169,14 @@ function figures(
         const aBout = a0 + largeurBout
         const debutCongé = xmin > 0 ? a0 : xmax < 0 ? -aBout : xmin
         const finCongé = xmin > 0 ? aBout : xmax < 0 ? -a0 : xmax
-        if (haut > 0 && haut < corne.hauteur) {
+        const yTipHaut = elev?.yTipHaut ?? corne.hauteur
+        const yTipBas = elev?.yTipBas ?? 0
+        if (haut > 0 && haut < yTipHaut - yTipBas) {
           faces.push({
             sorte: 'conge',
             debut: debutCongé,
             fin: finCongé,
-            y: corne.hauteur - haut,
+            y: yTipHaut - haut,
             z: versPlus ? zmax - haut : zmin + haut,
             rayon: haut,
             angleDeb: versPlus ? 0 : -Math.PI / 2,
@@ -166,12 +184,12 @@ function figures(
             dehors: 1,
           })
         }
-        if (bas > 0 && bas < corne.hauteur) {
+        if (bas > 0 && bas < yTipHaut - yTipBas) {
           faces.push({
             sorte: 'conge',
             debut: debutCongé,
             fin: finCongé,
-            y: bas,
+            y: yTipBas + bas,
             z: versPlus ? zmax - bas : zmin + bas,
             rayon: bas,
             angleDeb: versPlus ? Math.PI / 2 : Math.PI,
@@ -212,6 +230,7 @@ function figures(
         : corne.debord / 2
       const z = bout - recul
       const aFin = exterieur
+      const yBarrette = elev ? (elev.yTipHaut + elev.yTipBas) / 2 : hauteur / 2
       for (const [debut, fin, cote] of [
         [interieur, aFin, z],
         [-aFin, -interieur, z],
@@ -223,7 +242,7 @@ function figures(
           rayon: barrette.rayon,
           debut,
           fin,
-          y: hauteur / 2,
+          y: yBarrette,
           z: cote,
           dehors: -1,
         })
