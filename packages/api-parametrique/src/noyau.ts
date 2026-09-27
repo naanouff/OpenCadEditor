@@ -75,18 +75,79 @@ export const noyauProvisoire: NoyauGeometrique = {
     return { faces }
   },
   poser(esquisse, solide, parametres) {
+    const evaluer = (expression: string) => evaluateurProvisoire.evaluer(expression, parametres)
     const cercles = esquisse.entites
       .filter((entite) => entite.sorte === 'cercle' && entite.diametre)
       .map((entite) => {
-        const valeur = evaluateurProvisoire.evaluer(entite.diametre as string, parametres)
+        const valeur = evaluer(entite.diametre as string)
         return {
           rayon: valeur / 2,
           y: hauteurDuPlan(esquisse.support, solide, parametres),
           valeur,
         }
       })
-    return { support: esquisse.support, cercles }
+    const traits: number[] = []
+    const points: [number, number][] = []
+    for (const entite of esquisse.entites) {
+      if (entite.sorte === 'segment' && entite.rayon !== undefined && entite.hauteur !== undefined) {
+        points.push([evaluer(entite.rayon), evaluer(entite.hauteur)])
+      }
+    }
+    for (let i = 1; i < points.length; i++) {
+      traits.push(points[i - 1][0], points[i - 1][1], points[i][0], points[i][1])
+    }
+    const cotesLineaires = cotesDuProfil(points)
+    let rangRectangle = 0
+    for (const entite of esquisse.entites) {
+      if (entite.sorte !== 'rectangle' || !entite.longueur || !entite.largeur) continue
+      const lu = evaluer(entite.longueur) / 2
+      const lv = evaluer(entite.largeur) / 2
+      const coins: [number, number][] = [
+        [-lu, -lv],
+        [lu, -lv],
+        [lu, lv],
+        [-lu, lv],
+      ]
+      for (let i = 0; i < coins.length; i++) {
+        const a = coins[i]
+        const b = coins[(i + 1) % coins.length]
+        traits.push(a[0], a[1], b[0], b[1])
+      }
+      const hors = -(4 + rangRectangle * 3)
+      cotesLineaires.push(
+        { a: [-lu, -lv], b: [lu, -lv], decalage: hors, texte: texteCote(lu * 2) },
+        { a: [lu, -lv], b: [lu, lv], decalage: hors, texte: texteCote(lv * 2) },
+      )
+      rangRectangle += 1
+    }
+    return { support: esquisse.support, cercles, traits, cotesLineaires }
   },
+}
+
+function texteCote(valeur: number) {
+  return String(Math.round(Math.abs(valeur) * 1000) / 1000)
+}
+
+/** Une cote de hauteur par ordonnée, une cote de rayon par abscisse, hors de l'origine. */
+function cotesDuProfil(points: [number, number][]) {
+  const cotes: { a: [number, number]; b: [number, number]; decalage: number; texte: string }[] = []
+  const hauteurs = new Set<number>()
+  const rayons = new Set<number>()
+  let pile = 0
+  for (const [u, v] of points) {
+    const ordonnee = Math.round(v * 1e4) / 1e4
+    const abscisse = Math.round(u * 1e4) / 1e4
+    if (Math.abs(ordonnee) > 1e-4 && !hauteurs.has(ordonnee)) {
+      hauteurs.add(ordonnee)
+      cotes.push({ a: [0, 0], b: [0, v], decalage: 4 + pile * 4, texte: texteCote(v) })
+      pile += 1
+    }
+    if (Math.abs(abscisse) > 1e-4 && !rayons.has(abscisse)) {
+      rayons.add(abscisse)
+      cotes.push({ a: [0, v], b: [u, v], decalage: 4, texte: texteCote(u) })
+    }
+  }
+  return cotes
 }
 
 /** La matière ajoutée s'enfonce jusqu'au passage : l'enveloppe de l'anneau la borne. */

@@ -17,6 +17,7 @@ Suivi du projet et notes de travail. Ce dossier n’appartient pas au moteur : l
 | [veille/api-architecture.md](veille/api-architecture.md) | Socle modulaire de l’API, pile d’actions, domaines |
 | [sprints/sprint-03-api-carrure.md](sprints/sprint-03-api-carrure.md) | Socle de l’API carrure, tests du script et de la pile |
 | [shell/plan.md](shell/plan.md) | Shell : terminal, viewport, maillage, registres |
+| [shell/genericite.md](shell/genericite.md) | Critique : l’hôte est générique, la génération est un compilateur de carrure |
 | [shell/editor-ui.md](shell/editor-ui.md) | Chrome Dockview via `@naanouff/w3dts-editor-ui`, sync `develop` |
 | [sprints/sprint-04-shell.md](sprints/sprint-04-shell.md) | Shell testable : terminal, maillage de l’anneau, viewport |
 | [veille/portee-lunette.md](veille/portee-lunette.md) | Épaulement du dessus, après l’anneau |
@@ -50,5 +51,9 @@ Suivi du projet et notes de travail. Ce dossier n’appartient pas au moteur : l
 | [sprints/sprint-20-elevation-elliptique-cornes.md](sprints/sprint-20-elevation-elliptique-cornes.md) | Sprint des quarts d’ellipse : le bout plonge au ras du fond |
 | [veille/modele-document.md](veille/modele-document.md) | Premier palier du modèle : document, unité, repère de référence |
 | [sprints/sprint-21-document-repere.md](sprints/sprint-21-document-repere.md) | Sprint de ce palier : la session tient le document |
+| [veille/arbre-fonctions.md](veille/arbre-fonctions.md) | Arbre de fonctions : origine, esquisse sous la fonction, pointe |
+| [sprints/sprint-22-arbre-fonctions.md](sprints/sprint-22-arbre-fonctions.md) | Sprint du palier 1 : l’arbre affiche les fonctions, sans changer la frontière |
+| [veille/vis-maillage.md](veille/vis-maillage.md) | Vis : fermeture sous la tête, normales portées par le booléen, fil de fer de faces, vitesse |
+| [sprints/sprint-23-vis-maillage.md](sprints/sprint-23-vis-maillage.md) | Sprint de ces quatre corrections, sans changer la frontière de la carrure |
 
 Le modeleur ne démarre pas tant que la veille n’est pas écrite. OpenCadEditor est l’éditeur. CADOM (`.cadom`) est le format d’assemblage OpenCAD, pas un logiciel. L’intention est dans `.cadompart`. Ce découpage est consigné dans le journal.

@@ -78,12 +78,9 @@ function ViewportVue(_props: IDockviewPanelProps) {
   useEffect(() => {
     const canevas = ref.current
     if (!canevas) return
-    void afficher(
-      canevas,
-      hote.session.frontiere(),
-      hote.session.esquisseCourante(),
-      hote.session.maillage(),
-    ).catch((erreur: unknown) => {
+    const vue = storeShell.esquisseVue()
+    const posee = vue === null ? hote.session.esquisseCourante() : hote.session.esquisseDepuis(vue)
+    void afficher(canevas, hote.session.frontiere(), posee, hote.session.maillage()).catch((erreur: unknown) => {
       console.error(erreur instanceof Error ? erreur.message : String(erreur))
     })
   }, [hote, revision])

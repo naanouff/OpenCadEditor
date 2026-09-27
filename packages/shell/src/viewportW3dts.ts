@@ -1,6 +1,6 @@
 import type { EsquissePosee, Frontiere, MaillageOmbre } from '@opencad/api-parametrique'
 import { documentCad } from './documentCad.ts'
-import { poseGlyphe, repere, repereSurface, vueDuPlan } from './dessin.ts'
+import { coteSegment, poseGlyphe, repere, repereSurface, vueDuPlan } from './dessin.ts'
 import { remplacementEsquisse } from './entree.ts'
 import policeUrl from '../../../vendor/w3dts/node_modules/.pnpm/@fontsource+open-sans@5.2.7/node_modules/@fontsource/open-sans/files/open-sans-latin-400-normal.woff?url'
 import { createTextMeshFromFont } from '@naanouff/w3dts-text-mesh'
@@ -31,10 +31,62 @@ import { quat, vec3 } from 'gl-matrix'
 
 const chargeurVide = { load: async () => null }
 
+type Enceinte = { min: [number, number, number]; max: [number, number, number] }
+
+function enceinteDefaut(): Enceinte {
+  return { min: [-0.03, -0.005, -0.03], max: [0.03, 0.02, 0.03] }
+}
+
+/** Boîte des positions, avec une marge. Vide : le cadre par défaut. */
+function enceinteDe(positions: number[], marge: number): Enceinte {
+  if (positions.length < 3) return enceinteDefaut()
+  const min: [number, number, number] = [Infinity, Infinity, Infinity]
+  const max: [number, number, number] = [-Infinity, -Infinity, -Infinity]
+  for (let i = 0; i < positions.length; i += 3) {
+    for (let axe = 0; axe < 3; axe++) {
+      const valeur = positions[i + axe]
+      if (valeur < min[axe]) min[axe] = valeur
+      if (valeur > max[axe]) max[axe] = valeur
+    }
+  }
+  return {
+    min: [min[0] - marge, min[1] - marge, min[2] - marge],
+    max: [max[0] + marge, max[1] + marge, max[2] + marge],
+  }
+}
+
+/** Élargit le cadre si le maillage en sort. La carrure, déjà dedans, ne le déplace pas. */
+function etendreEnceinte(enceinte: Enceinte, positions: number[]): Enceinte {
+  if (positions.length < 3) return enceinte
+  const min: [number, number, number] = [...enceinte.min]
+  const max: [number, number, number] = [...enceinte.max]
+  let depasse = false
+  for (let i = 0; i < positions.length; i += 3) {
+    for (let axe = 0; axe < 3; axe++) {
+      const valeur = positions[i + axe]
+      if (valeur < min[axe]) {
+        min[axe] = valeur
+        depasse = true
+      }
+      if (valeur > max[axe]) {
+        max[axe] = valeur
+        depasse = true
+      }
+    }
+  }
+  if (!depasse) return enceinte
+  const marge = 0.002
+  return {
+    min: [min[0] - marge, min[1] - marge, min[2] - marge],
+    max: [max[0] + marge, max[1] + marge, max[2] + marge],
+  }
+}
+
 class ProjetAnneau extends LitAbstractProject {
   private params: ProjectLoadParams | null = null
   private racine: SceneNode | null = null
   private modeVue = ''
+  private enceinte = enceinteDefaut()
 
   constructor() {
     super('ProjetAnneau')
@@ -101,8 +153,19 @@ class ProjetAnneau extends LitAbstractProject {
     poserFil(racine, world, engine, logger, document.cotes.position.array, [0.92, 0.55, 0.12, 1], 'cotes')
     poserGlyphes(racine, world, engine, esquisse)
     const mode = esquisse?.support ?? '3d'
-    if (mode === this.modeVue) return
+    const cadre = esquisse
+      ? [...document.esquisse.position.array, ...document.cotes.position.array]
+      : document.maillage.positions
+    const suivante =
+      mode === this.modeVue
+        ? etendreEnceinte(this.enceinte, cadre)
+        : esquisse
+          ? enceinteDe(cadre, 0.008)
+          : etendreEnceinte(enceinteDefaut(), document.maillage.positions)
+    const cadreChange = suivante !== this.enceinte
+    if (mode === this.modeVue && !cadreChange) return
     this.modeVue = mode
+    this.enceinte = suivante
     const entree = (
       engine as { inputManager?: { applyInputOverridesJson(texte: string): void; resetInputToDefaults(): void } }
     ).inputManager
@@ -110,8 +173,8 @@ class ProjetAnneau extends LitAbstractProject {
     else entree?.resetInputToDefaults()
     const controleur = cameraControllerManager.getActiveController()
     const boite = {
-      min: vec3.fromValues(-0.03, -0.005, -0.03),
-      max: vec3.fromValues(0.03, 0.02, 0.03),
+      min: vec3.fromValues(...this.enceinte.min),
+      max: vec3.fromValues(...this.enceinte.max),
     }
     if (!(controleur instanceof OrbitalCameraController)) return
     const orbital = controleur as OrbitalCameraController & {
@@ -184,24 +247,30 @@ function poserGlyphes(
   esquisse: EsquissePosee | null,
 ) {
   if (!esquisse || !police || !graphe) return
-  esquisse.cercles.forEach((cercle, index) => {
-    const pose = poseGlyphe(esquisse.support, cercle.rayon, cercle.y, cercle.valeur, index)
+  const altitude = esquisse.cercles[0]?.y ?? 0
+  const poserTexte = (
+    nom: string,
+    texte: string,
+    origine: [number, number, number],
+    normale: [number, number, number],
+    tangente: [number, number, number],
+  ) => {
     const mesh = createTextMeshFromFont({
       fontArrayBuffer: police as ArrayBuffer,
-      text: pose.texte,
+      text: texte,
       fontSize: 0.003,
       layout: { align: 'left' },
       orientation: {
         mode: 'plane',
-        normal: vec3.fromValues(...pose.normale),
-        tangent: vec3.fromValues(...pose.tangente),
+        normal: vec3.fromValues(...normale),
+        tangent: vec3.fromValues(...tangente),
       },
-      origin: vec3.fromValues(...pose.origine),
-      name: `cote-${index}`,
+      origin: vec3.fromValues(...origine),
+      name: nom,
     })
     engine.resourceManager.uploadMesh(mesh)
     const matiere = new Material({
-      name: `cote-${index}`,
+      name: nom,
       shadingModel: 'pbr',
       shaderGraph: graphe ?? undefined,
       doubleSided: true,
@@ -214,7 +283,22 @@ function poserGlyphes(
       },
     })
     engine.resourceManager.uploadMaterial(matiere)
-    parent.add(new SceneNode(`cote-${index}`, world, mesh, matiere))
+    parent.add(new SceneNode(nom, world, mesh, matiere))
+  }
+  esquisse.cercles.forEach((cercle, index) => {
+    const pose = poseGlyphe(esquisse.support, cercle.rayon, cercle.y, cercle.valeur, index)
+    poserTexte(`cote-${index}`, pose.texte, pose.origine, pose.normale, pose.tangente)
+  })
+  ;(esquisse.cotesLineaires ?? []).forEach((cote, index) => {
+    const pose = coteSegment(esquisse.support, cote.a, cote.b, cote.decalage, altitude)
+    if (pose.trait.length === 0) return
+    poserTexte(
+      `cote-ligne-${index}`,
+      cote.texte,
+      [pose.ancre[0] * 0.001, pose.ancre[1] * 0.001, pose.ancre[2] * 0.001],
+      pose.normale,
+      pose.direction,
+    )
   })
 }
 

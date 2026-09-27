@@ -122,6 +122,8 @@ export const domaineEsquisse: Domaine = {
         if (cible === 'debord') entite.debord = operation.arguments.expression
         if (cible === 'largeur') entite.largeur = operation.arguments.expression
         if (cible === 'rayon') entite.rayon = operation.arguments.expression
+        if (cible === 'hauteur') entite.hauteur = operation.arguments.expression
+        if (cible === 'longueur') entite.longueur = operation.arguments.expression
       },
       defaire() {},
     },

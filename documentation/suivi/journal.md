@@ -277,3 +277,27 @@ Le document porte un auteur, vide au départ. `auteur` écrit le reste de la lig
 
 Le document porte une version semver 2.0.0, `0.0.0` au départ. `version` n’accepte que `MAJEUR.MINEUR.CORRECTIF`, préversion comprise. Un texte hors format est refusé. Annuler restaure la version précédente. Le panneau Document l’affiche. Test : `packages/api-parametrique/tests/document.test.ts`.
 
+## 2026-09-26 — Généricité de la génération consignée
+
+[shell/genericite.md](../shell/genericite.md) critique l’état du shell de génération. L’hôte, les panneaux et le registre de domaines restent génériques. Le solide, l’esquisse et `noyau.decrire` reconnaissent la carrure Oyster, puis émettent des faces spécialisées. Le filaire du shell retesselle cette frontière à part du maillage de `ombrer`. Aucun correctif n’est engagé.
+
+## 2026-09-26 — Sprint 22 préparé : arbre de fonctions
+
+[veille/arbre-fonctions.md](../veille/arbre-fonctions.md) fixe l’arbre cible : origine, fonctions dans l’ordre, esquisse sous la fonction qui la consomme, pointe de reconstruction plus tard. [sprints/sprint-22-arbre-fonctions.md](../sprints/sprint-22-arbre-fonctions.md) code le premier palier. L’arbre affiche ces fonctions. La frontière de la carrure ne change pas. La pointe, le profil porté par la fonction et les plans d’origine restent après.
+
+## 2026-09-26 — Sprint 22 codé : arbre de fonctions
+
+L’arbre montre l’origine, puis une fonction par extrusion ou enlèvement. L’esquisse est l’enfant de la fonction. Les paramètres restent dans leur panneau. `frontiere()` après le script de carrure est inchangée. La pointe de reconstruction reste après. Test : `packages/shell/tests/arbre.test.ts`.
+
+## 2026-09-26 — Vue d’esquisse depuis l’arbre
+
+Un clic sur une esquisse de l’arbre ouvre sa vue, même si une fonction l’a déjà consommée. La vue montre la grille, les traits et les cotes ; le solide et son fil de fer restent cachés. **Quitter l'esquisse**, un second clic sur la même ligne, ou un clic sur la pièce rend la vue 3D. Le solide n’est pas reconstruit. Test : `packages/shell/tests/vueEsquisse.test.ts`.
+
+## 2026-09-26 — Macro vis tête fraisée Pozi
+
+Le panneau Debug a un bouton **Build vis**. Il n’y a pas de commande `vis`. Le corps est le profil sans filet : cône de pointe à 30° depuis l’axe jusqu’à l’âme Ø 3,5, puis l’âme, fermé à l’épaulement. Sur la pointe, la crête suit ce cône : le filet s’amincit et s’éteint où le cône rejoint l’âme. Le bout reste un cône nu, sans filet ni dard. `revolution` le tourne, puis `pas` ajoute l’hélice sur ce corps seul : triangle vif à 40°, sommets espacés de 2,60, crête au Ø 6, fond sur l’âme. Le filet est balayé le long de l’hélice, comme en CAO : à chaque angle, le profil d’un pas (mi-fond, fond, crête, fond, mi-fond) est posé sur la matière, et les coudes du profil sont des colonnes de la bande. Crête et fonds sont des arêtes du maillage ; il n’y a plus de grille d’anneaux ni de dents d’échantillonnage. La naissance est un éventail depuis la pointe ; l’arrêt sous la tête remplit le dernier tour jusqu’au cercle de l’épaulement, puis se referme à plat au Ø 6, pour que le dessous de la tête reste un cône. La tête 90°, de Ø 6 à Ø 12, est une seconde révolution, ajoutée au volume. `enleve` creuse l’empreinte. Le solide est ombré, sans fil de fer : les normales se moyennent, un pli au-delà de 50° reste vif. L’éventail de la pointe suit le même sens que le fût, vers l’extérieur. Cotes nominales : tête à 90° de Ø 12, pointe à 30°, filet inclus 40°, pas 2,6, âme Ø 3,5, longueur 30 tête comprise, empreinte Ø 6,6 profonde de 2,39. La largeur de la croix n’est pas cotée : un quart du Ø de l’empreinte. Chaque opérateur de l’arbre a une case : éteint, la fonction et l’esquisse qu’elle consomme ne sont plus rejouées. Tests : `packages/api-parametrique/tests/revolution.test.ts`, `packages/shell/tests/scriptVis.test.ts`.
+
+## 2026-09-27 — Sprint 23 préparé : maillage de la vis
+
+Quatre défauts restent sur la vis. La tête n’est pas fermée : le corps se referme au Ø nominal, coplanaire au fond de la tête, et l’union retire les deux. Les normales sont recalculées après le booléen, donc les sommets en T du BSP laissent le cône facetté. Le fil de fer ne lit que la frontière analytique, et la vis n’en a pas. La construction est lente parce que chaque ligne reconstruit tout le solide, et parce que le booléen redécoupe des triangles qui ne se touchent pas. Le rendu est déjà sur le GPU ; un booléen BSP ne s’y porte pas. [veille/vis-maillage.md](../veille/vis-maillage.md) fixe les corrections. [sprints/sprint-23-vis-maillage.md](../sprints/sprint-23-vis-maillage.md) les code, dans l’ordre : fermeture, mesure et un seul recalcul par script, normales portées par le booléen, fil de fer des faces, booléen limité à la zone de contact, replay sans géométrie, puis worker. La frontière de la carrure ne change pas. Les paliers 2 à 4 de l’arbre et un filet cosmétique restent après.
+

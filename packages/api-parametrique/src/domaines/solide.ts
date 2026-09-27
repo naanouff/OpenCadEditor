@@ -1,3 +1,4 @@
+import { couperRectangles } from '../revolution.ts'
 import { ErreurApi, type Ajout, type Contexte, type Domaine, type Operation } from '../types.ts'
 
 function profil(contexte: Contexte, operation: Operation): Ajout | undefined {
@@ -117,6 +118,26 @@ export const domaineSolide: Domaine = {
     enlever: {
       dansHistorique: true,
       faire(contexte, operation) {
+        const rectangles = contexte.esquisse?.entites.some((entite) => entite.sorte === 'rectangle' && entite.longueur)
+        if (!contexte.piece.volume && rectangles) {
+          contexte.esquisse = null
+          contexte.piece.esquisse = null
+          return
+        }
+        if (contexte.piece.volume) {
+          if (!contexte.esquisse) throw new ErreurApi('aucune esquisse')
+          const profondeur = contexte.evaluateur.evaluer(operation.arguments.expression, contexte.parametres)
+          contexte.piece.volume = couperRectangles(
+            contexte.piece.volume,
+            contexte.esquisse,
+            profondeur,
+            contexte.evaluateur,
+            contexte.parametres,
+          )
+          contexte.esquisse = null
+          contexte.piece.esquisse = null
+          return
+        }
         exigerEsquisse(contexte)
         if (!contexte.solide) throw new ErreurApi('aucun solide')
         const esquisse = contexte.esquisse

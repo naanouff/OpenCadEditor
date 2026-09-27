@@ -1,5 +1,5 @@
 import type { EsquissePosee, Frontiere, MaillageOmbre } from '@opencad/api-parametrique'
-import { cercleFerme, coteDiametre, filDeFer, grille, pasGrille } from './dessin.ts'
+import { cercleFerme, coteDiametre, coteSegment, filDeFer, grille, pasGrille, repere } from './dessin.ts'
 
 /** Le lecteur CAD et les overlays vector-lines sont en mètres. */
 const METRE = 0.001
@@ -30,14 +30,28 @@ export function documentCad(
       cercleFerme(cercle.rayon, cercle.y, esquisseMm)
       cotesMm.push(...coteDiametre(esquisse.support, cercle.rayon, cercle.y, index).trait)
     })
+    const { normale, axeU, axeV } = repere(esquisse.support)
+    const yPlan = esquisse.cercles[0]?.y ?? 0
+    const poser = (u: number, v: number) => [
+      normale[0] * yPlan + axeU[0] * u + axeV[0] * v,
+      normale[1] * yPlan + axeU[1] * u + axeV[1] * v,
+      normale[2] * yPlan + axeU[2] * u + axeV[2] * v,
+    ]
+    const traits = esquisse.traits ?? []
+    for (let i = 0; i < traits.length; i += 4) {
+      esquisseMm.push(...poser(traits[i], traits[i + 1]), ...poser(traits[i + 2], traits[i + 3]))
+    }
+    for (const cote of esquisse.cotesLineaires ?? []) {
+      cotesMm.push(...coteSegment(esquisse.support, cote.a, cote.b, cote.decalage, yPlan).trait)
+    }
   }
-  const solide = volume && volume.indices.length > 0 ? volume : null
+  const solide = !esquisse && volume && volume.indices.length > 0 ? volume : null
   return {
-    brepWireframe: enMetres(filDeFer(frontiere).position.array),
+    brepWireframe: enMetres(esquisse ? [] : filDeFer(frontiere).position.array),
     grille: enMetres(grilleMm),
     esquisse: enMetres(esquisseMm),
     cotes: enMetres(cotesMm),
-    maillage: solide ? enMetresOmbre(solide) : maillage(frontiere),
+    maillage: esquisse ? { positions: [], normales: [], indices: [] } : solide ? enMetresOmbre(solide) : maillage(frontiere),
   }
 }
 

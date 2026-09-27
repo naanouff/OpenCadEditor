@@ -2,7 +2,7 @@
 
 Même règles que l’API : TDD ([developpement.md](../developpement.md)), registres, ports. Le socle ne contient pas de `switch` sur les panneaux. Le shell appelle `packages/api-parametrique`. Il ne possède pas l’historique.
 
-Le sprint qui démarre ce socle est [sprint 04](../sprints/sprint-04-shell.md). Le paquet est `packages/shell`.
+Le sprint qui démarre ce socle est [sprint 04](../sprints/sprint-04-shell.md). Le paquet est `packages/shell`. L’écart entre ce socle et la génération actuelle est dans [genericite.md](genericite.md).
 
 Le premier incrément est `packages/shell`, testé par Vitest, sans navigateur. Le canvas WebGPU est derrière le port viewport. Le chrome UI (Dockview, thème) est décrit dans [editor-ui.md](editor-ui.md) et branché par [sprint 15](../sprints/sprint-15-editor-ui.md) via `@naanouff/w3dts-editor-ui`.
 

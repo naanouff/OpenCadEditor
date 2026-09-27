@@ -5,6 +5,8 @@ export type Operation = {
   noms: string[]
   /** Identité stable : une deuxième opération de même clé remplace la première. */
   cle?: string
+  /** Absent ou vrai : l'opération est rejouée. Faux : elle est sautée, avec l'esquisse qu'elle consomme. */
+  actif?: boolean
 }
 
 export type EntiteEsquisse = {
@@ -15,7 +17,10 @@ export type EntiteEsquisse = {
   ecart?: string
   debord?: string
   largeur?: string
+  longueur?: string
   rayon?: string
+  /** Cote axiale de l'extrémité d'un segment, pour une révolution. */
+  hauteur?: string
 }
 
 export type Esquisse = {
@@ -91,6 +96,10 @@ export type Piece = {
   esquisse: Esquisse | null
   dernierSupport: string | null
   solide: Solide | null
+  /** Maillage porté par une commande, quand le solide de carrure ne s'applique pas. */
+  volume: MaillageOmbre | null
+  /** Demi-profil de la dernière révolution, rayon et hauteur. Le pas de vis s'y applique. */
+  demiProfil: { r: number; y: number }[] | null
   compteur: number
 }
 
@@ -190,10 +199,22 @@ export type Frontiere = {
   faces: FaceExacte[]
 }
 
+/** Cote linéaire dans le plan de l'esquisse, en millimètres. */
+export type CoteLineaire = {
+  a: [number, number]
+  b: [number, number]
+  /** Décalage signé le long de la normale du plan (sens +90° du segment). */
+  decalage: number
+  texte: string
+}
+
 /** Esquisse posée sur son plan, prête à dessiner. */
 export type EsquissePosee = {
   support: string
   cercles: { rayon: number; y: number; valeur: number }[]
+  /** Segments du plan, en millimètres : u, v, u, v. */
+  traits?: number[]
+  cotesLineaires?: CoteLineaire[]
 }
 
 export type NoyauGeometrique = {

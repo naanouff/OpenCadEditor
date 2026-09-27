@@ -1,15 +1,16 @@
 import { useState, type ReactElement } from 'react'
 import { Panel } from '@naanouff/w3dts-editor-ui'
 import { SCRIPT_CARRURE } from './scriptCarrure.ts'
+import { SCRIPT_VIS } from './scriptVis.ts'
 import { storeShell } from './storeShell.ts'
 
 export function DebugVue(): ReactElement {
   const [message, setMessage] = useState<string | null>(null)
 
-  const construireCarrure = () => {
+  const construire = (script: string, reussi: string) => {
     try {
-      storeShell.executer(SCRIPT_CARRURE)
-      setMessage('Carrure construite')
+      storeShell.executer(script)
+      setMessage(reussi)
     } catch (erreur) {
       setMessage(erreur instanceof Error ? erreur.message : String(erreur))
     }
@@ -22,9 +23,16 @@ export function DebugVue(): ReactElement {
           <button
             type="button"
             className="rounded border border-[var(--color-border-default)] bg-[var(--color-surface-input)] px-3 py-1.5 text-left text-[var(--color-text-primary)] hover:bg-[var(--color-surface-hover)]"
-            onClick={construireCarrure}
+            onClick={() => construire(SCRIPT_CARRURE, 'Carrure construite')}
           >
             Build carrure
+          </button>
+          <button
+            type="button"
+            className="rounded border border-[var(--color-border-default)] bg-[var(--color-surface-input)] px-3 py-1.5 text-left text-[var(--color-text-primary)] hover:bg-[var(--color-surface-hover)]"
+            onClick={() => construire(SCRIPT_VIS, 'Vis construite')}
+          >
+            Build vis
           </button>
           {message ? (
             <p className="m-0 font-mono text-[11px] text-[var(--color-text-secondary)]">{message}</p>

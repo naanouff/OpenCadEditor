@@ -80,6 +80,73 @@ export function coteDiametre(support: string, rayon: number, y: number, index = 
   return { trait, ancre: point(rayon + FLECHE), direction }
 }
 
+/**
+ * Cote linéaire dans le plan. `decalage` pousse la ligne le long de la normale
+ * (sens +90° de depart → arrivee). Millimètres.
+ */
+export function coteSegment(
+  support: string,
+  depart: [number, number],
+  arrivee: [number, number],
+  decalage: number,
+  altitude = 0,
+) {
+  const { normale, axeU, axeV } = repere(support)
+  const du = arrivee[0] - depart[0]
+  const dv = arrivee[1] - depart[1]
+  const longueur = Math.hypot(du, dv)
+  const directionNulle: [number, number, number] = [axeU[0], axeU[1], axeU[2]]
+  const normalePlan: [number, number, number] = [normale[0], normale[1], normale[2]]
+  if (longueur < 1e-6) {
+    return { trait: [] as number[], ancre: [0, 0, 0] as [number, number, number], direction: directionNulle, normale: normalePlan }
+  }
+  const ux = du / longueur
+  const vx = dv / longueur
+  const pu = -vx
+  const pv = ux
+  const decale = (u: number, v: number): [number, number] => [u + pu * decalage, v + pv * decalage]
+  const p0 = decale(depart[0], depart[1])
+  const p1 = decale(arrivee[0], arrivee[1])
+  const spatial = (u: number, v: number): [number, number, number] => [
+    normale[0] * altitude + axeU[0] * u + axeV[0] * v,
+    normale[1] * altitude + axeU[1] * u + axeV[1] * v,
+    normale[2] * altitude + axeU[2] * u + axeV[2] * v,
+  ]
+  const trait: number[] = []
+  const segment = (a: [number, number], b: [number, number]) => {
+    trait.push(...spatial(a[0], a[1]), ...spatial(b[0], b[1]))
+  }
+  segment(depart, p0)
+  segment(arrivee, p1)
+  segment(p0, p1)
+  const fleche = Math.min(FLECHE, longueur * 0.3)
+  const aile = Math.min(0.6, fleche * 0.35)
+  const pointe = (sens: number) => {
+    const t = sens > 0 ? p1 : p0
+    const piedU = t[0] - ux * sens * fleche
+    const piedV = t[1] - vx * sens * fleche
+    segment(t, [piedU + pu * aile, piedV + pv * aile])
+    segment(t, [piedU - pu * aile, piedV - pv * aile])
+  }
+  pointe(1)
+  pointe(-1)
+  const signe = decalage < 0 ? -1 : 1
+  const mu = (p0[0] + p1[0]) / 2 + pu * signe * 1.5
+  const mv = (p0[1] + p1[1]) / 2 + pv * signe * 1.5
+  let dirU = ux
+  let dirV = vx
+  if (dirU < -1e-6 || (Math.abs(dirU) <= 1e-6 && dirV < 0)) {
+    dirU = -dirU
+    dirV = -dirV
+  }
+  const direction: [number, number, number] = [
+    axeU[0] * dirU + axeV[0] * dirV,
+    axeU[1] * dirU + axeV[1] * dirV,
+    axeU[2] * dirU + axeV[2] * dirV,
+  ]
+  return { trait, ancre: spatial(mu, mv), direction, normale: normalePlan }
+}
+
 /** Glyphe du diamètre : texte sur la ligne de cote, juste hors du cercle. */
 export function poseGlyphe(support: string, rayon: number, y: number, valeur: number, index = 0) {
   const { normale } = repere(support)

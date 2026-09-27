@@ -4,6 +4,14 @@ export type NoeudArbre = {
   id: string
   libelle: string
   enfants?: NoeudArbre[]
+  /** Rang dans l'historique, pour l'interrupteur d'un opérateur. */
+  index?: number
+  /** L'opérateur se coupe sans quitter l'arbre. */
+  interrupteur?: boolean
+  actif?: boolean
+  /** Ouvre la vue de cette esquisse. */
+  esquisse?: boolean
+  support?: string
 }
 
 const SOUS_ESQUISSE = new Set(['cercle', 'rectangle', 'segment', 'arc', 'concentrique', 'cote', 'symetrie'])
@@ -30,53 +38,84 @@ export function libelleOperation(operation: Operation): string {
     case 'symetrie':
       return `Symétrie ${args.axe}`
     case 'extrude':
-      return `Extrude ${args.expression}`
+      return `Extrusion ${args.expression}`
     case 'enlever':
-      return args.traverse === 'oui' ? `Enlève travers ${args.expression}` : `Enlève ${args.expression}`
+      return args.traverse === 'oui'
+        ? `Enlèvement travers ${args.expression}`
+        : `Enlèvement ${args.expression}`
+    case 'revolution':
+      return 'Révolution'
+    case 'pas':
+      return 'Pas de vis'
     default:
       return operation.type
   }
 }
 
-/** Arbre de construction : pièce → paramètres / esquisses / fonctions. */
-export function arbreConstruction(piece: string | null, historique: Operation[]): NoeudArbre[] {
-  if (!piece) return []
-  const parametres: NoeudArbre[] = []
-  const enfants: NoeudArbre[] = []
-  let esquisse: NoeudArbre | null = null
+const PLANS_ORIGINE = [
+  { id: 'plan.dessus', libelle: 'Plan dessus' },
+  { id: 'plan.12h', libelle: 'Plan 12h' },
+  { id: 'plan.3h', libelle: 'Plan 3h' },
+]
+
+function noeud(index: number, operation: Operation, enfants?: NoeudArbre[], interrupteur = false): NoeudArbre {
+  return {
+    id: `${index}-${operation.domaine}-${operation.type}`,
+    libelle: libelleOperation(operation),
+    ...(operation.type === 'ouvrir' ? { index, esquisse: true, support: operation.arguments.support } : {}),
+    ...(interrupteur ? { index, interrupteur: true, actif: operation.actif !== false } : {}),
+    ...(enfants ? { enfants } : {}),
+  }
+}
+
+/** Origine, puis une fonction par extrusion ou enlèvement. L'esquisse est l'enfant de la fonction. */
+export function fonctions(historique: Operation[]): NoeudArbre[] {
+  const liste: NoeudArbre[] = [
+    {
+      id: 'origine',
+      libelle: 'Origine',
+      enfants: PLANS_ORIGINE.map((plan) => ({ id: plan.id, libelle: plan.libelle })),
+    },
+  ]
+  let esquisse: { index: number; operation: Operation }[] = []
+
+  const esquisseNoeud = () => {
+    const [ouverture, ...reste] = esquisse
+    if (!ouverture) return undefined
+    return noeud(
+      ouverture.index,
+      ouverture.operation,
+      reste.map((entree) => noeud(entree.index, entree.operation)),
+    )
+  }
 
   historique.forEach((operation, index) => {
-    const noeud: NoeudArbre = {
-      id: `${index}-${operation.domaine}-${operation.type}`,
-      libelle: libelleOperation(operation),
-    }
-    if (operation.type === 'param') {
-      parametres.push(noeud)
-      return
-    }
+    if (operation.type === 'param') return
     if (operation.type === 'ouvrir') {
-      esquisse = { ...noeud, enfants: [] }
-      enfants.push(esquisse)
+      esquisse = [{ index, operation }]
       return
     }
-    if (esquisse && (SOUS_ESQUISSE.has(operation.type) || operation.type === 'extrude' || operation.type === 'enlever')) {
-      esquisse.enfants!.push(noeud)
-      if (operation.type === 'extrude' || operation.type === 'enlever') esquisse = null
+    if (SOUS_ESQUISSE.has(operation.type)) {
+      esquisse.push({ index, operation })
       return
     }
-    esquisse = null
-    enfants.push(noeud)
+    if (operation.type === 'pas') {
+      liste.push(noeud(index, operation, undefined, true))
+      return
+    }
+    if (operation.type !== 'extrude' && operation.type !== 'enlever' && operation.type !== 'revolution') return
+    const enfant = esquisseNoeud()
+    liste.push(noeud(index, operation, enfant ? [enfant] : undefined, true))
+    esquisse = []
   })
 
-  const racine: NoeudArbre = {
-    id: `piece-${piece}`,
-    libelle: piece,
-    enfants: [
-      ...(parametres.length > 0
-        ? [{ id: 'parametres', libelle: 'Paramètres', enfants: parametres }]
-        : []),
-      ...enfants,
-    ],
-  }
-  return [racine]
+  const ouverte = esquisseNoeud()
+  if (ouverte) liste.push(ouverte)
+  return liste
+}
+
+/** Arbre de construction : pièce, origine, fonctions. Les paramètres restent hors de l'arbre. */
+export function arbreConstruction(piece: string | null, historique: Operation[]): NoeudArbre[] {
+  if (!piece) return []
+  return [{ id: `piece-${piece}`, libelle: piece, enfants: fonctions(historique) }]
 }

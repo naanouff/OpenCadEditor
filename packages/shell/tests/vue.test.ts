@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { Frontiere } from '@opencad/api-parametrique'
 import { documentCad } from '../src/documentCad.ts'
-import { coteDiametre, grille, pasGrille, poseGlyphe, repere } from '../src/dessin.ts'
+import { coteDiametre, coteSegment, grille, pasGrille, poseGlyphe, repere } from '../src/dessin.ts'
 import { jeuEntree } from '../src/entree.ts'
 
 const anneau: Frontiere = {
@@ -43,9 +43,10 @@ describe('vue esquisse', () => {
     const avec = documentCad(anneau, esquisse)
     expect(avec.grille.segmentCount).toBeGreaterThan(0)
     expect(avec.esquisse.segmentCount).toBeGreaterThan(0)
-    expect(avec.brepWireframe.segmentCount).toBe(sans.brepWireframe.segmentCount)
+    expect(avec.brepWireframe.segmentCount).toBe(0)
     expect(avec.grille.position.array[1]).toBeCloseTo(-0.00015)
-    expect(avec.maillage.indices).toEqual(sans.maillage.indices)
+    expect(avec.maillage.indices).toEqual([])
+    expect(sans.maillage.indices.length).toBeGreaterThan(0)
   })
 
   it('trace le diamètre et place l’ancre hors du cercle, sans toucher au solide', () => {
@@ -58,7 +59,8 @@ describe('vue esquisse', () => {
     const sans = documentCad(anneau)
     const avec = documentCad(anneau, esquisse)
     expect(avec.cotes.segmentCount).toBe(5)
-    expect(avec.maillage.indices).toEqual(sans.maillage.indices)
+    expect(avec.maillage.indices).toEqual([])
+    expect(sans.brepWireframe.segmentCount).toBeGreaterThan(0)
   })
 
   it('pose le glyphe hors du cercle, dans le plan, avec le diamètre', () => {
@@ -77,6 +79,17 @@ describe('vue esquisse', () => {
     const cosinus = (a[0] * b[0] + a[1] * b[1]) / (Math.hypot(a[0], a[1]) * Math.hypot(b[0], b[1]))
     expect(cosinus).toBeCloseTo(Math.cos(Math.PI / 6))
     expect(Math.hypot(second.trait[0], second.trait[2])).toBeCloseTo(15)
+  })
+
+  it('décale la cote linéaire hors du trait, dans le plan', () => {
+    const { trait, ancre } = coteSegment('plan.12h', [0, 0], [0, 5], 4)
+    expect(trait[0]).toBeCloseTo(0)
+    expect(trait[1]).toBeCloseTo(0)
+    expect(trait[3]).toBeCloseTo(-4)
+    expect(trait[4]).toBeCloseTo(0)
+    expect(ancre[0]).toBeCloseTo(-5.5)
+    expect(ancre[1]).toBeCloseTo(2.5)
+    expect(ancre[2]).toBeCloseTo(0)
   })
 
   it('retire la rotation en esquisse et la rend au solide', () => {
