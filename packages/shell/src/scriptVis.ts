@@ -4,7 +4,8 @@
  * `pas` ajoute l'hélice sur ce corps seul : triangle vif à 40°, sommets espacés du pas,
  * crête au Ø 6, fond sur l'âme. Sur la pointe, la crête suit le cône : le filet s'amincit
  * et s'éteint là où le cône rejoint l'âme. Le bout reste un cône nu.
- * La tête 90°, de Ø 6 à Ø 12, est une seconde révolution. L inclut la tête.
+ * `pas` referme le corps au rayon de l'âme. La tête 90°, de Ø 6 à Ø 12, est une seconde révolution :
+ * son fond, rogné par le fût, est la couronne visible sous la tête. L inclut la tête.
  * Empreinte Ø 6,6, profondeur 2,39.
  */
 const LONGUEUR = 30

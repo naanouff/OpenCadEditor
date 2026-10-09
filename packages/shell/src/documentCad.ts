@@ -1,5 +1,5 @@
 import type { EsquissePosee, Frontiere, MaillageOmbre } from '@opencad/api-parametrique'
-import { cercleFerme, coteDiametre, coteSegment, filDeFer, grille, pasGrille, repere } from './dessin.ts'
+import { aretesBrep, cercleFerme, coteDiametre, coteSegment, filDeFer, grille, pasGrille, repere } from './dessin.ts'
 
 /** Le lecteur CAD et les overlays vector-lines sont en mètres. */
 const METRE = 0.001
@@ -47,7 +47,9 @@ export function documentCad(
   }
   const solide = !esquisse && volume && volume.indices.length > 0 ? volume : null
   return {
-    brepWireframe: enMetres(esquisse ? [] : filDeFer(frontiere).position.array),
+    brepWireframe: enMetres(
+      esquisse ? [] : frontiere.faces.length > 0 ? filDeFer(frontiere).position.array : solide ? aretesBrep(solide) : [],
+    ),
     grille: enMetres(grilleMm),
     esquisse: enMetres(esquisseMm),
     cotes: enMetres(cotesMm),

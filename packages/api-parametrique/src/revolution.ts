@@ -41,10 +41,16 @@ function anneau(rayon: number, y: number): Point[] {
   return points
 }
 
-/** Solide fermé obtenu en tournant la polyligne (rayon, hauteur) autour de Y. */
+/** Solide fermé obtenu en tournant la polyligne (rayon, hauteur) autour de Y. Chaque segment est une face. */
 export function tourner(points: Station[]): Maillage {
   if (points.length < 3) throw new ErreurApi('profil trop court')
   const { positions, indices, triangle } = assembler()
+  const faces: number[] = []
+  const face = (a: Point, b: Point, c: Point, id: number) => {
+    const avant = indices.length
+    triangle(a, b, c)
+    if (indices.length > avant) faces.push(id)
+  }
   let precedent = anneau(points[0].r, points[0].y)
   for (let s = 1; s < points.length; s++) {
     const avant = points[s - 1]
@@ -54,19 +60,19 @@ export function tourner(points: Station[]): Maillage {
       const j = (i + 1) % SEGMENTS
       if (avant.r < 1e-8 && courant.r < 1e-8) continue
       if (avant.r < 1e-8) {
-        triangle(precedent[0], suivant[i], suivant[j])
+        face(precedent[0], suivant[i], suivant[j], s)
         continue
       }
       if (courant.r < 1e-8) {
-        triangle(precedent[i], suivant[0], precedent[j])
+        face(precedent[i], suivant[0], precedent[j], s)
         continue
       }
-      triangle(precedent[i], suivant[i], suivant[j])
-      triangle(precedent[i], suivant[j], precedent[j])
+      face(precedent[i], suivant[i], suivant[j], s)
+      face(precedent[i], suivant[j], precedent[j], s)
     }
     precedent = suivant
   }
-  return { positions, indices }
+  return { positions, indices, faces }
 }
 
 function retourner(maillage: Maillage): Maillage {
@@ -76,7 +82,12 @@ function retourner(maillage: Maillage): Maillage {
     indices[i + 1] = indices[i + 2]
     indices[i + 2] = echange
   }
-  return { positions: maillage.positions, indices }
+  return {
+    positions: maillage.positions,
+    indices,
+    normales: maillage.normales?.map((valeur) => -valeur),
+    faces: maillage.faces,
+  }
 }
 
 function radialMoyen(maillage: Maillage) {
@@ -117,10 +128,10 @@ function cleSommet(x: number, y: number, z: number) {
   return `${q(x)} ${q(y)} ${q(z)}`
 }
 
-/** Normales moyennées entre faces voisines. Un pli au-delà de 50° reste vif. */
+/** Normales moyennées entre triangles voisins. Un pli au-delà de 50° reste vif, et deux étiquettes de face ne se moyennent pas. */
 export function normalesLisses(maillage: Maillage): MaillageOmbre {
   const src = maillage.positions
-  const faces: { n: Point; coins: Point[] }[] = []
+  const faces: { n: Point; coins: Point[]; id: number }[] = []
   const parSommet = new Map<string, number[]>()
   for (let i = 0; i < maillage.indices.length; i += 3) {
     const coins = [0, 1, 2].map((k) => {
@@ -136,7 +147,7 @@ export function normalesLisses(maillage: Maillage): MaillageOmbre {
     ny /= longueur
     nz /= longueur
     const rang = faces.length
-    faces.push({ n: [nx, ny, nz], coins })
+    faces.push({ n: [nx, ny, nz], coins, id: rang })
     for (const coin of coins) {
       const cle = cleSommet(coin[0], coin[1], coin[2])
       const liste = parSommet.get(cle)
@@ -155,6 +166,8 @@ export function normalesLisses(maillage: Maillage): MaillageOmbre {
       let sz = 0
       for (const autre of parSommet.get(cleSommet(coin[0], coin[1], coin[2])) ?? []) {
         const n = faces[autre].n
+        const etiquettes = maillage.faces
+        if (etiquettes && etiquettes[face.id] !== etiquettes[autre]) continue
         if (n[0] * face.n[0] + n[1] * face.n[1] + n[2] * face.n[2] < PLI) continue
         sx += n[0]
         sy += n[1]
@@ -166,7 +179,7 @@ export function normalesLisses(maillage: Maillage): MaillageOmbre {
     }
     indices.push(base, base + 1, base + 2)
   }
-  return { positions, normales, indices }
+  return { positions, normales, indices, faces: maillage.faces ? [...maillage.faces] : undefined }
 }
 
 export function normalesPlates(maillage: Maillage): MaillageOmbre {
@@ -191,7 +204,7 @@ export function normalesPlates(maillage: Maillage): MaillageOmbre {
     normales.push(nx, ny, nz, nx, ny, nz, nx, ny, nz)
     indices.push(base, base + 1, base + 2)
   }
-  return { positions, normales, indices }
+  return { positions, normales, indices, faces: maillage.faces ? [...maillage.faces] : undefined }
 }
 
 function stations(esquisse: Esquisse, evaluateur: Evaluateur, parametres: Map<string, string>): Station[] {
@@ -218,12 +231,17 @@ export function couperRectangles(
   if (rectangles.length === 0) throw new ErreurApi('profil sans rectangle')
   let yMax = -Infinity
   for (let i = 1; i < volume.positions.length; i += 3) yMax = Math.max(yMax, volume.positions[i])
-  let courant: Maillage = { positions: volume.positions, indices: volume.indices }
+  let courant: Maillage = {
+    positions: volume.positions,
+    indices: volume.indices,
+    normales: volume.normales,
+    faces: volume.faces,
+  }
   for (const rectangle of rectangles) {
     if (!rectangle.largeur || !rectangle.longueur) throw new ErreurApi('rectangle sans cote')
     const largeur = evaluateur.evaluer(rectangle.largeur, parametres)
     const longueur = evaluateur.evaluer(rectangle.longueur, parametres)
-    const outil = boite({
+    const brut = boite({
       xmin: -longueur / 2,
       xmax: longueur / 2,
       ymin: yMax - profondeur,
@@ -231,9 +249,12 @@ export function couperRectangles(
       zmin: -largeur / 2,
       zmax: largeur / 2,
     })
+    const deja = courant.faces && courant.faces.length > 0 ? Math.max(...courant.faces) + 1 : 0
+    const outil = normalesPlates(decalerFaces(brut, deja))
     courant = difference(courant, outil)
   }
-  return normalesLisses(courant)
+  if (!courant.normales) throw new ErreurApi('normales absentes')
+  return { positions: courant.positions, normales: courant.normales, indices: courant.indices, faces: courant.faces }
 }
 
 function rayonDuProfil(profil: Station[], y: number) {
@@ -272,7 +293,7 @@ function epaule(profil: Station[], rTige: number) {
  *
  * La naissance est un éventail depuis la pointe jusqu'au premier mi-fond, sur le cône.
  * L'arrêt sous la tête remplit le dernier tour jusqu'au cercle de l'épaulement,
- * puis se referme à plat au Ø nominal.
+ * puis se referme à plat au rayon du fût. La couronne visible est le fond de la tête.
  */
 function maillerFilet(
   profil: Station[],
@@ -339,35 +360,47 @@ function maillerFilet(
   const dernier = colonnes - 1
 
   const { positions, indices, triangle } = assembler()
+  const faces: number[] = []
+  const FUT = 1
+  const FLANC_BAS = 2
+  const FLANC_HAUT = 3
+  const NAISSANCE = 4
+  const DISQUE = 5
+  const nFond = 1 + coudes.length
+  /** Le flanc bas relie le fond à la crête, le flanc haut repart de la crête. */
+  const faceBande = (k: number) => (k === nFond ? FLANC_BAS : k === nFond + 1 ? FLANC_HAUT : FUT)
+  const avec = (a: Point, b: Point, c: Point, id: number) => {
+    const avant = indices.length
+    triangle(a, b, c)
+    if (indices.length > avant) faces.push(id)
+  }
   /** Quadrilatère entre deux rangs voisins, vers l'extérieur. */
-  const bande = (bas: Point, hautBas: Point, hautHaut: Point, basHaut: Point) => {
-    triangle(bas, basHaut, hautBas)
-    triangle(basHaut, hautHaut, hautBas)
+  const bande = (bas: Point, hautBas: Point, hautHaut: Point, basHaut: Point, id: number) => {
+    avec(bas, basHaut, hautBas, id)
+    avec(basHaut, hautHaut, hautBas, id)
   }
   for (let i = 0; i < rangs; i++) {
     const a = lignes[i]
     const b = lignes[i + 1]
-    for (let k = 0; k < dernier; k++) bande(a[k], b[k], b[k + 1], a[k + 1])
+    for (let k = 0; k < dernier; k++) bande(a[k], b[k], b[k + 1], a[k + 1], faceBande(k))
   }
 
   const pointe: Point = [0, y0, 0]
-  for (let i = 0; i < N; i++) triangle(pointe, lignes[i][0], lignes[i + 1][0])
+  for (let i = 0; i < N; i++) avec(pointe, lignes[i][0], lignes[i + 1][0], NAISSANCE)
 
   const rCol = rayonDuProfil(profil, yBut)
   const collet = (i: number) => point(i, yBut, rCol)
   for (let i = rangs - N; i < rangs; i++) {
-    bande(lignes[i][dernier], lignes[i + 1][dernier], collet(i + 1), collet(i))
+    bande(lignes[i][dernier], lignes[i + 1][dernier], collet(i + 1), collet(i), FUT)
   }
   const centre: Point = [0, yBut, 0]
-  for (let i = 0; i < N; i++) {
-    const j = i + 1
-    const levreI = point(i, yBut, rTige)
-    const levreJ = point(j, yBut, rTige)
-    triangle(levreI, collet(i), levreJ)
-    triangle(collet(i), collet(j), levreJ)
-    triangle(levreI, centre, levreJ)
-  }
-  return { positions, indices }
+  for (let i = 0; i < N; i++) avec(collet(i), centre, collet(i + 1), DISQUE)
+  return { positions, indices, faces }
+}
+
+function decalerFaces(maillage: Maillage, base: number): Maillage {
+  if (!maillage.faces || base === 0) return maillage
+  return { ...maillage, faces: maillage.faces.map((id) => id + base) }
 }
 
 export const domaineRevolution: Domaine = {
@@ -383,12 +416,20 @@ export const domaineRevolution: Domaine = {
         if (!contexte.esquisse) throw new ErreurApi('aucune esquisse')
         const profil = stations(contexte.esquisse, contexte.evaluateur, contexte.parametres)
         contexte.piece.demiProfil = profil
-        const ajoute = tourner(profil)
-        const deja = contexte.piece.volume
-        const maille = deja && deja.indices.length > 0 ? union(deja, ajoute) : ajoute
-        contexte.piece.volume = normalesLisses(versExterieur(maille))
         contexte.esquisse = null
         contexte.piece.esquisse = null
+        if (contexte.geometrie === false) return
+        let ajoute = normalesLisses(versExterieur(tourner(profil)))
+        const deja = contexte.piece.volume
+        if (deja?.faces && deja.faces.length > 0) ajoute = decalerFaces(ajoute, Math.max(...deja.faces) + 1)
+        const maille = deja && deja.indices.length > 0 ? union(deja, ajoute) : ajoute
+        if (!maille.normales) throw new ErreurApi('normales absentes')
+        contexte.piece.volume = {
+          positions: maille.positions,
+          normales: maille.normales,
+          indices: maille.indices,
+          faces: maille.faces,
+        }
       },
       defaire() {},
     },
@@ -396,7 +437,7 @@ export const domaineRevolution: Domaine = {
       dansHistorique: true,
       faire(contexte) {
         const profil = contexte.piece.demiProfil
-        if (!profil) return
+        if (!profil || contexte.geometrie === false) return
         const lire = (nom: string) => contexte.evaluateur.evaluer(nom, contexte.parametres)
         const maille = maillerFilet(
           profil,

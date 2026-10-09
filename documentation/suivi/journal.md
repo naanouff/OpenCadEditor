@@ -189,7 +189,10 @@ Le viewer construit pour chaque sommet une tangente et une bitangente orthonorm�
 
 ## 2026-09-26 — Sprint 18 codé : contour en plan Oyster
 
-Le script porte largeur_bout 2,2, largeur_racine 6, ayon_racine 3, longueur_corne 4,2, ayon_bout_haut 1, diametre_barrette 1,1 et ecul_barrette 1,2. Le plan de flanc remplace la joue ; le congé creux à la racine est un cylindre d'axe Y hors de la peau. pansDeCorne, ombrer et ilDeFer suivent ce profil. Les quatre barrettes restent ouvertes près du bout. [sprints/sprint-18-contour-cornes-oyster.md](../sprints/sprint-18-contour-cornes-oyster.md) est codé. Le dessous creusé et la chute du dessus restent au sprint 19.
+Le script porte largeur_bout 2,2, largeur_racine 6, 
+ayon_racine 3, longueur_corne 4,2, 
+ayon_bout_haut 1, diametre_barrette 1,1 et 
+ecul_barrette 1,2. Le plan de flanc remplace la joue ; le congé creux à la racine est un cylindre d'axe Y hors de la peau. pansDeCorne, ombrer et ilDeFer suivent ce profil. Les quatre barrettes restent ouvertes près du bout. [sprints/sprint-18-contour-cornes-oyster.md](../sprints/sprint-18-contour-cornes-oyster.md) est codé. Le dessous creusé et la chute du dessus restent au sprint 19.
 
 ## 2026-09-26 — Jointures des cornes Oyster
 
@@ -300,4 +303,16 @@ Le panneau Debug a un bouton **Build vis**. Il n’y a pas de commande `vis`. Le
 ## 2026-09-27 — Sprint 23 préparé : maillage de la vis
 
 Quatre défauts restent sur la vis. La tête n’est pas fermée : le corps se referme au Ø nominal, coplanaire au fond de la tête, et l’union retire les deux. Les normales sont recalculées après le booléen, donc les sommets en T du BSP laissent le cône facetté. Le fil de fer ne lit que la frontière analytique, et la vis n’en a pas. La construction est lente parce que chaque ligne reconstruit tout le solide, et parce que le booléen redécoupe des triangles qui ne se touchent pas. Le rendu est déjà sur le GPU ; un booléen BSP ne s’y porte pas. [veille/vis-maillage.md](../veille/vis-maillage.md) fixe les corrections. [sprints/sprint-23-vis-maillage.md](../sprints/sprint-23-vis-maillage.md) les code, dans l’ordre : fermeture, mesure et un seul recalcul par script, normales portées par le booléen, fil de fer des faces, booléen limité à la zone de contact, replay sans géométrie, puis worker. La frontière de la carrure ne change pas. Les paliers 2 à 4 de l’arbre et un filet cosmétique restent après.
+
+## 2026-09-27 — Sprint 23 en cours : fermeture, un seul recalcul, normales
+
+`pas` referme le corps au rayon de l’âme. L’union du corps et de la tête garde la somme des volumes. Sous la tête, la couronne entre l’âme et le Ø 6 a une normale géométrique −Y. `Session.lot` et `Hote.executer` reconstruisent le solide une fois par script : le viewport de test ne reçoit que le maillage final. Mesures du script vis : avant, pas 41 ms (3 501 triangles), tête 1,2 s (85 432), vis complète 12,3 s (97 089) ; après le lot, la vis complète passe à 4,3 s. Le reste est l’union, environ 1,1 s, et la différence Pozi, environ 3 s. Le booléen porte désormais la normale de chaque sommet et l’interpole à la découpe. `tourner` donne une face par segment du profil, et le lissage ne mélange pas deux faces : le cône de tête reste à moins de 3° de sa normale analytique après l’union et l’empreinte. Le fil de fer des faces, le booléen limité à la zone de contact et le worker restent à faire. Tests : `packages/api-parametrique/tests/revolution.test.ts`, `packages/api-parametrique/tests/csg.test.ts`, `packages/shell/tests/scriptVis.test.ts`, `packages/shell/tests/viewport.test.ts`.
+
+## 2026-09-27 — Sprint 23 terminé : fil de fer, booléen local, worker
+
+Le fil de fer d’un solide maillé trace les frontières de faces : un cylindre tourné donne deux cercles, la vis trace la crête, le cercle de tête, le cercle d’épaulement et le contour de l’empreinte. Aucun segment ne traverse le cône hors de l’empreinte. La frontière analytique de la carrure reste `filDeFer`.
+
+`union` et `difference` laissent entiers les triangles hors de la boîte de l’autre solide, et un triangle que le volume adverse ne rogne pas n’est pas redécoupé. Le plan d’un nœud est pris au milieu de la liste. Deux cubes disjoints restent à 24 triangles. Deux cubes en contact par une face gardent le volume et un maillage fermé. Le script vis produit 4 466 triangles, en 1,7 s. Avant le lot, la même vis prenait 12,3 s pour 97 089 triangles ; après le lot seul, 4,3 s. Le rendu était déjà sur le GPU : le gain est le booléen, puis le worker qui sort la construction du fil d’interface.
+
+`Contexte.geometrie` à faux saute le maillage de `revolution`, `pas` et `enleve`. `esquisseDepuis` rejoue ainsi : ouvrir une esquisse déjà consommée ne refait pas le booléen. Le fil d’interface tient une session dans ce mode. `moteurSynchrone` garde la session complète pour les tests Node. `moteurWorker` calcule dans un worker, transfère les tableaux et ignore une réponse dont le numéro est dépassé. Le viewport montre le maillage reçu et « Construction… » tant que le calcul n’est pas revenu. Tests : `packages/api-parametrique/tests/csg.test.ts`, `packages/api-parametrique/tests/revolution.test.ts`, `packages/shell/tests/filBrep.test.ts`, `packages/shell/tests/scriptVis.test.ts`, `packages/shell/tests/vueEsquisse.test.ts`, `packages/shell/tests/protocole.test.ts`.
 

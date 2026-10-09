@@ -29,6 +29,7 @@ describe('viewport', () => {
     const hote = new Hote()
     hote.executer(script)
     const recus = hote.maillagesRecus()
+    expect(recus).toHaveLength(1)
     expect(rayonExterieur(recus.at(-1)!)).toBeCloseTo(20)
     hote.ligne('param diametre_boite 42')
     const suivant = hote.maillagesRecus()

@@ -4,66 +4,123 @@ import type { Maillage } from './types.ts'
 const TOLERANCE = 1e-5
 
 type Point = [number, number, number]
-type Triangle = [Point, Point, Point]
+type Sommet = { p: Point; n?: Point }
+type Triangle = { s: [Sommet, Sommet, Sommet]; face?: number }
 type Plan = { normale: Point; distance: number }
 
 const DEVANT = 1
 const DERRIERE = 2
 
-/** Triangles d'un maillage indexé. */
+function lirePoint(maillage: Maillage, i: number): Point {
+  return [maillage.positions[i * 3], maillage.positions[i * 3 + 1], maillage.positions[i * 3 + 2]]
+}
+
+function lireSommet(maillage: Maillage, i: number): Sommet {
+  const p = lirePoint(maillage, i)
+  if (!maillage.normales) return { p }
+  return {
+    p,
+    n: [maillage.normales[i * 3], maillage.normales[i * 3 + 1], maillage.normales[i * 3 + 2]],
+  }
+}
+
+/** Triangles d'un maillage indexé. La normale du sommet, s'il y en a une, suit la découpe. */
 function triangles(maillage: Maillage): Triangle[] {
-  const { positions, indices } = maillage
-  const sommet = (i: number): Point => [positions[i * 3], positions[i * 3 + 1], positions[i * 3 + 2]]
+  const { indices, faces } = maillage
   const liste: Triangle[] = []
   for (let i = 0; i < indices.length; i += 3) {
-    liste.push([sommet(indices[i]), sommet(indices[i + 1]), sommet(indices[i + 2])])
+    liste.push({
+      s: [lireSommet(maillage, indices[i]), lireSommet(maillage, indices[i + 1]), lireSommet(maillage, indices[i + 2])],
+      face: faces?.[i / 3],
+    })
   }
   return liste
+}
+
+function normaleDe(triangle: Triangle): Point {
+  const [a, b, c] = triangle.s
+  const u: Point = [b.p[0] - a.p[0], b.p[1] - a.p[1], b.p[2] - a.p[2]]
+  const v: Point = [c.p[0] - a.p[0], c.p[1] - a.p[1], c.p[2] - a.p[2]]
+  const normale: Point = [u[1] * v[2] - u[2] * v[1], u[2] * v[0] - u[0] * v[2], u[0] * v[1] - u[1] * v[0]]
+  const longueur = Math.hypot(normale[0], normale[1], normale[2]) || 1
+  return [normale[0] / longueur, normale[1] / longueur, normale[2] / longueur]
 }
 
 function versMaillage(liste: Triangle[]): Maillage {
   const positions: number[] = []
   const indices: number[] = []
+  const normales: number[] = []
+  const faces: number[] = []
+  let aNormale = false
+  let aFace = false
   for (const triangle of liste) {
     const debut = positions.length / 3
-    for (const point of triangle) positions.push(point[0], point[1], point[2])
+    const repli = normaleDe(triangle)
+    for (const sommet of triangle.s) {
+      positions.push(sommet.p[0], sommet.p[1], sommet.p[2])
+      const n = sommet.n ?? repli
+      if (sommet.n) aNormale = true
+      normales.push(n[0], n[1], n[2])
+    }
     indices.push(debut, debut + 1, debut + 2)
+    if (triangle.face !== undefined) aFace = true
+    faces.push(triangle.face ?? 0)
   }
-  return { positions, indices }
+  const maille: Maillage = { positions, indices }
+  if (aNormale) maille.normales = normales
+  if (aFace) maille.faces = faces
+  return maille
 }
 
 function planDe(triangle: Triangle): Plan | null {
-  const [a, b, c] = triangle
-  const u: Point = [b[0] - a[0], b[1] - a[1], b[2] - a[2]]
-  const v: Point = [c[0] - a[0], c[1] - a[1], c[2] - a[2]]
+  const [a, b, c] = triangle.s
+  const u: Point = [b.p[0] - a.p[0], b.p[1] - a.p[1], b.p[2] - a.p[2]]
+  const v: Point = [c.p[0] - a.p[0], c.p[1] - a.p[1], c.p[2] - a.p[2]]
   const normale: Point = [u[1] * v[2] - u[2] * v[1], u[2] * v[0] - u[0] * v[2], u[0] * v[1] - u[1] * v[0]]
   const longueur = Math.hypot(normale[0], normale[1], normale[2])
   if (longueur < TOLERANCE) return null
   const unitaire: Point = [normale[0] / longueur, normale[1] / longueur, normale[2] / longueur]
-  return { normale: unitaire, distance: unitaire[0] * a[0] + unitaire[1] * a[1] + unitaire[2] * a[2] }
+  return { normale: unitaire, distance: unitaire[0] * a.p[0] + unitaire[1] * a.p[1] + unitaire[2] * a.p[2] }
 }
 
 function ecart(plan: Plan, point: Point) {
   return plan.normale[0] * point[0] + plan.normale[1] * point[1] + plan.normale[2] * point[2] - plan.distance
 }
 
-function entre(a: Point, b: Point, t: number): Point {
-  return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t]
+function entre(a: Sommet, b: Sommet, t: number): Sommet {
+  const p: Point = [a.p[0] + (b.p[0] - a.p[0]) * t, a.p[1] + (b.p[1] - a.p[1]) * t, a.p[2] + (b.p[2] - a.p[2]) * t]
+  if (!a.n || !b.n) return { p }
+  const n: Point = [a.n[0] + (b.n[0] - a.n[0]) * t, a.n[1] + (b.n[1] - a.n[1]) * t, a.n[2] + (b.n[2] - a.n[2]) * t]
+  const longueur = Math.hypot(n[0], n[1], n[2]) || 1
+  return { p, n: [n[0] / longueur, n[1] / longueur, n[2] / longueur] }
 }
 
 function retourner(triangle: Triangle): Triangle {
-  return [triangle[2], triangle[1], triangle[0]]
+  const inverse = (n?: Point): Point | undefined => (n ? [-n[0], -n[1], -n[2]] : undefined)
+  const [a, b, c] = triangle.s
+  return {
+    s: [
+      { p: c.p, n: inverse(c.n) },
+      { p: b.p, n: inverse(b.n) },
+      { p: a.p, n: inverse(a.n) },
+    ],
+    face: triangle.face,
+  }
 }
 
 /** Découpe un triangle par le plan, et range les morceaux par côté. */
-function decouper(plan: Plan, triangle: Triangle, sortie: {
-  coplanairesDevant: Triangle[]
-  coplanairesDerriere: Triangle[]
-  devant: Triangle[]
-  derriere: Triangle[]
-}) {
+function decouper(
+  plan: Plan,
+  triangle: Triangle,
+  sortie: {
+    coplanairesDevant: Triangle[]
+    coplanairesDerriere: Triangle[]
+    devant: Triangle[]
+    derriere: Triangle[]
+  },
+) {
   let cote = 0
-  const ecarts = triangle.map((point) => ecart(plan, point))
+  const ecarts = triangle.s.map((sommet) => ecart(plan, sommet.p))
   for (const valeur of ecarts) {
     if (valeur > TOLERANCE) cote |= DEVANT
     else if (valeur < -TOLERANCE) cote |= DERRIERE
@@ -85,16 +142,16 @@ function decouper(plan: Plan, triangle: Triangle, sortie: {
     sortie.derriere.push(triangle)
     return
   }
-  const devant: Point[] = []
-  const derriere: Point[] = []
+  const devant: Sommet[] = []
+  const derriere: Sommet[] = []
   for (let i = 0; i < 3; i++) {
     const j = (i + 1) % 3
     const ei = ecarts[i]
     const ej = ecarts[j]
-    if (ei >= -TOLERANCE) devant.push(triangle[i])
-    if (ei <= TOLERANCE) derriere.push(triangle[i])
+    if (ei >= -TOLERANCE) devant.push(triangle.s[i])
+    if (ei <= TOLERANCE) derriere.push(triangle.s[i])
     if ((ei > TOLERANCE && ej < -TOLERANCE) || (ei < -TOLERANCE && ej > TOLERANCE)) {
-      const point = entre(triangle[i], triangle[j], ei / (ei - ej))
+      const point = entre(triangle.s[i], triangle.s[j], ei / (ei - ej))
       devant.push(point)
       derriere.push(point)
     }
@@ -104,7 +161,7 @@ function decouper(plan: Plan, triangle: Triangle, sortie: {
     [derriere, sortie.derriere],
   ] as const) {
     for (let i = 2; i < morceau.length; i++) {
-      const part: Triangle = [morceau[0], morceau[i - 1], morceau[i]]
+      const part: Triangle = { s: [morceau[0], morceau[i - 1], morceau[i]], face: triangle.face }
       if (planDe(part)) tas.push(part)
     }
   }
@@ -122,9 +179,17 @@ class Noeud {
 
   batir(liste: Triangle[]) {
     if (liste.length === 0) return
-    if (!this.plan) this.plan = planDe(liste[0])
+    if (!this.plan) {
+      const depart = Math.floor(liste.length / 2)
+      for (let k = 0; k < liste.length && !this.plan; k++) this.plan = planDe(liste[(depart + k) % liste.length])
+    }
     if (!this.plan) return
-    const sortie = { coplanairesDevant: this.propres, coplanairesDerriere: this.propres, devant: [] as Triangle[], derriere: [] as Triangle[] }
+    const sortie = {
+      coplanairesDevant: this.propres,
+      coplanairesDerriere: this.propres,
+      devant: [] as Triangle[],
+      derriere: [] as Triangle[],
+    }
     for (const triangle of liste) decouper(this.plan, triangle, sortie)
     if (sortie.devant.length > 0) {
       this.devant = this.devant ?? new Noeud()
@@ -136,17 +201,15 @@ class Noeud {
     }
   }
 
-  /** Retire de cet arbre ce qui est dans le volume de l'autre. */
-  rognerSur(autre: Noeud) {
-    this.propres = autre.retirerDedans(this.propres)
-    this.devant?.rognerSur(autre)
-    this.derriere?.rognerSur(autre)
-  }
-
   /** Retire de la liste ce qui est dans le volume de cet arbre. */
   retirerDedans(liste: Triangle[]): Triangle[] {
     if (!this.plan) return [...liste]
-    const sortie = { coplanairesDevant: [] as Triangle[], coplanairesDerriere: [] as Triangle[], devant: [] as Triangle[], derriere: [] as Triangle[] }
+    const sortie = {
+      coplanairesDevant: [] as Triangle[],
+      coplanairesDerriere: [] as Triangle[],
+      devant: [] as Triangle[],
+      derriere: [] as Triangle[],
+    }
     for (const triangle of liste) decouper(this.plan, triangle, sortie)
     const devant = [...sortie.devant, ...sortie.coplanairesDevant]
     const derriere = [...sortie.derriere, ...sortie.coplanairesDerriere]
@@ -157,7 +220,10 @@ class Noeud {
 
   inverser() {
     if (this.plan) {
-      this.plan = { normale: [-this.plan.normale[0], -this.plan.normale[1], -this.plan.normale[2]], distance: -this.plan.distance }
+      this.plan = {
+        normale: [-this.plan.normale[0], -this.plan.normale[1], -this.plan.normale[2]],
+        distance: -this.plan.distance,
+      }
     }
     this.propres = this.propres.map(retourner)
     this.devant?.inverser()
@@ -197,39 +263,108 @@ export function rogner(maillage: Maillage, volume: Maillage, garder: 'dehors' | 
   return garder === 'dedans' ? arbre.dedans(maillage) : arbre.dehors(maillage)
 }
 
-/** Retire les faces coplanaires en double entre les deux arbres. */
-function ajuster(garde: Noeud, autre: Noeud) {
-  garde.rognerSur(autre)
-  autre.rognerSur(garde)
-  autre.inverser()
-  autre.rognerSur(garde)
-  autre.inverser()
+type Boite = { min: Point; max: Point }
+
+function englobante(liste: Triangle[]): Boite | null {
+  if (liste.length === 0) return null
+  const min: Point = [Infinity, Infinity, Infinity]
+  const max: Point = [-Infinity, -Infinity, -Infinity]
+  for (const triangle of liste) {
+    for (const sommet of triangle.s) {
+      for (let axe = 0; axe < 3; axe++) {
+        min[axe] = Math.min(min[axe], sommet.p[axe])
+        max[axe] = Math.max(max[axe], sommet.p[axe])
+      }
+    }
+  }
+  return { min, max }
 }
 
-/** Réunit deux volumes fermés. */
+/** Vrai quand le triangle est strictement hors de la boîte : il ne peut pas rencontrer le solide. */
+function horsBoite(triangle: Triangle, boite: Boite | null) {
+  if (!boite) return true
+  const min: Point = [Infinity, Infinity, Infinity]
+  const max: Point = [-Infinity, -Infinity, -Infinity]
+  for (const sommet of triangle.s) {
+    for (let axe = 0; axe < 3; axe++) {
+      min[axe] = Math.min(min[axe], sommet.p[axe])
+      max[axe] = Math.max(max[axe], sommet.p[axe])
+    }
+  }
+  for (let axe = 0; axe < 3; axe++) {
+    if (max[axe] < boite.min[axe] - TOLERANCE || min[axe] > boite.max[axe] + TOLERANCE) return true
+  }
+  return false
+}
+
+function separer(liste: Triangle[], boite: Boite | null) {
+  const loin: Triangle[] = []
+  const pres: Triangle[] = []
+  for (const triangle of liste) (horsBoite(triangle, boite) ? loin : pres).push(triangle)
+  return { loin, pres }
+}
+
+function aire(triangle: Triangle) {
+  const [a, b, c] = triangle.s
+  const u: Point = [b.p[0] - a.p[0], b.p[1] - a.p[1], b.p[2] - a.p[2]]
+  const v: Point = [c.p[0] - a.p[0], c.p[1] - a.p[1], c.p[2] - a.p[2]]
+  const n: Point = [u[1] * v[2] - u[2] * v[1], u[2] * v[0] - u[0] * v[2], u[0] * v[1] - u[1] * v[0]]
+  return Math.hypot(n[0], n[1], n[2]) / 2
+}
+
+/** Découpe, mais rend le triangle d’origine si le volume adverse n’en retire rien. */
+function garderEntier(arbre: Noeud, liste: Triangle[]) {
+  const sortie: Triangle[] = []
+  for (const triangle of liste) {
+    const fragments = arbre.retirerDedans([triangle])
+    const reste = fragments.reduce((somme, fragment) => somme + aire(fragment), 0)
+    if (reste >= aire(triangle) * (1 - 1e-4)) sortie.push(triangle)
+    else sortie.push(...fragments)
+  }
+  return sortie
+}
+
+/**
+ * Union de deux listes déjà restreintes au voisinage.
+ * Le second passage, après retournement, retire les faces coplanaires en double.
+ */
+function unirPres(a: Triangle[], b: Triangle[], arbreA: Noeud, arbreB: Noeud) {
+  const gardeA = garderEntier(arbreB, a)
+  let gardeB = garderEntier(arbreA, b)
+  gardeB = gardeB.map(retourner)
+  gardeB = garderEntier(arbreA, gardeB)
+  gardeB = gardeB.map(retourner)
+  return [...gardeA, ...gardeB]
+}
+
+/** Réunit deux volumes fermés. Les triangles hors de la boîte de l’autre restent entiers. */
 export function union(a: Maillage, b: Maillage): Maillage {
-  const arbreA = new Noeud(triangles(a))
-  const arbreB = new Noeud(triangles(b))
-  ajuster(arbreA, arbreB)
-  arbreA.batir(arbreB.tous())
-  return versMaillage(arbreA.tous())
+  const trisA = triangles(a)
+  const trisB = triangles(b)
+  const { loin: loinA, pres: presA } = separer(trisA, englobante(trisB))
+  const { loin: loinB, pres: presB } = separer(trisB, englobante(trisA))
+  if (presA.length === 0 && presB.length === 0) return versMaillage([...loinA, ...loinB])
+  return versMaillage([...loinA, ...loinB, ...unirPres(presA, presB, new Noeud(trisA), new Noeud(trisB))])
 }
 
-/** Retire de a le volume de b. */
+/** Retire de a le volume de b. Les triangles de a hors de b restent entiers. */
 export function difference(a: Maillage, b: Maillage): Maillage {
-  const arbreA = new Noeud(triangles(a))
-  const arbreB = new Noeud(triangles(b))
+  const trisA = triangles(a)
+  const trisB = triangles(b)
+  const { loin: loinA, pres: presA } = separer(trisA, englobante(trisB))
+  const { pres: presB } = separer(trisB, englobante(trisA))
+  if (presA.length === 0 && presB.length === 0) return versMaillage(trisA)
+  const arbreA = new Noeud(trisA)
   arbreA.inverser()
-  ajuster(arbreA, arbreB)
-  arbreA.batir(arbreB.tous())
-  arbreA.inverser()
-  return versMaillage(arbreA.tous())
+  const garde = unirPres(presA.map(retourner), presB, arbreA, new Noeud(trisB))
+  return versMaillage([...loinA, ...garde.map(retourner)])
 }
 
 /** Volume signé, par la somme des tétraèdres sur l'origine. */
 export function volume(maillage: Maillage) {
   let total = 0
-  for (const [a, b, c] of triangles(maillage)) {
+  for (const triangle of triangles(maillage)) {
+    const [a, b, c] = triangle.s.map((sommet) => sommet.p)
     total +=
       (a[0] * (b[1] * c[2] - b[2] * c[1]) - a[1] * (b[0] * c[2] - b[2] * c[0]) + a[2] * (b[0] * c[1] - b[1] * c[0])) / 6
   }

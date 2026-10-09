@@ -112,6 +112,8 @@ export type Contexte = {
   evaluateur: Evaluateur
   solveur: SolveurEsquisse
   noyau: NoyauGeometrique
+  /** Faux : les fonctions maillées posent le profil et sautent le volume. */
+  geometrie?: boolean
 }
 
 export type Evaluateur = {
@@ -125,6 +127,10 @@ export type SolveurEsquisse = {
 export type Maillage = {
   positions: number[]
   indices: number[]
+  /** Une par sommet, hors de la matière. Absente tant que le maillage n'est pas ombré. */
+  normales?: number[]
+  /** Une étiquette par triangle. Le fil de fer sépare deux étiquettes différentes. */
+  faces?: number[]
 }
 
 /** Maillage d'affichage : chaque sommet porte la normale de sa surface. */

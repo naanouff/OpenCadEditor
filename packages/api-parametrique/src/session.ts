@@ -50,8 +50,13 @@ export class Session {
   private readonly verbes = new Map<string, (reste: string) => Operation>()
   private readonly passe: Action[] = []
   private readonly futur: Action[] = []
+  private enLot = false
+  private sale = false
+  private readonly geometrie: boolean
+  private vueSansGeometrie = false
 
-  constructor() {
+  constructor(options?: { geometrie?: boolean }) {
+    this.geometrie = options?.geometrie !== false
     this.enregistrer(domainePiece(this))
     this.enregistrer(domaineParametres)
     this.enregistrer(domaineEsquisse)
@@ -69,7 +74,30 @@ export class Session {
   }
 
   executer(script: string) {
-    for (const ligne of script.split('\n')) this.commande(ligne)
+    this.lot(() => {
+      for (const ligne of script.split('\n')) this.commande(ligne)
+    })
+  }
+
+  /** Les lignes s'empilent, et le solide n'est reconstruit qu'à la sortie. */
+  lot(faire: () => void) {
+    if (this.enLot) {
+      faire()
+      return
+    }
+    this.enLot = true
+    this.sale = false
+    try {
+      faire()
+    } finally {
+      this.enLot = false
+      if (this.sale) this.reconstruire()
+      this.sale = false
+    }
+  }
+
+  get constructionDifferee() {
+    return this.enLot
   }
 
   commande(ligne: string) {
@@ -192,6 +220,7 @@ export class Session {
     this.pieces.set(nom, pieceVide(source.nom))
     const avant = this.active
     this.active = nom
+    this.vueSansGeometrie = true
     try {
       for (const operation of operationsJusquaEsquisse(source.historique, index)) {
         this.handler(operation).faire(this.contexte(), operation)
@@ -200,6 +229,7 @@ export class Session {
       if (!piece.esquisse) return null
       return noyauProvisoire.poser(piece.esquisse, piece.solide, piece.parametres)
     } finally {
+      this.vueSansGeometrie = false
       this.pieces.delete(nom)
       this.active = avant
     }
@@ -246,7 +276,7 @@ export class Session {
       return {
         faire: () => {
           Object.assign(existant.arguments, operation.arguments)
-          this.reconstruire()
+          this.rejouer()
         },
         defaire: () => {
           existant.arguments = avant
@@ -258,7 +288,7 @@ export class Session {
     return {
       faire: () => {
         this.pieceActive().historique.push(operation)
-        this.reconstruire()
+        this.rejouer()
       },
       defaire: () => {
         const historique = this.pieceActive().historique
@@ -283,6 +313,11 @@ export class Session {
       this.reconstruire()
       throw erreur
     }
+  }
+
+  private rejouer() {
+    if (this.enLot) this.sale = true
+    else this.reconstruire()
   }
 
   private reconstruire() {
@@ -325,6 +360,7 @@ export class Session {
       evaluateur: evaluateurProvisoire,
       solveur: solveurProvisoire,
       noyau: noyauProvisoire,
+      geometrie: this.geometrie && !this.vueSansGeometrie,
     }
   }
 }

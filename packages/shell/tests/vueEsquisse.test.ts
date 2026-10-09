@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { Session } from '@opencad/api-parametrique'
+import { SCRIPT_VIS } from '../src/scriptVis.ts'
 import { arbreConstruction } from '../src/arbreConstruction.ts'
 import { documentCad } from '../src/documentCad.ts'
 import { storeShell } from '../src/storeShell.ts'
@@ -59,5 +60,25 @@ cote diametre 10
     storeShell.voirEsquisse(esquisse!.index!)
     storeShell.voirEsquisse(null)
     expect(storeShell.esquisseVue()).toBeNull()
+  })
+
+  it('relit l’esquisse de la vis sans mailler le volume', () => {
+    const session = new Session({ geometrie: false })
+    session.executer(SCRIPT_VIS)
+    expect(session.maillage().indices).toEqual([])
+    const index = session.historique().findIndex((operation) => operation.type === 'ouvrir')
+    expect(session.esquisseDepuis(index)?.support).toBe('plan.12h')
+    expect(session.maillage().indices).toEqual([])
+  })
+
+  it('ouvre l’esquisse déjà consommée sans refaire le booléen', () => {
+    const session = new Session()
+    session.executer(SCRIPT_VIS)
+    const index = session.historique().map((operation) => operation.type).lastIndexOf('ouvrir')
+    const debut = performance.now()
+    const posee = session.esquisseDepuis(index)
+    expect(performance.now() - debut).toBeLessThan(500)
+    expect(posee?.support).toBe('plan.dessus')
+    expect(session.maillage().indices.length).toBeGreaterThan(0)
   })
 })

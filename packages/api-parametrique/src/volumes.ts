@@ -23,17 +23,22 @@ function assembler() {
   return { positions, indices, triangle, quadrilatere }
 }
 
-/** Boîte fermée, normales vers l'extérieur. */
+/** Boîte fermée, normales vers l'extérieur. Chaque côté est une face. */
 export function boite(bornes: { xmin: number; xmax: number; ymin: number; ymax: number; zmin: number; zmax: number }): Maillage {
   const { xmin, xmax, ymin, ymax, zmin, zmax } = bornes
   const { positions, indices, quadrilatere } = assembler()
-  quadrilatere([xmax, ymin, zmin], [xmax, ymax, zmin], [xmax, ymax, zmax], [xmax, ymin, zmax])
-  quadrilatere([xmin, ymin, zmax], [xmin, ymax, zmax], [xmin, ymax, zmin], [xmin, ymin, zmin])
-  quadrilatere([xmin, ymax, zmin], [xmin, ymax, zmax], [xmax, ymax, zmax], [xmax, ymax, zmin])
-  quadrilatere([xmin, ymin, zmin], [xmax, ymin, zmin], [xmax, ymin, zmax], [xmin, ymin, zmax])
-  quadrilatere([xmin, ymin, zmax], [xmax, ymin, zmax], [xmax, ymax, zmax], [xmin, ymax, zmax])
-  quadrilatere([xmin, ymin, zmin], [xmin, ymax, zmin], [xmax, ymax, zmin], [xmax, ymin, zmin])
-  return { positions, indices }
+  const faces: number[] = []
+  const cote = (id: number, a: Point, b: Point, c: Point, d: Point) => {
+    quadrilatere(a, b, c, d)
+    faces.push(id, id)
+  }
+  cote(0, [xmax, ymin, zmin], [xmax, ymax, zmin], [xmax, ymax, zmax], [xmax, ymin, zmax])
+  cote(1, [xmin, ymin, zmax], [xmin, ymax, zmax], [xmin, ymax, zmin], [xmin, ymin, zmin])
+  cote(2, [xmin, ymax, zmin], [xmin, ymax, zmax], [xmax, ymax, zmax], [xmax, ymax, zmin])
+  cote(3, [xmin, ymin, zmin], [xmax, ymin, zmin], [xmax, ymin, zmax], [xmin, ymin, zmax])
+  cote(4, [xmin, ymin, zmax], [xmax, ymin, zmax], [xmax, ymax, zmax], [xmin, ymax, zmax])
+  cote(5, [xmin, ymin, zmin], [xmin, ymax, zmin], [xmax, ymax, zmin], [xmax, ymin, zmin])
+  return { positions, indices, faces }
 }
 
 /**

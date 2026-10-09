@@ -125,6 +125,11 @@ export const domaineSolide: Domaine = {
           return
         }
         if (contexte.piece.volume) {
+          if (contexte.geometrie === false) {
+            contexte.esquisse = null
+            contexte.piece.esquisse = null
+            return
+          }
           if (!contexte.esquisse) throw new ErreurApi('aucune esquisse')
           const profondeur = contexte.evaluateur.evaluer(operation.arguments.expression, contexte.parametres)
           contexte.piece.volume = couperRectangles(

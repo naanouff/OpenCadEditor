@@ -80,16 +80,26 @@ function ViewportVue(_props: IDockviewPanelProps) {
     if (!canevas) return
     const vue = storeShell.esquisseVue()
     const posee = vue === null ? hote.session.esquisseCourante() : hote.session.esquisseDepuis(vue)
-    void afficher(canevas, hote.session.frontiere(), posee, hote.session.maillage()).catch((erreur: unknown) => {
+    const maille = storeShell.utiliseMoteur()
+      ? (storeShell.maillageAffiche() ?? { positions: [], normales: [], indices: [] })
+      : hote.session.maillage()
+    void afficher(canevas, hote.session.frontiere(), posee, maille).catch((erreur: unknown) => {
       console.error(erreur instanceof Error ? erreur.message : String(erreur))
     })
   }, [hote, revision])
   return (
-    <canvas
-      ref={ref}
-      className="block h-full w-full"
-      style={{ background: 'var(--color-viewport-clear, #a8abad)' }}
-    />
+    <div className="relative h-full w-full">
+      <canvas
+        ref={ref}
+        className="block h-full w-full"
+        style={{ background: 'var(--color-viewport-clear, #a8abad)' }}
+      />
+      {storeShell.construction() ? (
+        <p className="pointer-events-none absolute left-3 top-3 m-0 font-ui text-[13px] text-[var(--color-text-primary)]">
+          Construction…
+        </p>
+      ) : null}
+    </div>
   )
 }
 

@@ -4,16 +4,20 @@ import { panneauViewport } from './panneaux/viewport.ts'
 import type { EntreeJournal, Panneau } from './types.ts'
 
 export class Hote {
-  readonly session = new Session()
+  readonly session: Session
   private readonly panneaux: Panneau[] = []
 
-  constructor() {
+  constructor(options?: { geometrie?: boolean }) {
+    this.session = new Session({ geometrie: options?.geometrie })
     this.enregistrer(panneauTerminal())
     this.enregistrer(panneauViewport())
   }
 
   executer(script: string) {
-    for (const ligne of script.split('\n')) this.ligne(ligne)
+    this.session.lot(() => {
+      for (const ligne of script.split('\n')) this.ligne(ligne)
+    })
+    this.pousserMaillage()
   }
 
   enregistrer(panneau: Panneau) {
@@ -22,7 +26,11 @@ export class Hote {
 
   ligne(texte: string) {
     for (const panneau of this.panneaux) panneau.saisir?.(this, texte)
-    if (!texte.trim()) return
+    if (!texte.trim() || this.session.constructionDifferee) return
+    this.pousserMaillage()
+  }
+
+  private pousserMaillage() {
     const maillage = this.session.maillage()
     for (const panneau of this.panneaux) panneau.recevoir?.(maillage)
   }

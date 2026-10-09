@@ -32,6 +32,22 @@ describe('booléen', () => {
     expect(aretesImpaires(tube({ rayonExt: 20, rayonInt: 17.5, bas: 0, haut: 8, segments: SEGMENTS }))).toBe(0)
   })
 
+  it('unit deux cubes disjoints sans les découper', () => {
+    const a = boite({ xmin: 0, xmax: 1, ymin: 0, ymax: 1, zmin: 0, zmax: 1 })
+    const b = boite({ xmin: 3, xmax: 4, ymin: 0, ymax: 1, zmin: 0, zmax: 1 })
+    const resultat = union(a, b)
+    expect(resultat.indices.length / 3).toBe(24)
+    expect(volume(resultat)).toBeCloseTo(2, 6)
+  })
+
+  it('unit deux cubes qui se touchent par une face', () => {
+    const a = boite({ xmin: 0, xmax: 1, ymin: 0, ymax: 1, zmin: 0, zmax: 1 })
+    const b = boite({ xmin: 1, xmax: 2, ymin: 0, ymax: 1, zmin: 0, zmax: 1 })
+    const resultat = union(a, b)
+    expect(volume(resultat)).toBeCloseTo(2, 4)
+    expect(aretesImpaires(resultat)).toBe(0)
+  })
+
   it('ferme un cylindre par ses deux couvercles', () => {
     const barreau = cylindre({ axe: 'x', rayon: 2, debut: 0, fin: 5, a: 0, b: 0, segments: SEGMENTS })
     expect(volume(barreau)).toBeCloseTo(airePolygone(2, SEGMENTS) * 5, 6)

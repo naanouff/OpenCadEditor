@@ -25,6 +25,7 @@ import { Logger } from '@naanouff/w3dts-logger'
 import {
   VectorLineOverlayComponent,
   buildLineListInterleavedVertices,
+  buildLineRibbonInterleavedVertices,
   createVectorLineOverlaySystem,
 } from '@naanouff/w3dts-vector-lines'
 import { quat, vec3 } from 'gl-matrix'
@@ -147,7 +148,7 @@ class ProjetAnneau extends LitAbstractProject {
     scene.add(racine)
     this.racine = racine
     poserMaillage(racine, world, engine, document)
-    poserFil(racine, world, engine, logger, document.brepWireframe.position.array, [0.12, 0.13, 0.14, 1], 'solide')
+    poserFil(racine, world, engine, logger, document.brepWireframe.position.array, [0.12, 0.13, 0.14, 1], 'solide', 0.00008)
     poserFil(racine, world, engine, logger, document.grille.position.array, [0.8, 0.81, 0.82, 1], 'grille')
     poserFil(racine, world, engine, logger, document.esquisse.position.array, [0.15, 0.45, 0.92, 1], 'esquisse')
     poserFil(racine, world, engine, logger, document.cotes.position.array, [0.92, 0.55, 0.12, 1], 'cotes')
@@ -310,14 +311,18 @@ function poserFil(
   segments: number[],
   rgba: [number, number, number, number],
   nom: string,
+  /** Demi-largeur en mètres. Un ruban passe devant la surface ; un trait matériel s'y noie de profil. */
+  demiLargeur?: number,
 ) {
-  const construit = buildLineListInterleavedVertices(segments, rgba, 50_000, logger, nom)
+  const construit = demiLargeur
+    ? buildLineRibbonInterleavedVertices(segments, rgba, 50_000, demiLargeur, logger, nom)
+    : buildLineListInterleavedVertices(segments, rgba, 50_000, logger, nom)
   if (construit.vertexCount === 0) return
   const tampon = engine.resourceManager.createLineOverlayVertexBuffer(construit.vertices, nom)
   const noeud = new SceneNode(nom, world)
   world.addComponent(
     noeud.entityId,
-    new VectorLineOverlayComponent(tampon, construit.vertexCount, 0, 'line-list'),
+    new VectorLineOverlayComponent(tampon, construit.vertexCount, 0, demiLargeur ? 'triangle-list' : 'line-list'),
   )
   parent.add(noeud)
 }

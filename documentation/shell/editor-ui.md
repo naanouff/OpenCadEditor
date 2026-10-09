@@ -43,7 +43,7 @@ Ils vivent dans `packages/shell/src/surcharges/`. Un plugin Vite redirige les mo
 - Layout par défaut : construction à gauche, paramètres sous l’arbre, document sous les paramètres, viewport au centre, terminal en bas
 - Panneaux métier : tokens CSS + primitive `Panel` (pas le store `viewer-editor`)
 - Terminal : Monaco comme le Script panel w3dts (`Entrée` exécute, `Maj+Entrée` nouvelle ligne, ↑ historique)
-- Construction : arbre de `session.historique()` (pièce → origine / fonctions, esquisse sous la fonction). Chaque opérateur a une case : éteint, il reste dans l’arbre et n’est plus rejoué, avec l’esquisse qu’il consomme. Un clic sur une esquisse ouvre sa vue : grille, traits et cotes, sans le solide. **Quitter l'esquisse**, un second clic, ou un clic sur la pièce rend la vue 3D. Les paramètres restent dans leur panneau.
+- Construction : arbre de `session.historique()` (pièce → origine / fonctions, esquisse sous la fonction). Chaque opérateur a une case : éteint, il reste dans l’arbre et n’est plus rejoué, avec l’esquisse qu’il consomme. Un clic sur une esquisse ouvre sa vue : grille, traits et cotes, sans le solide. **Quitter l'esquisse**, un second clic, ou un clic sur la pièce rend la vue 3D. Les paramètres restent dans leur panneau. Le fil de fer d’un solide maillé vient des frontières de faces. Pendant que le worker calcule le volume, le viewport affiche « Construction… ».
 - Document : auteur, version semantique, unité et repère de référence (`session.document()`)
 - Debug : boutons **Build carrure** (`scriptCarrure.ts`) et **Build vis** (`scriptVis.ts`)
 

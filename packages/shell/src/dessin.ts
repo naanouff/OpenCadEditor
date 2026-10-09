@@ -354,6 +354,145 @@ export function aretesVives(maillage: Maillage, angleVif = ANGLE_VIF) {
 }
 
 /**
+ * Arêtes de frontière entre faces, en millimètres.
+ * Une arête qui ne borde qu'une face, et dont le milieu repose sur cette même face, est écartée :
+ * c'est une découpe intérieure laissée par le booléen. Une jonction entre deux faces coplanaires
+ * non plus : les fonds de l'empreinte n'en font qu'un. Une jonction avec une face d'un autre plan est tracée.
+ * Sans aucun partenaire, l'arête est tracée : le maillage est ouvert.
+ */
+export function aretesBrep(maillage: Maillage) {
+  const { positions, indices, faces } = maillage
+  if (!faces || faces.length === 0) return []
+  const quantifie = (valeur: number) => Math.round(valeur * 1e4) / 1e4
+  const cleSommet = (rang: number) =>
+    `${quantifie(positions[rang * 3])},${quantifie(positions[rang * 3 + 1])},${quantifie(positions[rang * 3 + 2])}`
+  const point = (rang: number) => [positions[rang * 3], positions[rang * 3 + 1], positions[rang * 3 + 2]]
+  const normaleTriangle = (i: number) => {
+    const sommet = (k: number) => {
+      const s = indices[i + k] * 3
+      return [positions[s], positions[s + 1], positions[s + 2]]
+    }
+    const a = sommet(0)
+    const b = sommet(1)
+    const c = sommet(2)
+    const ab = [b[0] - a[0], b[1] - a[1], b[2] - a[2]]
+    const ac = [c[0] - a[0], c[1] - a[1], c[2] - a[2]]
+    const n = [ab[1] * ac[2] - ab[2] * ac[1], ab[2] * ac[0] - ab[0] * ac[2], ab[0] * ac[1] - ab[1] * ac[0]]
+    const longueur = Math.hypot(n[0], n[1], n[2]) || 1
+    return [n[0] / longueur, n[1] / longueur, n[2] / longueur]
+  }
+  const arretes = new Map<string, { a: number[]; b: number[]; etiquettes: number[]; normales: number[][]; source: number }>()
+  for (let i = 0; i < indices.length; i += 3) {
+    const etiquette = faces[i / 3]
+    const normale = normaleTriangle(i)
+    for (const [u, v] of [
+      [0, 1],
+      [1, 2],
+      [2, 0],
+    ]) {
+      const premier = indices[i + u]
+      const second = indices[i + v]
+      const cles = [cleSommet(premier), cleSommet(second)]
+      const nom = cles[0] < cles[1] ? `${cles[0]}|${cles[1]}` : `${cles[1]}|${cles[0]}`
+      const connue = arretes.get(nom)
+      if (connue) {
+        connue.etiquettes.push(etiquette)
+        connue.normales.push(normale)
+      } else {
+        arretes.set(nom, { a: point(premier), b: point(second), etiquettes: [etiquette], normales: [normale], source: i })
+      }
+    }
+  }
+  const array: number[] = []
+  const poser = (a: number[], b: number[]) => array.push(a[0], a[1], a[2], b[0], b[1], b[2])
+  const seules: { a: number[]; b: number[]; etiquette: number; normale: number[]; source: number }[] = []
+  for (const arete of arretes.values()) {
+    const distinctes = new Set(arete.etiquettes)
+    if (distinctes.size > 1) {
+      const parFace = new Map<number, number[]>()
+      arete.etiquettes.forEach((id, k) => {
+        if (!parFace.has(id)) parFace.set(id, arete.normales[k])
+      })
+      const vecteurs = [...parFace.values()]
+      const coplanaires = vecteurs.every((normale) => {
+        const scalaire = vecteurs[0][0] * normale[0] + vecteurs[0][1] * normale[1] + vecteurs[0][2] * normale[2]
+        return scalaire > 0.999
+      })
+      if (!coplanaires) poser(arete.a, arete.b)
+    } else if (arete.etiquettes.length === 1) {
+      seules.push({
+        a: arete.a,
+        b: arete.b,
+        etiquette: arete.etiquettes[0],
+        normale: arete.normales[0],
+        source: arete.source,
+      })
+    }
+  }
+  const tolerance = 0.05
+  const triangles: { face: number; p: number[][]; min: number[]; max: number[]; normale: number[]; source: number }[] = []
+  for (let t = 0; t < indices.length; t += 3) {
+    const p = [0, 1, 2].map((k) => {
+      const s = indices[t + k] * 3
+      return [positions[s], positions[s + 1], positions[s + 2]]
+    })
+    triangles.push({
+      face: faces[t / 3],
+      p,
+      normale: normaleTriangle(t),
+      source: t,
+      min: [0, 1, 2].map((axe) => Math.min(p[0][axe], p[1][axe], p[2][axe])),
+      max: [0, 1, 2].map((axe) => Math.max(p[0][axe], p[1][axe], p[2][axe])),
+    })
+  }
+  const surTriangle = (point: number[], triangle: (typeof triangles)[number]) => {
+    const [a, b, c] = triangle.p
+    const ab = [b[0] - a[0], b[1] - a[1], b[2] - a[2]]
+    const ac = [c[0] - a[0], c[1] - a[1], c[2] - a[2]]
+    const n = [ab[1] * ac[2] - ab[2] * ac[1], ab[2] * ac[0] - ab[0] * ac[2], ab[0] * ac[1] - ab[1] * ac[0]]
+    const nl = Math.hypot(n[0], n[1], n[2]) || 1
+    const dist = Math.abs((point[0] - a[0]) * n[0] + (point[1] - a[1]) * n[1] + (point[2] - a[2]) * n[2]) / nl
+    if (dist > tolerance) return false
+    const d00 = ab[0] * ab[0] + ab[1] * ab[1] + ab[2] * ab[2]
+    const d01 = ab[0] * ac[0] + ab[1] * ac[1] + ab[2] * ac[2]
+    const d11 = ac[0] * ac[0] + ac[1] * ac[1] + ac[2] * ac[2]
+    const d20 = (point[0] - a[0]) * ab[0] + (point[1] - a[1]) * ab[1] + (point[2] - a[2]) * ab[2]
+    const d21 = (point[0] - a[0]) * ac[0] + (point[1] - a[1]) * ac[1] + (point[2] - a[2]) * ac[2]
+    const denom = d00 * d11 - d01 * d01 || 1
+    const v = (d11 * d20 - d01 * d21) / denom
+    const w = (d00 * d21 - d01 * d20) / denom
+    return Math.min(1 - v - w, v, w) >= -0.02
+  }
+  for (const arete of seules) {
+    const milieu = [
+      (arete.a[0] + arete.b[0]) / 2,
+      (arete.a[1] + arete.b[1]) / 2,
+      (arete.a[2] + arete.b[2]) / 2,
+    ]
+    let meme = false
+    let autre = false
+    let couvert = false
+    for (const triangle of triangles) {
+      if (milieu[0] < triangle.min[0] - tolerance || milieu[0] > triangle.max[0] + tolerance) continue
+      if (milieu[1] < triangle.min[1] - tolerance || milieu[1] > triangle.max[1] + tolerance) continue
+      if (milieu[2] < triangle.min[2] - tolerance || milieu[2] > triangle.max[2] + tolerance) continue
+      if (triangle.source === arete.source || !surTriangle(milieu, triangle)) continue
+      if (triangle.face === arete.etiquette) meme = true
+      else {
+        const scalaire =
+          arete.normale[0] * triangle.normale[0] +
+          arete.normale[1] * triangle.normale[1] +
+          arete.normale[2] * triangle.normale[2]
+        if (scalaire > 0.999) couvert = true
+        else autre = true
+      }
+    }
+    if (autre || (!meme && !couvert)) poser(arete.a, arete.b)
+  }
+  return array
+}
+
+/**
  * Flanc incliné que traverse ce perçage : `bout` est l'extrémité côté flanc,
  * `x(z)` la position du flanc à ce débord.
  */
