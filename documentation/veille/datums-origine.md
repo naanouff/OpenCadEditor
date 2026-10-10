@@ -25,7 +25,7 @@ Les faces de solide (`face.*`) restent des supports valides (registre topo, spri
 
 ## État
 
-Préparé (sprint 31). Réécriture des paliers 3–4 dans [arbre-fonctions.md](arbre-fonctions.md) déjà alignée sur ce plan.
+Branché (sprint 31) : `datums.ts` depuis `document.repere` ; consommateurs esquisse, polylines (`gcsVersMonde`), `dessin.repere`, arbre Origine.
 
 ## Hors périmètre
 

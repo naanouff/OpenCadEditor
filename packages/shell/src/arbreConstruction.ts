@@ -1,4 +1,4 @@
-import type { Operation } from '@opencad/api-parametrique'
+import { datumsOrigine, type Operation } from '@opencad/api-parametrique'
 
 export type NoeudArbre = {
   id: string
@@ -56,12 +56,6 @@ export function libelleOperation(operation: Operation): string {
   }
 }
 
-const PLANS_ORIGINE = [
-  { id: 'plan.dessus', libelle: 'Plan dessus' },
-  { id: 'plan.12h', libelle: 'Plan 12h' },
-  { id: 'plan.3h', libelle: 'Plan 3h' },
-]
-
 function marquerApres(noeud: NoeudArbre) {
   noeud.apresPointe = true
   for (const enfant of noeud.enfants ?? []) marquerApres(enfant)
@@ -83,7 +77,7 @@ export function fonctions(historique: Operation[], pointe: number | null = null)
     {
       id: 'origine',
       libelle: 'Origine',
-      enfants: PLANS_ORIGINE.map((plan) => ({ id: plan.id, libelle: plan.libelle })),
+      enfants: datumsOrigine().map((plan) => ({ id: plan.id, libelle: plan.libelle })),
     },
   ]
   let esquisse: { index: number; operation: Operation }[] = []

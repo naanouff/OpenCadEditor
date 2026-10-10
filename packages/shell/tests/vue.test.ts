@@ -24,6 +24,8 @@ describe('vue esquisse', () => {
     const trois = repere('plan.3h')
     expect(dessus.normale[1]).toBe(1)
     expect(trois.normale[1]).toBe(0)
+    expect(dessus.axeV).toEqual([0, 0, -1])
+    expect(trois.axeU).toEqual([0, 1, 0])
     for (const plan of [dessus, trois]) {
       const scalaire = (a: number[], b: number[]) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2]
       expect(scalaire(plan.axeU, plan.normale)).toBeCloseTo(0)

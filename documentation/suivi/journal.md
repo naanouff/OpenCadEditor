@@ -402,3 +402,7 @@ Branche depuis `feature/topo-faces`. GCS : deux cercles concentriques ; contour 
 
 Branche depuis `feature/gcs-enrichi`. Anneau OCCT = extrude Øext + cut Øint ; lunette/fond sur faces ; cornes fusées ; `rouvrir` sur dernier support. Barrette et tube encore ignorés (évite de dégrader le corps). `SCRIPT_CARRURE` compile et maille via OCCT. Validation visuelle : Debug **Build carrure**.
 
+## 2026-10-10 — PR #5 fusionnée, sprint 31 datums
+
+Carrure (28–30) sur `develop`. Branche `feature/datums-origine` : table `datumsOrigine(repere)` partagée par validation d’esquisse, polylines (`gcsVersMonde`), `dessin.repere` et nœuds Origine. Composition : second extrude = seconde fonction.
+
