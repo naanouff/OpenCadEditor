@@ -53,11 +53,11 @@ La doctrine du 2026-09-16 (branche `develop`) pose deux capacités égales :
 |------|--------|
 | Graphe d’assemblage | `.cadom` |
 | Intention de conception (historique paramétrique) | `.cadompart` |
-| Solide exact au recalcul | noyau B-Rep OpenCAD |
-| Solide exact figé (archive, métrologie) | `.cadombrep` |
+| Solide exact au recalcul | **occt-kernel** (décision OpenCadEditor 2026-10-10 ; noyau OpenCAD déprécié) |
+| Solide exact figé (archive, métrologie) | `.cadombrep` (cache BREP via OCCT) |
 | Affichage sans noyau | `.cadomesh` (ou glTF) |
-| STEP / AP242 | hors du modèle de vérité OpenCAD : import seulement |
+| STEP / AP242 | hors du modèle de vérité : import / échange seulement |
 
-`.cadom` dit « cette occurrence est à cette position, avec ces surcharges ». `.cadompart` dit « extrude cette esquisse, perce, soustrais ». Le noyau recalcule le solide. Le STEP n’est pas la géométrie normative d’OpenCAD.
+`.cadom` dit « cette occurrence est à cette position, avec ces surcharges ». `.cadompart` dit « extrude cette esquisse, perce, soustrais ». Le moteur B-Rep recalcule le solide. Dans OpenCadEditor, ce moteur est [occt-kernel](../suivi/occt-kernel.md) — détail dans [noyau-occt.md](noyau-occt.md). Le STEP n’est pas la géométrie normative.
 
 OpenCadEditor est le logiciel qui exploite ces fichiers. Il n’est pas le format, et le format n’est pas une interface.

@@ -1,6 +1,6 @@
 # SWOT — OpenCadEditor
 
-Périmètre évalué : OpenCadEditor, éditeur web (client Electron prévu) sur le shell `@naanouff/w3dts-viewer-editor` et les extensions EDEX. Il exploite les formats OpenCAD de la branche [develop](https://github.com/naanouff/OpenCAD/tree/develop). CADOM (`.cadom`) est le format d’assemblage, pas l’éditeur. L’intention paramétrique est `.cadompart`, recalculée par le noyau OpenCAD. L’affichage sans noyau est `.cadomesh`. Le STEP est hors du modèle de vérité.
+Périmètre évalué : OpenCadEditor, éditeur web (client Electron prévu) sur le shell `@naanouff/w3dts-viewer-editor` et les extensions EDEX. Il exploite les formats OpenCAD de la branche [develop](https://github.com/naanouff/OpenCAD/tree/develop). CADOM (`.cadom`) est le format d’assemblage, pas l’éditeur. L’intention paramétrique est `.cadompart`, recalculée par **occt-kernel** (décision 2026-10-10 ; le noyau OpenCAD est déprécié comme cible moteur — [noyau-occt.md](noyau-occt.md)). L’affichage sans noyau est `.cadomesh`. Le STEP est hors du modèle de vérité.
 
 ## Forces
 
@@ -12,7 +12,7 @@ Périmètre évalué : OpenCadEditor, éditeur web (client Electron prévu) sur 
 
 ## Faiblesses
 
-- Le noyau OpenCAD (recalcul de `.cadompart`, export `.cadombrep` et `.cadomesh`) est spécifié et encore en backlog. L’éditeur ne peut pas reconstruire une cote tant que ce noyau n’est pas là.
+- Le recalcul B-Rep vise désormais occt-kernel (sprint 24). Tant que le sous-module n’est pas branché, le chemin reste `noyauProvisoire` / BSP. Le noyau OpenCAD n’est plus attendu.
 - Le SDK et la spec continuent d’évoluer sur `develop` (CADOM v0.3.3 au moment de la lecture). L’éditeur dépend de ce contrat.
 - w3dts affiche des maillages. Il ne recalcule pas un `.cadompart`.
 - La connaissance fonctionnelle de la modélisation paramétrique n’est pas acquise dans l’équipe. Copier l’interface d’un SolidWorks sans en comprendre l’arbre de construction produirait un faux modeleur.
@@ -35,6 +35,6 @@ Périmètre évalué : OpenCadEditor, éditeur web (client Electron prévu) sur 
 OpenCadEditor exploite des formats. Il n’est pas ces formats. Deux façons de commencer restent ouvertes pour l’éditeur, pas pour le modèle de vérité (les deux capacités sont déjà co-primaires dans la doctrine) :
 
 1. **Exploiter le graphe.** Placer les occurrences, les transforms et les surcharges d’un `.cadom`, afficher le `.cadomesh`. Pas encore de reconstruction.
-2. **Exploiter l’intention.** Esquisser, coter, reconstruire via `.cadompart` et le noyau, puis figer un `.cadombrep`.
+2. **Exploiter l’intention.** Esquisser, coter, reconstruire via `.cadompart` et **occt-kernel**, puis figer un `.cadombrep` (cache BREP).
 
-Ce n’est pas un démarrage de code.
+Décision moteur : [noyau-occt.md](noyau-occt.md). Sprint : [sprint-24-noyau-occt.md](../sprints/sprint-24-noyau-occt.md).

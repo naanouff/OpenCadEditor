@@ -316,3 +316,19 @@ Le fil de fer d’un solide maillé trace les frontières de faces : un cylindre
 
 `Contexte.geometrie` à faux saute le maillage de `revolution`, `pas` et `enleve`. `esquisseDepuis` rejoue ainsi : ouvrir une esquisse déjà consommée ne refait pas le booléen. Le fil d’interface tient une session dans ce mode. `moteurSynchrone` garde la session complète pour les tests Node. `moteurWorker` calcule dans un worker, transfère les tableaux et ignore une réponse dont le numéro est dépassé. Le viewport montre le maillage reçu et « Construction… » tant que le calcul n’est pas revenu. Tests : `packages/api-parametrique/tests/csg.test.ts`, `packages/api-parametrique/tests/revolution.test.ts`, `packages/shell/tests/filBrep.test.ts`, `packages/shell/tests/scriptVis.test.ts`, `packages/shell/tests/vueEsquisse.test.ts`, `packages/shell/tests/protocole.test.ts`.
 
+## 2026-10-09 — Analyse du dépôt
+
+[analyse.md](analyse.md) consolide l’état après les sprints 03–23 : trois couches (`api-parametrique`, `shell`, `w3dts`), deux chemins géométriques (carrure à faces exactes, vis à maillage BSP), limites de généricité, manques pour le produit OpenCAD. Le README et [documentation/README.md](../README.md) pointent vers cette note et cessent de dire que le modeleur et le shell sont absents.
+
+## 2026-10-10 — occt-wasm livre occt-kernel
+
+Vérification de [@naanouff/occt-wasm](https://github.com/naanouff/occt-wasm) : la **v0.1.0** n’exposait que le lecteur STEPCAF (`occt-step`). La **v0.2.0** (release du jour) ajoute l’artefact **`occt-kernel`** (~15,6 Mo wasm) : arena, primitives, wire / extrude / revolve, booléens, fillet / chamfer, tessellation, STEP/BREP échange. Preuves, surface API et doctrine : [occt-kernel.md](occt-kernel.md). [analyse.md](analyse.md) est alignée. Aucun branchement dans `packages/` : candidat pour `NoyauGeometrique`, historique toujours hors bande.
+
+## 2026-10-10 — Décision : occt-kernel remplace le noyau OpenCAD
+
+Le moteur B-Rep d’OpenCadEditor est **occt-kernel**. Le noyau OpenCAD est **déprécié** comme cible (il n’était pas branché). Formats `.cadom` / `.cadompart` inchangés ; STEP/BREP = échange ou cache. Plan : [noyau-occt.md](../veille/noyau-occt.md). Sprint prêt : [sprint-24-noyau-occt.md](../sprints/sprint-24-noyau-occt.md) — sous-module `vendor/occt-wasm` @ v0.2.0, adaptateur worker, validation des deux pièces pilotes (vis puis carrure ; `pas` hybride faute d’hélice dans le kernel v1). README, analyse et SWOT alignés. Pas encore de code.
+
+## 2026-10-10 — Gitflow
+
+Flux aligné sur occt-wasm : `feature/*` | `fix/*` → `develop` → `main` → tag `v*`. Doc : [gitflow.md](../gitflow.md). Rulesets versionnés dans `.github/rulesets/` (`gitflow-protect-main`, `gitflow-protect-develop`) : PR obligatoire, pas de suppression ni de force-push ; bypass admin. Branche par défaut GitHub : `main`. La branche historique `feature/initial` ne fait plus partie du flux courant.
+

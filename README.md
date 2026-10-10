@@ -1,6 +1,6 @@
 # OpenCadEditor
 
-Éditeur CAO web qui exploite les formats [OpenCAD](https://github.com/naanouff/OpenCAD/tree/develop). Le rendu et l’interface viendront de [w3dts](https://github.com/naanouff/w3dts), présent ici en sous-module (`vendor/w3dts`).
+Éditeur CAO web qui exploite les formats [OpenCAD](https://github.com/naanouff/OpenCAD/tree/develop). Le rendu et l’interface viennent de [w3dts](https://github.com/naanouff/w3dts), présent ici en sous-module (`vendor/w3dts`). Le solide exact au recalcul passe par [occt-wasm](https://github.com/naanouff/occt-wasm) / `occt-kernel` (sous-module prévu `vendor/occt-wasm`, sprint 24).
 
 OpenCadEditor est le logiciel. Les fichiers OpenCAD ne le sont pas.
 
@@ -8,19 +8,22 @@ OpenCadEditor est le logiciel. Les fichiers OpenCAD ne le sont pas.
 |------|----------------------|
 | Assemblage | `.cadom` |
 | Intention paramétrique | `.cadompart` |
-| Solide exact au recalcul | noyau OpenCAD |
-| Solide exact figé | `.cadombrep` |
+| Solide exact au recalcul | **occt-kernel** (noyau OpenCAD déprécié) |
+| Solide exact figé | `.cadombrep` (cache / archive ; BREP via OCCT) |
 | Affichage sans noyau | `.cadomesh` |
-| STEP / AP242 | import seulement, hors du modèle de vérité |
+| STEP / AP242 | import / échange seulement, hors du modèle de vérité |
 
-La doctrine de référence est `documentation/opencad-doctrine.md` sur la branche `develop` d’OpenCAD (2026-09-16).
+La doctrine formats reste celle d’OpenCAD (`documentation/opencad-doctrine.md` sur `develop`, 2026-09-16). Le choix de moteur B-Rep pour cet éditeur est consigné dans [documentation/veille/noyau-occt.md](documentation/veille/noyau-occt.md).
 
 ## État
 
-La veille fonctionnelle est écrite. Le modeleur n’est pas encore développé. Le suivi des décisions est dans [documentation/suivi/journal.md](documentation/suivi/journal.md).
+Prototype paramétrique (sprints 03–23) : langage texte, `noyauProvisoire` TypeScript encore en chemin, shell React/WebGPU. Deux pièces de référence — carrure Milgauss / Oyster et vis tête fraisée Pozi. Sprint 24 : rapatrier occt-kernel et valider les deux pièces. Analyse : [documentation/suivi/analyse.md](documentation/suivi/analyse.md). Suivi : [documentation/suivi/journal.md](documentation/suivi/journal.md).
 
 | Note | Sujet |
 |------|--------|
+| [analyse.md](documentation/suivi/analyse.md) | État du dépôt, couches, limites |
+| [noyau-occt.md](documentation/veille/noyau-occt.md) | Décision : occt-kernel remplace le noyau OpenCAD |
+| [occt-kernel.md](documentation/suivi/occt-kernel.md) | Vérification v0.2.0 |
 | [modelisation-parametrique.md](documentation/veille/modelisation-parametrique.md) | Vocabulaire et place des formats |
 | [existant.md](documentation/veille/existant.md) | Outils de CAO existants |
 | [fonctionnalites.md](documentation/veille/fonctionnalites.md) | Fonctions par logiciel |
@@ -31,8 +34,13 @@ La veille fonctionnelle est écrite. Le modeleur n’est pas encore développé.
 ## Dépôt
 
 ```text
-documentation/     suivi et veille de ce projet
-vendor/w3dts/      moteur WebGPU (sous-module)
+documentation/              suivi, veille et sprints
+packages/api-parametrique/  session, domaines, CSG provisoire
+packages/shell/             hôte React, Dockview, viewport (`pnpm dev`)
+vendor/w3dts/               moteur WebGPU (sous-module)
+vendor/occt-wasm/           occt-kernel + occt-step (sprint 24)
 ```
 
-Le client bureau (Electron) et le shell d’édition ne sont pas encore dans ce dépôt.
+Gitflow : `feature/*` → `develop` → `main` → tag — [documentation/gitflow.md](documentation/gitflow.md).
+
+Le client bureau (Electron) n’est pas encore dans ce dépôt.

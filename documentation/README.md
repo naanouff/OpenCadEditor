@@ -4,6 +4,11 @@ Suivi du projet et notes de travail. Ce dossier n’appartient pas au moteur : l
 
 | Dossier | Rôle |
 |---------|------|
+| [gitflow.md](gitflow.md) | Branches : feature/fix → develop → main → tag |
+| [suivi/analyse.md](suivi/analyse.md) | État du dépôt : couches, langage, géométrie, manques |
+| [suivi/occt-kernel.md](suivi/occt-kernel.md) | Vérification : occt-wasm v0.2.0 et kernel B-Rep |
+| [veille/noyau-occt.md](veille/noyau-occt.md) | Décision : occt-kernel remplace le noyau OpenCAD |
+| [sprints/sprint-24-noyau-occt.md](sprints/sprint-24-noyau-occt.md) | Sprint : sous-module, worker, vis + carrure |
 | [suivi/journal.md](suivi/journal.md) | Décisions datées et état des choix encore ouverts |
 | [developpement.md](developpement.md) | Règle de base : TDD |
 | [veille/](veille/) | Veille fonctionnelle avant développement du modeleur |
@@ -55,5 +60,7 @@ Suivi du projet et notes de travail. Ce dossier n’appartient pas au moteur : l
 | [sprints/sprint-22-arbre-fonctions.md](sprints/sprint-22-arbre-fonctions.md) | Sprint du palier 1 : l’arbre affiche les fonctions, sans changer la frontière |
 | [veille/vis-maillage.md](veille/vis-maillage.md) | Vis : fermeture sous la tête, normales portées par le booléen, fil de fer de faces, vitesse |
 | [sprints/sprint-23-vis-maillage.md](sprints/sprint-23-vis-maillage.md) | Sprint de ces quatre corrections, sans changer la frontière de la carrure |
+| [veille/noyau-occt.md](veille/noyau-occt.md) | occt-kernel : dépréciation du noyau OpenCAD, pièces pilotes |
+| [sprints/sprint-24-noyau-occt.md](sprints/sprint-24-noyau-occt.md) | Sprint du rapatriement occt-wasm et validation vis + carrure |
 
-Le modeleur ne démarre pas tant que la veille n’est pas écrite. OpenCadEditor est l’éditeur. CADOM (`.cadom`) est le format d’assemblage OpenCAD, pas un logiciel. L’intention est dans `.cadompart`. Ce découpage est consigné dans le journal.
+La veille précède chaque sprint. Le prototype (API, shell, carrure, vis) est dans `packages/`. OpenCadEditor est l’éditeur. CADOM (`.cadom`) est le format d’assemblage OpenCAD, pas un logiciel. L’intention est dans `.cadompart`. L’état consolidé est dans [suivi/analyse.md](suivi/analyse.md) ; le détail daté reste dans le journal.
