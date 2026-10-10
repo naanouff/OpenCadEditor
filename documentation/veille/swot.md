@@ -12,7 +12,7 @@ Périmètre évalué : OpenCadEditor, éditeur web (client Electron prévu) sur 
 
 ## Faiblesses
 
-- Le recalcul B-Rep vise désormais occt-kernel (sprint 24). Tant que le sous-module n’est pas branché, le chemin reste `noyauProvisoire` / BSP. Le noyau OpenCAD n’est plus attendu.
+- Le recalcul B-Rep est occt-kernel (vis hybride). Suite : pipeline générique puis GCS ([direction-modeleur.md](direction-modeleur.md)), pas un port carrure motif par motif. Carrure encore `noyauProvisoire`. Le noyau OpenCAD n’est plus attendu.
 - Le SDK et la spec continuent d’évoluer sur `develop` (CADOM v0.3.3 au moment de la lecture). L’éditeur dépend de ce contrat.
 - w3dts affiche des maillages. Il ne recalcule pas un `.cadompart`.
 - La connaissance fonctionnelle de la modélisation paramétrique n’est pas acquise dans l’équipe. Copier l’interface d’un SolidWorks sans en comprendre l’arbre de construction produirait un faux modeleur.

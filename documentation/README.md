@@ -60,7 +60,11 @@ Suivi du projet et notes de travail. Ce dossier n’appartient pas au moteur : l
 | [sprints/sprint-22-arbre-fonctions.md](sprints/sprint-22-arbre-fonctions.md) | Sprint du palier 1 : l’arbre affiche les fonctions, sans changer la frontière |
 | [veille/vis-maillage.md](veille/vis-maillage.md) | Vis : fermeture sous la tête, normales portées par le booléen, fil de fer de faces, vitesse |
 | [sprints/sprint-23-vis-maillage.md](sprints/sprint-23-vis-maillage.md) | Sprint de ces quatre corrections, sans changer la frontière de la carrure |
-| [veille/noyau-occt.md](veille/noyau-occt.md) | occt-kernel : dépréciation du noyau OpenCAD, pièces pilotes |
-| [sprints/sprint-24-noyau-occt.md](sprints/sprint-24-noyau-occt.md) | Sprint du rapatriement occt-wasm et validation vis + carrure |
+| [veille/noyau-occt.md](veille/noyau-occt.md) | occt-kernel : dépréciation du noyau OpenCAD, preuve vis |
+| [sprints/sprint-24-noyau-occt.md](sprints/sprint-24-noyau-occt.md) | Sprint infra kernel + vis hybride (carrure motif annulée) |
+| [veille/direction-modeleur.md](veille/direction-modeleur.md) | Verdict FreeCAD / Creo : bons piliers, mauvais chemin pièce |
+| [veille/pipeline-occt.md](veille/pipeline-occt.md) | Chaîne générique historique → wires → OCCT |
+| [sprints/sprint-25-pipeline-occt.md](sprints/sprint-25-pipeline-occt.md) | Sprint features génériques + vis sur le pipeline |
+| [sprints/sprint-26-gcs-esquisse.md](sprints/sprint-26-gcs-esquisse.md) | Sprint solveur d’esquisse (GCS) |
 
 La veille précède chaque sprint. Le prototype (API, shell, carrure, vis) est dans `packages/`. OpenCadEditor est l’éditeur. CADOM (`.cadom`) est le format d’assemblage OpenCAD, pas un logiciel. L’intention est dans `.cadompart`. L’état consolidé est dans [suivi/analyse.md](suivi/analyse.md) ; le détail daté reste dans le journal.

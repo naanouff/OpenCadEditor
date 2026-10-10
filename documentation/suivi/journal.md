@@ -332,3 +332,17 @@ Le moteur B-Rep d’OpenCadEditor est **occt-kernel**. Le noyau OpenCAD est **d�
 
 Flux aligné sur occt-wasm : `feature/*` | `fix/*` → `develop` → `main` → tag `v*`. Doc : [gitflow.md](../gitflow.md). Rulesets versionnés dans `.github/rulesets/` (`gitflow-protect-main`, `gitflow-protect-develop`) : PR obligatoire, pas de suppression ni de force-push ; bypass admin. Branche par défaut GitHub : `main`. La branche historique `feature/initial` ne fait plus partie du flux courant.
 
+## 2026-10-10 — Sprint 24 commencé : feature/noyau-occt
+
+Branche `feature/noyau-occt` depuis `develop`. Sous-module `vendor/occt-wasm` @ tag `v0.2.0`. Artefacts `occt-kernel.js` / `.wasm` dans `packages/shell/occt/` (script `scripts/fetch-occt-kernel.mjs`). Alias Vite `@naanouff/occt-wasm/kernel` et `kernel/batch`. Smoke Vitest : box → tessellate et extrude → cut (`packages/shell/tests/occtKernel.test.ts`). Le worker précharge le kernel ; le maillage affiché vient encore de `Session` / `noyauProvisoire` jusqu’à la validation vis et carrure.
+
+## 2026-10-10 — Vis hybride OCCT
+
+`packages/shell/src/occt/construireVis.ts` : corps et tête en `revolve`, fuse, empreinte Pozi en extrude + `boolean_cut`. Le filet `pas` reste le maillage hôte : on retire le fût lisse OCCT du solide, puis `union` avec le corps fileté Session. Le worker, pour la pièce `vis`, sert ce maillage hybride. Tests : `construireVisOcct.test.ts`. Carrure encore sur `noyauProvisoire`.
+
+## 2026-10-10 — Direction modeleur contraint : pivot
+
+Verdict : [direction-modeleur.md](../veille/direction-modeleur.md). L’architecture (historique + occt-kernel + arbre + formats) est la bonne pour un FreeCAD / Creo web. Le chemin tactique (compilateur de pièce + motifs + `construireVis` / `decrire`) ne mène pas à un modeleur contraint s’il continue.
+
+**Arrêt** : porter la carrure motif par motif vers OCCT (item 6 du sprint 24 annulé). **Suite** : [pipeline-occt.md](../veille/pipeline-occt.md) — [sprint 25](../sprints/sprint-25-pipeline-occt.md) (esquisse résolue + features génériques → `runBatch`, vis réécrite dessus) puis [sprint 26](../sprints/sprint-26-gcs-esquisse.md) (GCS). Carrure seulement quand le pipeline générique le permet. Sprint 24 recentré sur infra + preuve vis.
+

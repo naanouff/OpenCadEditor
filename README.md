@@ -38,8 +38,10 @@ documentation/              suivi, veille et sprints
 packages/api-parametrique/  session, domaines, CSG provisoire
 packages/shell/             hôte React, Dockview, viewport (`pnpm dev`)
 vendor/w3dts/               moteur WebGPU (sous-module)
-vendor/occt-wasm/           occt-kernel + occt-step (sprint 24)
+vendor/occt-wasm/           sources occt-wasm @ v0.2.0 (sous-module)
+packages/shell/occt/        artefacts occt-kernel.wasm (release)
 ```
+
 
 Gitflow : `feature/*` → `develop` → `main` → tag — [documentation/gitflow.md](documentation/gitflow.md).
 

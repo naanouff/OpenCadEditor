@@ -50,4 +50,4 @@ flowchart LR
 
 Décision : [noyau-occt.md](../veille/noyau-occt.md). Le noyau OpenCAD est **déprécié** comme moteur ; **occt-kernel** est la cible. Sprint : [sprint-24-noyau-occt.md](../sprints/sprint-24-noyau-occt.md) — rapatrier le sous-module, brancher le worker, valider vis et carrure.
 
-L’historique reste dans la `Session` / `.cadompart` ; le BREP exporté peut servir de cache (rôle `.cadombrep`). Le BSP / `noyauProvisoire` reste le chemin chaud jusqu’à la fin du sprint 24.
+L’historique reste dans la `Session` / `.cadompart` ; le BREP exporté peut servir de cache (rôle `.cadombrep`). Vis hybride OCCT (sprint 24) ; carrure encore `noyauProvisoire` jusqu’au [pipeline générique](../veille/pipeline-occt.md).

@@ -51,7 +51,7 @@ Le type `Solide` ne porte pas une géométrie générale. Un ajout est un rectan
 
 [@naanouff/occt-wasm](https://github.com/naanouff/occt-wasm) **v0.2.0** livre `occt-kernel` (primitives, extrude/revolve, booléens, fillet, tessellation, STEP/BREP). Preuves : [occt-kernel.md](occt-kernel.md).
 
-**Décision 2026-10-10** ([noyau-occt.md](../veille/noyau-occt.md)) : ce kernel **remplace** le noyau OpenCAD comme moteur B-Rep d’OpenCadEditor. Formats (`.cadom` / `.cadompart`) inchangés ; historique hors bande. Sprint 24 : sous-module `vendor/occt-wasm`, adaptateur worker, validation **vis** et **carrure**. Chemin actuel encore `noyauProvisoire` jusqu’à ce sprint.
+**Décision 2026-10-10** ([noyau-occt.md](../veille/noyau-occt.md)) : ce kernel **remplace** le noyau OpenCAD comme moteur B-Rep d’OpenCadEditor. Formats inchangés ; historique hors bande. Sprint 24 : infra + preuve **vis** hybride OCCT. **Pivot** ([direction-modeleur.md](../veille/direction-modeleur.md)) : pas de carrure motif→OCCT ; suite = [pipeline générique](../veille/pipeline-occt.md) (sprints 25–26). Carrure encore `noyauProvisoire`.
 
 ## Interface
 
@@ -68,19 +68,23 @@ La règle de développement est le TDD ([developpement.md](../developpement.md))
 
 ## Ce qui manque pour le produit annoncé
 
-- Import / export OpenCAD (`.cadom` / `.cadompart`). STEP reste hors du modèle de vérité ; `occt-step` / `occt-kernel` peuvent servir l’échange.
-- Sprint 24 : brancher `occt-kernel` (noyau OpenCAD déprécié) ; le BSP TypeScript reste provisoire jusqu’à la bascule.
-- Esquisse résolue comme géométrie : les profils sont reconnus par motif, pas évalués sommet par sommet (le kernel attend des wires déjà résolus ; pas de GCS).
-- Solveur de contraintes réel (le solveur actuel est provisoire).
-- Ruban, souris sur l’esquisse, Electron, assemblage multi-pièces, déplacement du repère.
-- Un seul tesselleur : affichage solide et filaire de la carrure peuvent diverger (la tessellation OCCT unifierait le chemin d’affichage).
+- Import / export OpenCAD (`.cadom` / `.cadompart`). STEP hors modèle de vérité.
+- Sprint 25 : pipeline historique → wires → OCCT (remplacer `construireVis` spécialiste).
+- Sprint 26 : GCS (esquisse contrainte).
+- Naming topologique, pointe d’arbre (paliers 2–4), carrure via pipeline générique seulement.
+- Ruban, souris sur l’esquisse, Electron, assemblage multi-pièces.
+- Un seul tesselleur (carrure encore faces exactes + `noyauProvisoire`).
 
 ## Lecture utile
 
-- [journal.md](journal.md) — décisions datées, source de vérité au fil des sprints
-- [occt-kernel.md](occt-kernel.md) — vérification v0.2.0 : kernel B-Rep WASM
-- [noyau-occt.md](../veille/noyau-occt.md) — décision : OCCT remplace le noyau OpenCAD
-- [sprint-24-noyau-occt.md](../sprints/sprint-24-noyau-occt.md) — rapatriement et pièces pilotes
-- [genericite.md](../shell/genericite.md) — où le compilateur de carrure quitte le socle générique
-- [api-architecture.md](../veille/api-architecture.md) — socle session, domaines, pile
+- [journal.md](journal.md) — décisions datées
+- [direction-modeleur.md](../veille/direction-modeleur.md) — verdict FreeCAD / Creo et pivot
+- [pipeline-occt.md](../veille/pipeline-occt.md) — chaîne générique vers OCCT
+- [occt-kernel.md](occt-kernel.md) — vérification v0.2.0
+- [noyau-occt.md](../veille/noyau-occt.md) — OCCT remplace le noyau OpenCAD
+- [sprint-24-noyau-occt.md](../sprints/sprint-24-noyau-occt.md) — infra + preuve vis
+- [sprint-25-pipeline-occt.md](../sprints/sprint-25-pipeline-occt.md) — features génériques
+- [sprint-26-gcs-esquisse.md](../sprints/sprint-26-gcs-esquisse.md) — solveur d’esquisse
+- [genericite.md](../shell/genericite.md) — où le compilateur de pièce quitte le socle
+- [api-architecture.md](../veille/api-architecture.md) — session, domaines, pile
 - [shell/plan.md](../shell/plan.md) — hôte, panneaux, viewport

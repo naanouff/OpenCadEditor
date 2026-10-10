@@ -64,4 +64,4 @@ On peut changer les valeurs de la carrure sans toucher au code. On ne peut pas c
 
 Le langage texte donne l’impression d’un modeleur : esquisse, cote, extrude, symétrie. L’évaluation réelle est une reconnaissance de la carrure, puis une émission de faces spécialisées.
 
-La suite est dans [arbre-fonctions.md](../veille/arbre-fonctions.md). Le premier pas, l’arbre, est le [sprint 22](../sprints/sprint-22-arbre-fonctions.md).
+Cette critique tient après OCCT : `construireVis` est un second compilateur de pièce. Verdict et pivot : [direction-modeleur.md](../veille/direction-modeleur.md). Suite code : [pipeline-occt.md](../veille/pipeline-occt.md) / [sprint 25](../sprints/sprint-25-pipeline-occt.md), puis GCS ([sprint 26](../sprints/sprint-26-gcs-esquisse.md)). L’arbre (palier 1) : [arbre-fonctions.md](../veille/arbre-fonctions.md).

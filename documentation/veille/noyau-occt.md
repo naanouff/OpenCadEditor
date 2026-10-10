@@ -24,21 +24,26 @@ flowchart LR
 
 ## Rapatriement
 
-Sous-module `vendor/occt-wasm` @ tag `v0.2.0`, même pattern que `vendor/w3dts`. Consommation : `dist/occt-kernel.js`, `occt-kernel.wasm`, `js/kernel-batch.mjs`. Chargement dans le **worker** géométrie uniquement.
+Sous-module `vendor/occt-wasm` @ tag `v0.2.0`, même pattern que `vendor/w3dts`. Les binaires ne sont pas dans le git du sous-module : release → `packages/shell/occt/` via `scripts/fetch-occt-kernel.mjs`. Batch : `vendor/occt-wasm/js/kernel-batch.mjs` (alias `@naanouff/occt-wasm/kernel/batch`). Chargement dans le **worker** géométrie (`chargerKernel`).
 
-## Pièces pilotes
+## Preuve pilote (sprint 24)
 
-Les deux scripts Debug :
+**Vis** — [scriptVis.ts](../../packages/shell/src/scriptVis.ts) via `construireVis` temporaire : corps / tête / Pozi en `revolve` + booléens OCCT. Filet `pas` hybride (maillage hôte) : pas d’hélice dans le kernel v1.
 
-1. **Vis** — [scriptVis.ts](../../packages/shell/src/scriptVis.ts) : corps / tête / empreinte Pozi via `revolve` + booléens OCCT. Le filet `pas` (hélice) reste temporairement en maillage hôte : `occt-kernel` v1 n’expose pas pipe / hélice.
-2. **Carrure** — [scriptCarrure.ts](../../packages/shell/src/scriptCarrure.ts) : anneau, cornes, barrettes, tube via wires, extrude, fuse/cut, fillets OCCT — à la place de `noyauProvisoire.decrire` et du BSP.
+**Carrure** — reste sur `noyauProvisoire` jusqu’au [pipeline générique](pipeline-occt.md). Porter la carrure motif par motif vers OCCT est **abandonné** ([direction-modeleur.md](direction-modeleur.md)).
+
+## Suite (après la preuve)
+
+1. Sprint 25 — historique → wires → OCCT sans `if (piece === 'vis')`.
+2. Sprint 26 — GCS.
+3. Carrure uniquement quand ce pipeline sait anneau + profil + cut.
 
 ## Ce qui sort du chemin chaud
 
-`noyauProvisoire`, [csg.ts](../../packages/api-parametrique/src/csg.ts), [ombre.ts](../../packages/api-parametrique/src/ombre.ts), [corne.ts](../../packages/api-parametrique/src/corne.ts) : dépréciés dès que les deux scripts passent les tests sur OCCT.
+`construireVis` spécialiste (sprint 25), puis `noyauProvisoire` / BSP quand le pipeline générique couvre les pièces. Pas de port carrure dédié.
 
 ## Hors de cette décision
 
 - Import PMI (`occt-step`), lecture/écriture fichiers OpenCAD sur disque.
-- Solveur d’esquisse GCS.
+- Solveur d’esquisse GCS (sprint 26).
 - Remplacement total du filet hélicoïdal dans OCCT.

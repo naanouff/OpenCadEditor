@@ -1,10 +1,24 @@
 import { Session, type Maillage } from '@opencad/api-parametrique'
+import { chargerKernel, type OcctKernelModule } from '../occt/chargerKernel.ts'
+import { maillageVisHybride } from '../occt/construireVis.ts'
 import type { Demande, Reponse } from './protocole.ts'
 
 const session = new Session()
+let occt: OcctKernelModule | null = null
+let occtPret: Promise<OcctKernelModule> | null = null
 
-function repondre(sequence: number) {
-  const maille: Maillage = session.maillage()
+function assurerOcct() {
+  if (occt) return Promise.resolve(occt)
+  if (!occtPret) {
+    occtPret = chargerKernel().then((module) => {
+      occt = module
+      return module
+    })
+  }
+  return occtPret
+}
+
+function repondre(sequence: number, maille: Maillage) {
   const positions = new Float64Array(maille.positions)
   const normales = new Float64Array(maille.normales ?? [])
   const indices = new Uint32Array(maille.indices)
@@ -15,21 +29,41 @@ function repondre(sequence: number) {
   postMessage(reponse, transfert)
 }
 
+function maillageCourant(kernel: OcctKernelModule | null): Maillage {
+  if (kernel && session.pieceCourante() === 'vis') {
+    const actuel = session.maillage()
+    if (actuel.indices.length > 0) {
+      try {
+        return maillageVisHybride(kernel)
+      } catch (erreur) {
+        console.error(erreur instanceof Error ? erreur.message : String(erreur))
+      }
+    }
+  }
+  return session.maillage()
+}
+
 onmessage = (event: MessageEvent<Demande>) => {
   const demande = event.data
-  if (demande.sorte === 'executer') session.executer(demande.script)
-  else if (demande.sorte === 'ligne') {
-    try {
-      session.commande(demande.texte)
-    } catch {
-      // L’interface a déjà signalé l’erreur.
-    }
-  } else if (demande.sorte === 'annuler') {
-    try {
-      session.annuler()
-    } catch {
-      // Rien à annuler.
-    }
-  } else session.activer(demande.index, demande.actif)
-  repondre(demande.sequence)
+  void (async () => {
+    const kernel = await assurerOcct().catch((erreur: unknown) => {
+      console.error(erreur instanceof Error ? erreur.message : String(erreur))
+      return null
+    })
+    if (demande.sorte === 'executer') session.executer(demande.script)
+    else if (demande.sorte === 'ligne') {
+      try {
+        session.commande(demande.texte)
+      } catch {
+        // L’interface a déjà signalé l’erreur.
+      }
+    } else if (demande.sorte === 'annuler') {
+      try {
+        session.annuler()
+      } catch {
+        // Rien à annuler.
+      }
+    } else session.activer(demande.index, demande.actif)
+    repondre(demande.sequence, maillageCourant(kernel))
+  })()
 }
