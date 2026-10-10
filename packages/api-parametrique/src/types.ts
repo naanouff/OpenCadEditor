@@ -120,8 +120,13 @@ export type Evaluateur = {
   evaluer(expression: string, parametres: Map<string, string>): number
 }
 
+export type StatutContrainte = 'sous-contraint' | 'contraint' | 'surcontraint'
+
 export type SolveurEsquisse = {
-  etat(esquisse: Esquisse): { ferme: boolean; degres: number }
+  etat(
+    esquisse: Esquisse,
+    parametres?: Map<string, string>,
+  ): { ferme: boolean; degres: number; statut?: StatutContrainte }
 }
 
 export type Maillage = {

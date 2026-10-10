@@ -43,6 +43,18 @@ revolution
     expect(yMax).toBeCloseTo(5, 1)
   })
 
+  it('expose le statut GCS sous-contraint puis contraint', () => {
+    storeShell.executer(`
+piece p
+esquisse plan.dessus
+rectangle
+cote longueur 20
+`)
+    expect(storeShell.hote().session.etatEsquisse()?.statut).toBe('sous-contraint')
+    storeShell.ligne('cote largeur 10')
+    expect(storeShell.hote().session.etatEsquisse()?.statut).toBe('contraint')
+  })
+
   it('ouvre la vue au clic et la referme au second clic', () => {
     storeShell.executer(`
 piece p
@@ -55,6 +67,9 @@ cote diametre 10
     expect(esquisse?.index).toBeTypeOf('number')
     storeShell.voirEsquisse(esquisse!.index!)
     expect(storeShell.esquisseVue()).toBe(esquisse!.index)
+    expect(storeShell.hote().session.etatEsquisse()?.statut ?? storeShell.hote().session.etatEsquisseDepuis(esquisse!.index!)?.statut).toBe(
+      'contraint',
+    )
     storeShell.voirEsquisse(esquisse!.index!)
     expect(storeShell.esquisseVue()).toBeNull()
     storeShell.voirEsquisse(esquisse!.index!)
