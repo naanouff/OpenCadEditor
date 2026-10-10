@@ -5,6 +5,7 @@ export type Moteur = {
   ligne(texte: string, sequence: number): void
   annuler(sequence: number): void
   activer(index: number, actif: boolean, sequence: number): void
+  pointe(cible: number | 'fin', sequence: number): void
 }
 
 /** Une réponse n’est appliquée que si son numéro est encore celui de la demande en cours. */
@@ -39,6 +40,10 @@ export function moteurSynchrone(recevoir: (maillage: Maillage, sequence: number)
     },
     activer(index, actif, sequence) {
       session.activer(index, actif)
+      pousser(sequence)
+    },
+    pointe(cible, sequence) {
+      session.poserPointe(cible)
       pousser(sequence)
     },
   }

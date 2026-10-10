@@ -1,4 +1,10 @@
-export { Session } from './session.ts'
+export {
+  Session,
+  TYPES_FONCTION,
+  indexFonctionParRang,
+  indexesFonctions,
+  rejouables,
+} from './session.ts'
 export { ErreurApi, REPERE_REFERENCE } from './types.ts'
 export { evaluateurProvisoire } from './evaluateur.ts'
 export { solveurGcs, solveurProvisoire } from './solveur.ts'

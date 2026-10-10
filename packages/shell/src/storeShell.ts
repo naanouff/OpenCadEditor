@@ -84,6 +84,13 @@ export const storeShell = {
     revision += 1
     prevenir()
   },
+  pointe(cible: number | 'fin') {
+    vueEsquisse = null
+    hote.session.poserPointe(cible)
+    envoyer((sequence) => moteur?.pointe(cible, sequence))
+    revision += 1
+    prevenir()
+  },
   esquisseVue: () => vueEsquisse,
   voirEsquisse(index: number | null) {
     const suivante = index === null || vueEsquisse === index ? null : index

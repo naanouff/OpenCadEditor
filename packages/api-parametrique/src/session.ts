@@ -3,6 +3,13 @@ import { domaineParametres } from './domaines/parametres.ts'
 import { domaineSolide } from './domaines/solide.ts'
 import { domaineRevolution } from './revolution.ts'
 import { evaluateurProvisoire } from './evaluateur.ts'
+import {
+  CONSOMME_ESQUISSE,
+  SOUS_ESQUISSE,
+  TYPES_FONCTION,
+  indexFonctionParRang,
+  rejouables,
+} from './historique.ts'
 import { noyauProvisoire } from './noyau.ts'
 import { solveurGcs, solveurProvisoire } from './solveur.ts'
 import { versionSemantique } from './versionSemantique.ts'
@@ -17,6 +24,15 @@ import {
   type Piece,
   type Vecteur,
 } from './types.ts'
+
+export {
+  CONSOMME_ESQUISSE,
+  SOUS_ESQUISSE,
+  TYPES_FONCTION,
+  indexFonctionParRang,
+  indexesFonctions,
+  rejouables,
+} from './historique.ts'
 
 type Action = {
   faire: () => void
@@ -35,6 +51,7 @@ function pieceVide(nom: string): Piece {
     volume: null,
     demiProfil: null,
     compteur: 0,
+    pointe: null,
   }
 }
 
@@ -58,6 +75,7 @@ export class Session {
   constructor(options?: { geometrie?: boolean }) {
     this.geometrie = options?.geometrie !== false
     this.enregistrer(domainePiece(this))
+    this.enregistrer(domainePointe(this))
     this.enregistrer(domaineParametres)
     this.enregistrer(domaineEsquisse)
     this.enregistrer(domaineSolide)
@@ -347,6 +365,51 @@ export class Session {
     }
   }
 
+  /** Index historique de la pointe, ou `null` (fin). */
+  pointeCourante() {
+    if (!this.active) return null
+    return this.pieceActive().pointe
+  }
+
+  /**
+   * Pose la pointe sur un index historique de fonction, ou `fin`.
+   * Annulable (restaure la pointe précédente).
+   */
+  poserPointe(cible: number | 'fin') {
+    const piece = this.pieceActive()
+    const suivante = this.resoudrePointe(cible)
+    const avant = piece.pointe
+    if (avant === suivante) return
+    const action: Action = {
+      faire: () => {
+        piece.pointe = suivante
+        this.reconstruire()
+      },
+      defaire: () => {
+        piece.pointe = avant
+        this.reconstruire()
+      },
+    }
+    action.faire()
+    this.futur.length = 0
+    this.passe.push(action)
+  }
+
+  /** Applique la pointe sans empiler d’annulation (verbe `pointe` via `commande`). */
+  appliquerPointe(cible: number | 'fin') {
+    this.pieceActive().pointe = this.resoudrePointe(cible)
+    this.reconstruire()
+  }
+
+  private resoudrePointe(cible: number | 'fin'): number | null {
+    if (cible === 'fin') return null
+    const piece = this.pieceActive()
+    if (!TYPES_FONCTION.has(piece.historique[cible]?.type ?? '')) {
+      throw new ErreurApi('pointe hors fonction')
+    }
+    return cible
+  }
+
   private rejouer() {
     if (this.enLot) this.sale = true
     else this.reconstruire()
@@ -362,7 +425,7 @@ export class Session {
     piece.volume = null
     piece.demiProfil = null
     piece.compteur = 0
-    for (const operation of rejouables(piece.historique)) {
+    for (const operation of rejouables(piece.historique, piece.pointe)) {
       this.handler(operation).faire(this.contexte(), operation)
     }
   }
@@ -397,9 +460,6 @@ export class Session {
   }
 }
 
-const SOUS_ESQUISSE = new Set(['cercle', 'rectangle', 'segment', 'arc', 'concentrique', 'cote', 'symetrie'])
-const CONSOMME_ESQUISSE = new Set(['extrude', 'enlever', 'revolution'])
-
 /** Rejoue jusqu'à l'esquisse demandée, sans la fonction qui la consomme. */
 function operationsJusquaEsquisse(historique: Operation[], index: number): Operation[] {
   const sortie: Operation[] = []
@@ -428,34 +488,43 @@ function operationsJusquaEsquisse(historique: Operation[], index: number): Opera
   return sortie
 }
 
-/** Saute une fonction éteinte et l'esquisse qui la précède. Une esquisse encore ouverte est rejouée. */
-function rejouables(historique: Operation[]): Operation[] {
-  const sortie: Operation[] = []
-  let tampon: Operation[] = []
-  const verser = () => {
-    sortie.push(...tampon)
-    tampon = []
+function domainePointe(session: Session): Domaine {
+  return {
+    id: 'pointe',
+    verbes: {
+      pointe: (reste) => {
+        const texte = reste.trim()
+        if (texte === 'fin') return { type: 'pointe', arguments: { cible: 'fin' }, noms: [] }
+        return { type: 'pointe', arguments: { cible: texte }, noms: [] }
+      },
+    },
+    operations: {
+      pointe: {
+        dansHistorique: false,
+        faire(_contexte, operation) {
+          const avant = session.pointeCourante()
+          operation.arguments.avant = avant === null ? 'fin' : String(avant)
+          const cible = operation.arguments.cible
+          if (cible === 'fin') {
+            session.appliquerPointe('fin')
+            return
+          }
+          const rang = Number(cible)
+          if (!Number.isInteger(rang)) throw new ErreurApi(`pointe invalide: ${cible}`)
+          try {
+            session.appliquerPointe(indexFonctionParRang(session.historique(), rang))
+          } catch {
+            throw new ErreurApi(`rang de fonction invalide: ${cible}`)
+          }
+        },
+        defaire(_contexte, operation) {
+          const avant = operation.arguments.avant
+          if (avant === 'fin' || avant === undefined) session.appliquerPointe('fin')
+          else session.appliquerPointe(Number(avant))
+        },
+      },
+    },
   }
-  for (const operation of historique) {
-    if (operation.type === 'ouvrir') {
-      verser()
-      tampon = [operation]
-      continue
-    }
-    if (SOUS_ESQUISSE.has(operation.type)) {
-      tampon.push(operation)
-      continue
-    }
-    if (CONSOMME_ESQUISSE.has(operation.type)) {
-      if (operation.actif === false) tampon = []
-      else sortie.push(...tampon, operation)
-      tampon = []
-      continue
-    }
-    if (operation.actif !== false) sortie.push(operation)
-  }
-  verser()
-  return sortie
 }
 
 function domainePiece(session: Session): Domaine {

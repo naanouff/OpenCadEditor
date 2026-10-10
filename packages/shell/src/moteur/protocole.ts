@@ -3,6 +3,7 @@ export type Demande =
   | { sorte: 'ligne'; texte: string; sequence: number }
   | { sorte: 'annuler'; sequence: number }
   | { sorte: 'activer'; index: number; actif: boolean; sequence: number }
+  | { sorte: 'pointe'; cible: number | 'fin'; sequence: number }
 
 export type Reponse = {
   sequence: number

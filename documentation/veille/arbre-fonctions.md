@@ -40,6 +40,8 @@ La commande `pointe` prend un rang, ou la fin. Annuler restaure la pointe préc�
 
 Une pointe sur la première extrusion de la carrure laisse une frontière sans cornes ni tube. Une pointe à la fin rend la frontière d’aujourd’hui. `noyau.decrire` ne change pas de logique : il reçoit un historique tronqué, donc moins d’ajouts et d’enlèvements.
 
+Décisions d’implémentation et sprint : [pointe-arbre.md](pointe-arbre.md), [sprint-27-pointe-arbre.md](../sprints/sprint-27-pointe-arbre.md).
+
 ## Palier 3 — Chaque fonction porte son profil
 
 `profil` dans `domaines/solide.ts` reconnaît la carrure en comptant segments et arcs. `noyau.decrire` relit `diametre_boite` et `hauteur_carrure`, et cherche le tube sur `plan.3h`.

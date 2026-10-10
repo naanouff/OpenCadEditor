@@ -82,4 +82,39 @@ cercle
       }),
     ).toBe('Enlèvement travers 1.5')
   })
+
+  it('marque la pointe et les fonctions après', () => {
+    const session = new Session()
+    session.executer(`
+piece carrure
+param diametre_boite 40
+param epaisseur_paroi 2
+param diametre_lunette 32
+param profondeur_lunette 1
+esquisse plan.dessus
+cercle
+cote diametre diametre_boite
+cercle
+concentrique cercle.exterieur
+cote diametre diametre_boite - 2 * epaisseur_paroi
+extrude 8
+esquisse face.dessus
+cercle
+concentrique anneau
+cote diametre diametre_lunette
+enleve profondeur_lunette
+`)
+    session.commande('pointe 1')
+    const enfants = arbreConstruction(
+      session.pieceCourante(),
+      session.historique(),
+      session.pointeCourante(),
+    )[0]!.enfants!
+    const extrusion = enfants.find((n) => n.libelle.startsWith('Extrusion'))!
+    const enlevement = enfants.find((n) => n.libelle.startsWith('Enlèvement'))!
+    expect(extrusion.estPointe).toBe(true)
+    expect(extrusion.apresPointe).toBeUndefined()
+    expect(enlevement.apresPointe).toBe(true)
+    expect(enlevement.enfants![0]!.apresPointe).toBe(true)
+  })
 })

@@ -50,4 +50,20 @@ extrude 8
     }
     expect(crete).toBe(true)
   }, 180_000)
+
+  it('pointe avant pas : pas de filet dans le maillage OCCT', async () => {
+    const occt = await chargerKernel()
+    const session = new Session({ geometrie: false })
+    session.executer(SCRIPT_VIS)
+    session.commande('pointe 1')
+    const maille = maillagePipelineOcct(occt, session)
+    let crete = false
+    for (let i = 0; i < maille.positions.length; i += 3) {
+      const y = maille.positions[i + 1]!
+      const r = Math.hypot(maille.positions[i]!, maille.positions[i + 2]!)
+      if (y > 14 && y < 24 && Math.abs(r - 3) < 0.15) crete = true
+    }
+    expect(crete).toBe(false)
+    expect(stats(maille).rayonMax).toBeLessThan(3.5)
+  }, 180_000)
 })

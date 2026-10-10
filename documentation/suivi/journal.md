@@ -366,3 +366,15 @@ Debug **Build boite** (rectangle coté → extrude OCCT) : solide affiché. Ouve
 
 Résultat attendu confirmé : boîte L=20 × l=10 × hauteur 8 via GCS + pipeline OCCT. Critères du sprint 26 atteints.
 
+## 2026-10-10 — Sprint 27 préparé : pointe d’arbre
+
+Plan consignés : [pointe-arbre.md](../veille/pointe-arbre.md) et [sprint-27-pointe-arbre.md](../sprints/sprint-27-pointe-arbre.md) (palier 2 de [arbre-fonctions.md](../veille/arbre-fonctions.md)). `Piece.pointe`, `rejouables` tronqué, verbe `pointe` annulable, sync pipeline OCCT + worker, UI grisée + clic. Hors sprint : paliers 3–4, naming topo, carrure OCCT. Pas encore de code ; branche prévue `feature/pointe-arbre`.
+
+## 2026-10-10 — Sprint 27 commencé : feature/pointe-arbre
+
+Branche `feature/pointe-arbre` depuis `develop`. `Piece.pointe` + `rejouables(historique, pointe)` partagé (`historique.ts`) ; verbe `pointe <rang>|fin` annulable. Pipeline OCCT et worker lisent `pointeCourante()`. Protocole `pointe` parallèle à `activer` ; arbre `estPointe` / `apresPointe` ; clic sur une fonction pose la pointe. Preuves : carrure tronquée, vis avant `pas` sans filet.
+
+## 2026-10-10 — Sprint 27 : pointe conforme à l’écran
+
+Debug **Build carrure** / **Build vis** : déplacer la pointe change le viewport ; fonctions après la pointe grisées. Critère visuel du sprint 27 validé.
+

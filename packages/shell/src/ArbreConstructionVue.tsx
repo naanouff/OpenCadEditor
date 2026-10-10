@@ -16,11 +16,12 @@ function LigneArbre({ noeud, profondeur }: { noeud: NoeudArbre; profondeur: numb
   const aEnfants = (noeud.enfants?.length ?? 0) > 0
   const [ouvert, setOuvert] = useState(true)
   const eteint = noeud.actif === false
+  const apres = noeud.apresPointe === true
   const vue = noeud.esquisse && storeShell.esquisseVue() === noeud.index
   return (
-    <li className={`m-0 list-none ${eteint ? 'opacity-40' : ''}`}>
+    <li className={`m-0 list-none ${eteint || apres ? 'opacity-40' : ''}`}>
       <div
-        className={`flex w-full items-center gap-1 rounded px-1 py-0.5 text-left font-mono text-[12px] hover:bg-[var(--color-surface-hover)] ${vue ? 'bg-[var(--color-surface-hover)]' : ''}`}
+        className={`flex w-full items-center gap-1 rounded px-1 py-0.5 text-left font-mono text-[12px] hover:bg-[var(--color-surface-hover)] ${vue ? 'bg-[var(--color-surface-hover)]' : ''} ${noeud.estPointe ? 'ring-1 ring-[var(--color-border-default)]' : ''}`}
         style={{ paddingLeft: 4 + profondeur * 12 }}
       >
         {noeud.interrupteur && noeud.index !== undefined ? (
@@ -30,6 +31,7 @@ function LigneArbre({ noeud, profondeur }: { noeud: NoeudArbre; profondeur: numb
             checked={!eteint}
             aria-label={`Actif ${noeud.libelle}`}
             onChange={() => storeShell.activer(noeud.index as number, eteint)}
+            onClick={(e) => e.stopPropagation()}
           />
         ) : null}
         <button
@@ -38,6 +40,10 @@ function LigneArbre({ noeud, profondeur }: { noeud: NoeudArbre; profondeur: numb
           onClick={() => {
             if (noeud.esquisse && noeud.index !== undefined) {
               storeShell.voirEsquisse(noeud.index)
+              return
+            }
+            if (noeud.interrupteur && noeud.index !== undefined) {
+              storeShell.pointe(noeud.index)
               return
             }
             if (profondeur === 0) {
@@ -54,6 +60,7 @@ function LigneArbre({ noeud, profondeur }: { noeud: NoeudArbre; profondeur: numb
           )}
           <span className={profondeur === 0 ? 'font-semibold text-accent' : 'text-[var(--color-text-primary)]'}>
             {noeud.libelle}
+            {noeud.estPointe ? ' ◂' : ''}
           </span>
         </button>
       </div>
@@ -74,7 +81,7 @@ export function ArbreConstructionVue(): ReactElement {
 
   const arbre = useMemo(() => {
     const session = storeShell.hote().session
-    return arbreConstruction(session.pieceCourante(), session.historique())
+    return arbreConstruction(session.pieceCourante(), session.historique(), session.pointeCourante())
   }, [revision])
 
   const etatEsquisse = useMemo(() => {

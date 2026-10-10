@@ -58,7 +58,7 @@ Sans GCS + features génériques → OCCT, le dépôt reste un **générateur pa
 1. Esquisse résolue (polylines évaluées) + `extrude` / `revolution` / `enlever` → `runBatch` OCCT — [sprint 25](../sprints/sprint-25-pipeline-occt.md) (**fait**).
 2. Remplacer `construireVis` spécial par ce pipeline (**fait**).
 3. Solveur d’esquisse 2D (GCS) — [sprint 26](../sprints/sprint-26-gcs-esquisse.md) / [gcs-esquisse.md](gcs-esquisse.md) (**amorcé** : rectangle, cercle, profil).
-4. Pointe de reconstruction (arbre palier 2).
+4. Pointe de reconstruction (arbre palier 2) — [pointe-arbre.md](pointe-arbre.md) / [sprint 27](../sprints/sprint-27-pointe-arbre.md) (**fait**).
 5. Références topologiques (faces / arêtes).
 6. Carrure **uniquement** quand le pipeline générique sait anneau + profil + cut — plus comme pièce magique.
 
