@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "@opencad/api-parametrique": "file:../api-parametrique",
+    "@opencad/format-opencad": "file:../format-opencad",
     "dockview": "^5.1.0",
     "lucide-react": "^0.577.0",
     "monaco-editor": "^0.57.0",

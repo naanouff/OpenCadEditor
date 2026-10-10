@@ -20,7 +20,8 @@ flowchart LR
 ```
 
 - **[packages/api-parametrique](../../packages/api-parametrique)** — langage, historique, géométrie. Aucune dépendance runtime. Tests Vitest : 9 fichiers (`carrure`, `corne`, `csg`, `document`, `ombre`, `revolution`, `tesseler`, `tube-bout`).
-- **[packages/shell](../../packages/shell)** — hôte, panneaux Dockview, terminal Monaco, viewport. Dépend de l’API et de React 19, Dockview, Monaco, Tailwind. Tests : 15 fichiers. `pnpm dev` via Vite.
+- **[packages/format-opencad](../../packages/format-opencad)** — lecture et écriture `.cadompart` (protobuf). Dépend de l’API et de protobufjs.
+- **[packages/shell](../../packages/shell)** — hôte, panneaux Dockview, terminal Monaco, viewport. Dépend de l’API, du format et de React 19, Dockview, Monaco, Tailwind. Tests : 15 fichiers. `pnpm dev` via Vite.
 - **`vendor/w3dts`** — moteur WebGPU (`develop`, commit noté `7a0651a9`). Chrome via `@naanouff/w3dts-editor-ui`. Les surcharges caméra restent dans [packages/shell/src/surcharges](../../packages/shell/src/surcharges), hors du sous-module.
 
 Pas de `package.json` racine : chaque paquet a son propre `pnpm-lock.yaml`.
@@ -36,7 +37,7 @@ Domaines branchés :
 - `solide` — extrude, enlève, symétrie
 - `revolution` — tourner un profil, puis `pas` pour l’hélice de filet (la vis)
 
-Le document ([sprint 21](../sprints/sprint-21-document-repere.md)) porte auteur, version semver, unité `mm` et un repère fixe : origine au centre, X vers 3 h, Y vertical, Z vers 12 h. Les pièces et l’historique restent sur la session, pas dans le document. Aucun fichier `.cadom` / `.cadompart` n’est lu ni écrit.
+Le document ([sprint 21](../sprints/sprint-21-document-repere.md)) porte auteur, version semver, unité `mm` et un repère fixe : origine au centre, X vers 3 h, Y vertical, Z vers 12 h. Les pièces et l’historique restent sur la session, pas dans le document. Le sprint 32 ([fichier-cadompart.md](../veille/fichier-cadompart.md)) lit et écrit un `.cadompart` depuis `packages/format-opencad`. `.cadom` n’est pas encore lu.
 
 ## Géométrie : deux chemins
 
@@ -68,9 +69,8 @@ La règle de développement est le TDD ([developpement.md](../developpement.md))
 
 ## Ce qui manque pour le produit annoncé
 
-- Import / export OpenCAD (`.cadom` / `.cadompart`). STEP hors modèle de vérité.
-- Sprint 25–27 : pipeline OCCT, GCS amorcé, pointe d’arbre (**faits**).
-- Suite préparée : [topo-faces](../veille/topo-faces.md) → [gcs-enrichi](../veille/gcs-enrichi.md) → [carrure-pipeline](../veille/carrure-pipeline.md) → [datums-origine](../veille/datums-origine.md) (sprints 28–31).
+- Import / export `.cadompart` : branché ([sprint 32](../sprints/sprint-32-fichier-cadompart.md)), filet `pas` compris ([sprint 33](../sprints/sprint-33-pas-cadompart.md)). `.cadom`, `.cadomesh`, `.cadombrep` après. STEP hors modèle de vérité.
+- Sprint 25–31 : pipeline OCCT, GCS, pointe, faces, carrure, datums (**faits**).
 - Ruban, souris sur l’esquisse, Electron, assemblage multi-pièces.
 - Un seul tesselleur (carrure encore faces exactes + `noyauProvisoire` jusqu’au sprint 30).
 
@@ -86,4 +86,6 @@ La règle de développement est le TDD ([developpement.md](../developpement.md))
 - [sprint-26-gcs-esquisse.md](../sprints/sprint-26-gcs-esquisse.md) — solveur d’esquisse
 - [genericite.md](../shell/genericite.md) — où le compilateur de pièce quitte le socle
 - [api-architecture.md](../veille/api-architecture.md) — session, domaines, pile
+- [fichier-cadompart.md](../veille/fichier-cadompart.md) — lecture et écriture `.cadompart` (sprint 32)
+- [pas-cadompart.md](../veille/pas-cadompart.md) — filet `pas` dans le fichier (sprint 33)
 - [shell/plan.md](../shell/plan.md) — hôte, panneaux, viewport

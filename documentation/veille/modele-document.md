@@ -49,4 +49,4 @@ C’est déjà le sens des plans du shell : `plan.3h` regarde +X, `plan.12h` reg
 
 ## Hors de ce palier
 
-Les pièces dans le document, les plans d’esquisse comme repères nommés, le format `.cadompart`, et le déplacement du repère. On les construit ensuite.
+Les pièces dans le document, les plans d’esquisse comme repères nommés, le format `.cadompart`, et le déplacement du repère. On les construit ensuite. Les plans d’origine sont devenus les datums du [sprint 31](../sprints/sprint-31-datums-origine.md). Le fichier `.cadompart` est préparé dans [fichier-cadompart.md](fichier-cadompart.md).

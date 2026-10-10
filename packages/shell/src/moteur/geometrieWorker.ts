@@ -7,7 +7,7 @@ import {
 } from '../occt/pipelineOcct.ts'
 import type { Demande, Reponse } from './protocole.ts'
 
-const session = new Session()
+let session = new Session()
 let occt: OcctKernelModule | null = null
 let occtPret: Promise<OcctKernelModule> | null = null
 
@@ -77,6 +77,10 @@ onmessage = (event: MessageEvent<Demande>) => {
       } catch {
         // L’interface a déjà signalé l’erreur.
       }
+    } else if (demande.sorte === 'ouvrir') {
+      session = new Session()
+      session.executer(demande.script)
+      for (const index of demande.eteins) session.activer(index, false)
     }
     repondre(demande.sequence, maillageCourant(kernel))
   })()

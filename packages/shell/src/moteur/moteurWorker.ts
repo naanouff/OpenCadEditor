@@ -22,5 +22,6 @@ export function moteurWorker(recevoir: (maillage: Maillage, sequence: number) =>
     annuler: (sequence) => envoyer({ sorte: 'annuler', sequence }),
     activer: (index, actif, sequence) => envoyer({ sorte: 'activer', index, actif, sequence }),
     pointe: (cible, sequence) => envoyer({ sorte: 'pointe', cible, sequence }),
+    ouvrir: (script, eteins, sequence) => envoyer({ sorte: 'ouvrir', script, eteins, sequence }),
   }
 }
