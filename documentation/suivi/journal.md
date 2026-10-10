@@ -336,3 +336,7 @@ Flux aligné sur occt-wasm : `feature/*` | `fix/*` → `develop` → `main` → 
 
 Branche `feature/noyau-occt` depuis `develop`. Sous-module `vendor/occt-wasm` @ tag `v0.2.0`. Artefacts `occt-kernel.js` / `.wasm` dans `packages/shell/occt/` (script `scripts/fetch-occt-kernel.mjs`). Alias Vite `@naanouff/occt-wasm/kernel` et `kernel/batch`. Smoke Vitest : box → tessellate et extrude → cut (`packages/shell/tests/occtKernel.test.ts`). Le worker précharge le kernel ; le maillage affiché vient encore de `Session` / `noyauProvisoire` jusqu’à la validation vis et carrure.
 
+## 2026-10-10 — Vis hybride OCCT
+
+`packages/shell/src/occt/construireVis.ts` : corps et tête en `revolve`, fuse, empreinte Pozi en extrude + `boolean_cut`. Le filet `pas` reste le maillage hôte : on retire le fût lisse OCCT du solide, puis `union` avec le corps fileté Session. Le worker, pour la pièce `vis`, sert ce maillage hybride. Tests : `construireVisOcct.test.ts`. Carrure encore sur `noyauProvisoire`.
+
