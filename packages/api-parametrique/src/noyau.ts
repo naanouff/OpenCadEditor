@@ -37,10 +37,13 @@ export const noyauProvisoire: NoyauGeometrique = {
   },
   mailler(solide, parametres) {
     if (!solide) return { positions: [], normales: [], indices: [] }
+    // Hors carrure (pas de diametre_boite) : le maillage vient du pipeline OCCT.
+    if (!parametres.has('diametre_boite')) return { positions: [], normales: [], indices: [] }
     return ombrer(this.decrire(solide, parametres).faces)
   },
   decrire(solide, parametres) {
     if (!solide) return { faces: [] }
+    if (!parametres.has('diametre_boite')) return { faces: [] }
     const diametre = evaluateurProvisoire.evaluer('diametre_boite', parametres)
     const paroi = evaluateurProvisoire.evaluer('epaisseur_paroi', parametres)
     const hauteur = evaluateurProvisoire.evaluer('hauteur_carrure', parametres)

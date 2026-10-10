@@ -354,3 +354,15 @@ Branche `feature/pipeline-occt` depuis `develop`. Pipeline générique : `esquis
 
 Debug **Build vis** sur le shell : pointe, filet, tête fraisée, empreinte Pozi — conforme. Critère visuel du sprint 25 validé. Extrusion rectangle générique couverte par les tests ; carrure hors périmètre (toujours `noyauProvisoire`).
 
+## 2026-10-10 — Sprint 26 commencé : feature/gcs-esquisse
+
+Branche depuis `develop`. GCS v1 dans `api-parametrique` ([solveurGcs.ts](../../packages/api-parametrique/src/solveurGcs.ts), veille [gcs-esquisse.md](../veille/gcs-esquisse.md)) : rectangle (H/V + distances), cercle (rayon), profil révolution. `polylinesDepuisEsquisse` consomme `resoudre`. `Session.etatEsquisse` / `etatEsquisseDepuis` ; statut sous/sur/contraint dans le panneau Construction. Critère : changer `L` double la largeur OCCT (`gcsPipeline.test.ts`). Carrure motif (ecart/debord) hors GCS géométrique.
+
+## 2026-10-10 — Sprint 26 : boîte GCS à l’écran
+
+Debug **Build boite** (rectangle coté → extrude OCCT) : solide affiché. Ouverture de l’esquisse : statut **Esquisse contrainte**. `noyau.mailler` ne exige plus `diametre_boite` hors carrure (sinon le host plantait avant le worker). Tests solveur / vue / pipeline / carrure verts.
+
+## 2026-10-10 — Sprint 26 validé visuellement
+
+Résultat attendu confirmé : boîte L=20 × l=10 × hauteur 8 via GCS + pipeline OCCT. Critères du sprint 26 atteints.
+

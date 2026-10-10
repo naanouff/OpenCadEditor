@@ -1,6 +1,8 @@
 export { Session } from './session.ts'
 export { ErreurApi, REPERE_REFERENCE } from './types.ts'
 export { evaluateurProvisoire } from './evaluateur.ts'
+export { solveurGcs, solveurProvisoire } from './solveur.ts'
+export type { Contrainte, EsquisseResolue, PointResolu } from './solveur.ts'
 export { valeurTypee } from './valeurTypee.ts'
 export { versionSemantique } from './versionSemantique.ts'
 export { classifieur, difference, rogner, union, volume } from './csg.ts'
@@ -22,5 +24,6 @@ export type {
   MaillageOmbre,
   Operation,
   Repere,
+  StatutContrainte,
   Vecteur,
 } from './types.ts'

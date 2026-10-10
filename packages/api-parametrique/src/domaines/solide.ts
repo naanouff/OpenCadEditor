@@ -79,8 +79,8 @@ function profil(contexte: Contexte, operation: Operation): Ajout | undefined {
 
 function exigerEsquisse(contexte: Contexte) {
   if (!contexte.esquisse) throw new ErreurApi('aucune esquisse')
-  const etat = contexte.solveur.etat(contexte.esquisse)
-  if (!etat.ferme || etat.degres > 0) {
+  const etat = contexte.solveur.etat(contexte.esquisse, contexte.parametres)
+  if (!etat.ferme || etat.degres > 0 || etat.statut === 'surcontraint') {
     throw new ErreurApi('esquisse non contrainte')
   }
 }

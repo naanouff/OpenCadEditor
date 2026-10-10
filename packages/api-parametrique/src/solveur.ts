@@ -1,10 +1,6 @@
-import type { SolveurEsquisse } from './types.ts'
+import { solveurGcs } from './solveurGcs.ts'
 
-/** Un cercle, un rectangle ou un profil segment/arc est fermé. Les degrés viennent des entités. */
-export const solveurProvisoire: SolveurEsquisse = {
-  etat(esquisse) {
-    const degres = esquisse.entites.reduce((somme, entite) => somme + entite.degres, 0)
-    const ferme = esquisse.entites.length > 0
-    return { ferme, degres }
-  },
-}
+/** Solveur d’esquisse : GCS v1 (rectangle, cercle, profil révolution). */
+export const solveurProvisoire = solveurGcs
+export { solveurGcs } from './solveurGcs.ts'
+export type { Contrainte, EsquisseResolue, PointResolu, StatutContrainte } from './solveurGcs.ts'

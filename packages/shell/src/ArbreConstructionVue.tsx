@@ -1,7 +1,16 @@
 import { useEffect, useMemo, useState, type ReactElement } from 'react'
 import { Icon, Panel } from '@naanouff/w3dts-editor-ui'
+import type { StatutContrainte } from '@opencad/api-parametrique'
 import { arbreConstruction, type NoeudArbre } from './arbreConstruction.ts'
 import { storeShell } from './storeShell.ts'
+
+function libelleStatut(statut: StatutContrainte, degres: number) {
+  if (statut === 'surcontraint') return 'Esquisse surcontrainte'
+  if (statut === 'sous-contraint' || degres > 0) {
+    return `Esquisse sous-contrainte (${degres} ddl)`
+  }
+  return 'Esquisse contrainte'
+}
 
 function LigneArbre({ noeud, profondeur }: { noeud: NoeudArbre; profondeur: number }): ReactElement {
   const aEnfants = (noeud.enfants?.length ?? 0) > 0
@@ -68,6 +77,13 @@ export function ArbreConstructionVue(): ReactElement {
     return arbreConstruction(session.pieceCourante(), session.historique())
   }, [revision])
 
+  const etatEsquisse = useMemo(() => {
+    const index = storeShell.esquisseVue()
+    if (index === null) return null
+    const session = storeShell.hote().session
+    return session.etatEsquisse() ?? session.etatEsquisseDepuis(index)
+  }, [revision])
+
   return (
     <aside className="h-full overflow-auto bg-[var(--color-surface-panel)] p-3 font-ui text-[13px] text-foreground">
       <Panel title="Construction" collapsible={false}>
@@ -79,6 +95,18 @@ export function ArbreConstructionVue(): ReactElement {
           >
             Quitter l'esquisse
           </button>
+        ) : null}
+        {etatEsquisse ? (
+          <p
+            className={`mb-2 m-0 text-[12px] ${
+              etatEsquisse.statut === 'contraint' && !etatEsquisse.degres
+                ? 'text-[var(--color-text-secondary)]'
+                : 'text-amber-600'
+            }`}
+            data-testid="statut-esquisse"
+          >
+            {libelleStatut(etatEsquisse.statut ?? 'sous-contraint', etatEsquisse.degres)}
+          </p>
         ) : null}
         {arbre.length === 0 ? (
           <p className="m-0 text-[var(--color-text-secondary)]">Aucune pièce</p>

@@ -1,5 +1,6 @@
 import {
   evaluateurProvisoire,
+  solveurGcs,
   type EntiteEsquisse,
   type Esquisse,
 } from '@opencad/api-parametrique'
@@ -25,12 +26,6 @@ function fermer(xyz: number[]): Polyline3 {
   return xyz
 }
 
-function rectangleXz(longueur: number, largeur: number, y: number): Polyline3 {
-  const lu = longueur / 2
-  const lv = largeur / 2
-  return fermer([-lu, y, -lv, lu, y, -lv, lu, y, lv, -lu, y, lv])
-}
-
 function cercleXz(rayon: number, y: number, segments: number): Polyline3 {
   const xyz: number[] = []
   for (let i = 0; i < segments; i++) {
@@ -52,9 +47,9 @@ function profilRevolution(entites: EntiteEsquisse[], evaluer: (e: string) => num
 }
 
 /**
- * Évalue les entités d'une esquisse en polylignes 3D (paramètres numériques, pas de GCS).
- * - `plan.dessus` : rectangles / cercles dans XZ
- * - `plan.12h` : chaîne de segments rayon/hauteur dans le plan XY (z = 0)
+ * Résout l'esquisse (GCS) puis émet des polylignes 3D.
+ * - `plan.dessus` / `plan.3h` : coins résolus → XZ
+ * - `plan.12h` : profil révolution (rayon, hauteur) → XY
  */
 export function polylinesDepuisEsquisse(
   esquisse: Esquisse,
@@ -72,14 +67,36 @@ export function polylinesDepuisEsquisse(
   }
 
   if (support === 'plan.dessus' || support === 'plan.3h') {
-    const sortie: Polyline3[] = []
-    for (const entite of entites) {
-      if (entite.sorte === 'rectangle' && entite.longueur && entite.largeur) {
-        sortie.push(rectangleXz(evaluer(entite.longueur), evaluer(entite.largeur), yPlan))
-      } else if (entite.sorte === 'cercle' && entite.diametre) {
-        sortie.push(cercleXz(evaluer(entite.diametre) / 2, yPlan, segmentsCercle))
-      }
+    const resolue = solveurGcs.resoudre(esquisse, parametres)
+    if (resolue.statut === 'surcontraint') throw new Error('esquisse surcontrainte')
+    if (resolue.statut === 'sous-contraint' || resolue.degres > 0) {
+      throw new Error('esquisse sous-contrainte')
     }
+
+    const pts = new Map(resolue.points.map((p) => [p.id, p]))
+    const sortie: Polyline3[] = []
+
+    for (const poly of resolue.polylines) {
+      if (poly.points.length === 1) {
+        // Cercle : un point bord + rayon depuis le centre
+        const bord = pts.get(poly.points[0]!)
+        const centreId = poly.points[0]!.replace(/\.p$/, '.o')
+        const centre = pts.get(centreId)
+        if (bord && centre) {
+          const r = Math.hypot(bord.u - centre.u, bord.v - centre.v)
+          sortie.push(cercleXz(r, yPlan, segmentsCercle))
+        }
+        continue
+      }
+      const xyz: number[] = []
+      for (const id of poly.points) {
+        const p = pts.get(id)
+        if (!p) throw new Error(`point inconnu ${id}`)
+        xyz.push(p.u, yPlan, p.v)
+      }
+      sortie.push(fermer(xyz))
+    }
+
     if (sortie.length > 0) return sortie
   }
 

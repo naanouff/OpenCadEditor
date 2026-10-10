@@ -4,7 +4,7 @@ import { domaineSolide } from './domaines/solide.ts'
 import { domaineRevolution } from './revolution.ts'
 import { evaluateurProvisoire } from './evaluateur.ts'
 import { noyauProvisoire } from './noyau.ts'
-import { solveurProvisoire } from './solveur.ts'
+import { solveurGcs, solveurProvisoire } from './solveur.ts'
 import { versionSemantique } from './versionSemantique.ts'
 import {
   ErreurApi,
@@ -209,6 +209,38 @@ export class Session {
     const piece = this.pieceActive()
     if (!piece.esquisse) return null
     return noyauProvisoire.poser(piece.esquisse, piece.solide, piece.parametres)
+  }
+
+  /** Statut GCS de l’esquisse ouverte (sous / contraint / sur). */
+  etatEsquisse() {
+    if (!this.active) return null
+    const piece = this.pieceActive()
+    if (!piece.esquisse) return null
+    return solveurGcs.etat(piece.esquisse, piece.parametres)
+  }
+
+  /** Statut GCS d’une esquisse de l’historique (même déjà consommée). */
+  etatEsquisseDepuis(index: number) {
+    const source = this.pieceActive()
+    const ouvrir = source.historique[index]
+    if (!ouvrir || ouvrir.type !== 'ouvrir') return null
+    const nom = `__etat_${source.nom}`
+    this.pieces.set(nom, pieceVide(source.nom))
+    const avant = this.active
+    this.active = nom
+    this.vueSansGeometrie = true
+    try {
+      for (const operation of operationsJusquaEsquisse(source.historique, index)) {
+        this.handler(operation).faire(this.contexte(), operation)
+      }
+      const piece = this.pieceActive()
+      if (!piece.esquisse) return null
+      return solveurGcs.etat(piece.esquisse, piece.parametres)
+    } finally {
+      this.vueSansGeometrie = false
+      this.pieces.delete(nom)
+      this.active = avant
+    }
   }
 
   /** Pose une esquisse de l'historique, même déjà consommée, sans modifier la pièce. */
