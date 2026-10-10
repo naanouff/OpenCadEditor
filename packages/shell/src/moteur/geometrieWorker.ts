@@ -30,12 +30,14 @@ function repondre(sequence: number, maille: Maillage) {
 }
 
 function maillageCourant(kernel: OcctKernelModule | null): Maillage {
-  const piece = session.pieceCourante()
-  if (kernel && piece?.nom === 'vis' && piece.volume) {
-    try {
-      return maillageVisHybride(kernel)
-    } catch (erreur) {
-      console.error(erreur instanceof Error ? erreur.message : String(erreur))
+  if (kernel && session.pieceCourante() === 'vis') {
+    const actuel = session.maillage()
+    if (actuel.indices.length > 0) {
+      try {
+        return maillageVisHybride(kernel)
+      } catch (erreur) {
+        console.error(erreur instanceof Error ? erreur.message : String(erreur))
+      }
     }
   }
   return session.maillage()
