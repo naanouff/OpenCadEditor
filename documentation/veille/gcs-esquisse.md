@@ -37,3 +37,7 @@ Les entités actuelles (`rectangle`, `cercle`, `segment`+rayon/hauteur) **émett
 - `polylinesDepuisEsquisse` consomme `resoudre`.
 - UI : statut dans le panneau Construction (`ArbreConstructionVue`) quand une esquisse est ouverte ou rejouée.
 - Test : `packages/shell/tests/gcsPipeline.test.ts` — doubler `L` agrandit l’extrude OCCT.
+
+## Suite
+
+Anneau, `ecart`/`debord`, arcs, symétrie : [gcs-enrichi.md](gcs-enrichi.md) / [sprint 29](../sprints/sprint-29-gcs-enrichi.md).

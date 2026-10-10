@@ -69,5 +69,13 @@ Suivi du projet et notes de travail. Ce dossier n’appartient pas au moteur : l
 | [sprints/sprint-26-gcs-esquisse.md](sprints/sprint-26-gcs-esquisse.md) | Sprint solveur d’esquisse (GCS) |
 | [veille/pointe-arbre.md](veille/pointe-arbre.md) | Pointe de reconstruction : préfixe d’historique |
 | [sprints/sprint-27-pointe-arbre.md](sprints/sprint-27-pointe-arbre.md) | Sprint arbre palier 2 : pointe annulable + UI |
+| [veille/topo-faces.md](veille/topo-faces.md) | Faces de sketch stables après rebuild |
+| [sprints/sprint-28-topo-faces.md](sprints/sprint-28-topo-faces.md) | Sprint registre `face.*` + poche OCCT |
+| [veille/gcs-enrichi.md](veille/gcs-enrichi.md) | GCS : concentrique, corne, symétrie → wires |
+| [sprints/sprint-29-gcs-enrichi.md](sprints/sprint-29-gcs-enrichi.md) | Sprint solveur enrichi |
+| [veille/carrure-pipeline.md](veille/carrure-pipeline.md) | Carrure via pipeline OCCT générique |
+| [sprints/sprint-30-carrure-pipeline.md](sprints/sprint-30-carrure-pipeline.md) | Sprint anneau + cuts + cornes OCCT |
+| [veille/datums-origine.md](veille/datums-origine.md) | Plans d’origine = datums document |
+| [sprints/sprint-31-datums-origine.md](sprints/sprint-31-datums-origine.md) | Sprint paliers arbre 3–4 |
 
 La veille précède chaque sprint. Le prototype (API, shell, carrure, vis) est dans `packages/`. OpenCadEditor est l’éditeur. CADOM (`.cadom`) est le format d’assemblage OpenCAD, pas un logiciel. L’intention est dans `.cadompart`. L’état consolidé est dans [suivi/analyse.md](suivi/analyse.md) ; le détail daté reste dans le journal.

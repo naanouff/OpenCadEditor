@@ -378,3 +378,27 @@ Branche `feature/pointe-arbre` depuis `develop`. `Piece.pointe` + `rejouables(hi
 
 Debug **Build carrure** / **Build vis** : déplacer la pointe change le viewport ; fonctions après la pointe grisées. Critère visuel du sprint 27 validé.
 
+## 2026-10-10 — Suite consignés : sprints 28–31
+
+Feuille de route post-pointe : [topo-faces.md](../veille/topo-faces.md) → [gcs-enrichi.md](../veille/gcs-enrichi.md) → [carrure-pipeline.md](../veille/carrure-pipeline.md) → [datums-origine.md](../veille/datums-origine.md). Sprints [28](../sprints/sprint-28-topo-faces.md)–[31](../sprints/sprint-31-datums-origine.md). Paliers arbre 3–4 réécrits dans [arbre-fonctions.md](../veille/arbre-fonctions.md) (wires OCCT, pas `profil()` / `decrire`). Prochain code : sprint 28, branche `feature/topo-faces`.
+
+## 2026-10-10 — Sprint 28 commencé : feature/topo-faces
+
+Branche depuis `develop`. Registre `face.dessus` / `face.dessous` (bornes Y après extrude) ; `esquissePolylines` accepte `face.*` ; `enlever` coupe depuis le fond vers l’extérieur. Preuves : poche Ø8 profondeur 2 sur boîte hauteur 8 ; rebuild hauteur 12.
+
+## 2026-10-10 — Vigilance : cercles en polyline OCCT
+
+Build boite : poche conforme ; le fil de fer du cylindre montre les facettes de la densification (~48 segments). Pas un défaut de `face.dessus`. Noté dans [topo-faces.md](../veille/topo-faces.md) : arcs / cercles natifs kernel pour plus tard.
+
+## 2026-10-10 — Sprint 28 : faces conformes à l’écran
+
+Debug **Build boite** : extrude + poche sur `face.dessus` conforme. Critère visuel du sprint 28 validé (vigilance polylines notée).
+
+## 2026-10-10 — Sprint 29 commencé : feature/gcs-enrichi
+
+Branche depuis `feature/topo-faces`. GCS : deux cercles concentriques ; contour corne (`ecart`/`debord`/`largeur`/`rayon` + `geometriePlan`) avec symétries → 4 polylines ; `exigerEsquisse` refuse sans wire. Pipeline OCCT consomme `symetries` / `concentrique`. Preuve : extrude corne via OCCT.
+
+## 2026-10-10 — Sprint 30 commencé : feature/carrure-pipeline
+
+Branche depuis `feature/gcs-enrichi`. Anneau OCCT = extrude Øext + cut Øint ; lunette/fond sur faces ; cornes fusées ; `rouvrir` sur dernier support. Barrette et tube encore ignorés (évite de dégrader le corps). `SCRIPT_CARRURE` compile et maille via OCCT. Validation visuelle : Debug **Build carrure**.
+

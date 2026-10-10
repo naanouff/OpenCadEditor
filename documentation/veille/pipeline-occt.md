@@ -5,11 +5,13 @@ Plan d’exécution de [direction-modeleur.md](direction-modeleur.md). Remplace 
 ## Chaîne (état)
 
 1. **Historique** — opérations `Session` (inchangé).
-2. **Esquisse résolue** — [`esquissePolylines.ts`](../../packages/shell/src/occt/esquissePolylines.ts) : rectangle / cercle / segments rayon-hauteur → polylines XYZ (pas de GCS).
+2. **Esquisse résolue** — [`esquissePolylines.ts`](../../packages/shell/src/occt/esquissePolylines.ts) + GCS v1 ; enrichissement anneau/cornes et `face.*` : sprints 28–29.
 3. **Fonction** — [`opsDepuisFonction.ts`](../../packages/shell/src/occt/opsDepuisFonction.ts) + [`pipelineOcct.ts`](../../packages/shell/src/occt/pipelineOcct.ts) : `extrude` / `enlever` / `revolution` → `runBatch` (pas de `if (piece === 'vis')`).
 4. **occt-kernel** — wire / extrude / revolve / booléens → `tessellate` → `MaillageOmbre`.
 5. **Worker** — [`geometrieWorker.ts`](../../packages/shell/src/moteur/geometrieWorker.ts) : pipeline si compilable, sinon Session (carrure).
 6. **`pas`** — hybride temporaire : fût = filet hôte ; tête + Pozi = OCCT.
+
+**Vigilance.** Cercles / arcs → polylines densifiées avant `make_wire_polyline` : facettes visibles dans le fil de fer. Cibles natives (cercle / arc kernel) hors v1 — voir [topo-faces.md](topo-faces.md).
 
 ## Critères
 
