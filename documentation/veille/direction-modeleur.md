@@ -61,7 +61,7 @@ Sans GCS + features génériques → OCCT, le dépôt reste un **générateur pa
 4. Pointe de reconstruction (arbre palier 2) — [pointe-arbre.md](pointe-arbre.md) / [sprint 27](../sprints/sprint-27-pointe-arbre.md) (**fait**).
 5. Références topologiques (faces) — [topo-faces.md](topo-faces.md) / [sprint 28](../sprints/sprint-28-topo-faces.md) (**fait**).
 6. Carrure via pipeline générique — [carrure-pipeline.md](carrure-pipeline.md) / [sprint 30](../sprints/sprint-30-carrure-pipeline.md) (**fait**).
-7. Datums d’origine + palier arbre 3 — [datums-origine.md](datums-origine.md) / [sprint 31](../sprints/sprint-31-datums-origine.md) (**en cours**).
+7. Datums d’origine + palier arbre 3 — [datums-origine.md](datums-origine.md) / [sprint 31](../sprints/sprint-31-datums-origine.md) (**fait**).
 
 ## Arrêt d’investissement
 
@@ -75,4 +75,4 @@ Sans GCS + features génériques → OCCT, le dépôt reste un **générateur pa
 | Bonne direction stratégique ? | **Oui** : historique + OCCT + arbre + formats. |
 | Prêt pour FreeCAD / Creo ? | **Non** : manque GCS, features génériques, topo. |
 | Risque principal ? | Continuer les **compilateurs de pièce** au-dessus d’OCCT. |
-| Prochain geste ? | Sprint 28 : registre `face.dessus` / `face.dessous` + poche OCCT. |
+| Prochain geste ? | Suite hors sprints 25–31 : barrette/tube OCCT, cercles natifs kernel, ou nouveau palier à consignier. |
