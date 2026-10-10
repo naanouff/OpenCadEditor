@@ -1,20 +1,21 @@
 # Pipeline générique historique → OCCT
 
-Plan d’exécution de [direction-modeleur.md](direction-modeleur.md). Remplace le chemin spécial `construireVis` / `decrire` + motifs.
+Plan d’exécution de [direction-modeleur.md](direction-modeleur.md). Remplace le chemin spécial `construireVis` / `decrire` + motifs. **Branché** sur `feature/pipeline-occt` (sprint 25).
 
-## Chaîne cible
+## Chaîne (état)
 
 1. **Historique** — opérations `Session` (inchangé).
-2. **Esquisse résolue** — segments / arcs / cercles → polylines 2D évaluées (paramètres numériques déjà dans les entités ; pas encore de GCS).
-3. **Fonction** — `extrude` / `enlever` / `revolution` lit le wire résolu + profondeur / axe, émet des ops `runBatch` (pas de `if (piece === 'vis')`).
-4. **occt-kernel** — `create_wire` / `extrude` / `revolve` / booléens → `tessellate` → `MaillageOmbre`.
-5. **UI** — protocole worker inchangé.
+2. **Esquisse résolue** — [`esquissePolylines.ts`](../../packages/shell/src/occt/esquissePolylines.ts) : rectangle / cercle / segments rayon-hauteur → polylines XYZ (pas de GCS).
+3. **Fonction** — [`opsDepuisFonction.ts`](../../packages/shell/src/occt/opsDepuisFonction.ts) + [`pipelineOcct.ts`](../../packages/shell/src/occt/pipelineOcct.ts) : `extrude` / `enlever` / `revolution` → `runBatch` (pas de `if (piece === 'vis')`).
+4. **occt-kernel** — wire / extrude / revolve / booléens → `tessellate` → `MaillageOmbre`.
+5. **Worker** — [`geometrieWorker.ts`](../../packages/shell/src/moteur/geometrieWorker.ts) : pipeline si compilable, sinon Session (carrure).
+6. **`pas`** — hybride temporaire : fût = filet hôte ; tête + Pozi = OCCT.
 
-## Critères de succès
+## Critères
 
-- Une pièce définie uniquement par historique + esquisse rectangle + extrude produit un solide OCCT sans script dédié.
-- La vis se reconstruit via ce pipeline (révolution + coupe Pozi) ; `construireVis.ts` disparaît ou devient un thin wrapper de tests.
-- Aucune reconnaissance de motif (`3 segments + 1 arc`) sur le chemin chaud.
+- Extrusion rectangle générique → solide OCCT (test `pipelineOcct`).
+- Vis via le même chemin ; `construireVis.ts` = façade de tests.
+- Aucune reconnaissance de motif sur le chemin chaud OCCT.
 
 ## Hors périmètre immédiat
 

@@ -51,7 +51,7 @@ Le type `Solide` ne porte pas une géométrie générale. Un ajout est un rectan
 
 [@naanouff/occt-wasm](https://github.com/naanouff/occt-wasm) **v0.2.0** livre `occt-kernel` (primitives, extrude/revolve, booléens, fillet, tessellation, STEP/BREP). Preuves : [occt-kernel.md](occt-kernel.md).
 
-**Décision 2026-10-10** ([noyau-occt.md](../veille/noyau-occt.md)) : ce kernel **remplace** le noyau OpenCAD comme moteur B-Rep d’OpenCadEditor. Formats inchangés ; historique hors bande. Sprint 24 : infra + preuve **vis** hybride OCCT. **Pivot** ([direction-modeleur.md](../veille/direction-modeleur.md)) : pas de carrure motif→OCCT ; suite = [pipeline générique](../veille/pipeline-occt.md) (sprints 25–26). Carrure encore `noyauProvisoire`.
+**Décision 2026-10-10** ([noyau-occt.md](../veille/noyau-occt.md)) : ce kernel **remplace** le noyau OpenCAD comme moteur B-Rep d’OpenCadEditor. Formats inchangés ; historique hors bande. Sprint 24 : infra + preuve **vis** hybride. Sprint 25 ([pipeline-occt.md](../veille/pipeline-occt.md)) : historique → wires → `runBatch` (worker unique) ; vis dessus ; `pas` hybride. Carrure encore `noyauProvisoire` jusqu’à ce que le pipeline la couvre.
 
 ## Interface
 

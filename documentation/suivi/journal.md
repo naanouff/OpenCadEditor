@@ -346,3 +346,11 @@ Verdict : [direction-modeleur.md](../veille/direction-modeleur.md). L’architec
 
 **Arrêt** : porter la carrure motif par motif vers OCCT (item 6 du sprint 24 annulé). **Suite** : [pipeline-occt.md](../veille/pipeline-occt.md) — [sprint 25](../sprints/sprint-25-pipeline-occt.md) (esquisse résolue + features génériques → `runBatch`, vis réécrite dessus) puis [sprint 26](../sprints/sprint-26-gcs-esquisse.md) (GCS). Carrure seulement quand le pipeline générique le permet. Sprint 24 recentré sur infra + preuve vis.
 
+## 2026-10-10 — Sprint 25 commencé : feature/pipeline-occt
+
+Branche `feature/pipeline-occt` depuis `develop`. Pipeline générique : `esquissePolylines` → `opsDepuisFonction` → `pipelineOcct` (historique → `runBatch` → tessellate). Worker unique : plus de branche `piece === 'vis'` ; si l’historique se compile, maillage OCCT, sinon Session / `noyauProvisoire` (carrure). Vis : révolutions + Pozi via le pipeline ; `pas` hybride (filet hôte + tête/Pozi OCCT). `construireVis.ts` réduit à une façade de tests. Tests : `esquissePolylines`, `pipelineOcct`, `construireVisOcct`.
+
+## 2026-10-10 — Sprint 25 : vis conforme à l’écran
+
+Debug **Build vis** sur le shell : pointe, filet, tête fraisée, empreinte Pozi — conforme. Critère visuel du sprint 25 validé. Extrusion rectangle générique couverte par les tests ; carrure hors périmètre (toujours `noyauProvisoire`).
+

@@ -24,3 +24,5 @@ Hors sprint : GCS, carrure OCCT, naming topologique, pointe d’arbre, suppressi
 - La vis passe par ce chemin ; les tests vis restent verts.
 - [pipeline-occt.md](../veille/pipeline-occt.md) et le journal disent « branché » pour ce pipeline.
 - Aucun travail carrure motif→OCCT n’a été ajouté.
+
+**2026-10-10** — critères atteints sur `feature/pipeline-occt` : tests verts + **Build vis** conforme à l’écran.
