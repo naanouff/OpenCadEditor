@@ -21,11 +21,15 @@ export type EntiteEsquisse = {
   rayon?: string
   /** Cote axiale de l'extrémité d'un segment, pour une révolution. */
   hauteur?: string
+  /** Cible d’une relation `concentrique` posée sur cette entité. */
+  concentrique?: string
 }
 
 export type Esquisse = {
   support: string
   entites: EntiteEsquisse[]
+  /** Axes de `symetrie` dans l’ordre du script. */
+  symetries?: Array<'vertical' | 'horizontal'>
 }
 
 export type Enlevement = {

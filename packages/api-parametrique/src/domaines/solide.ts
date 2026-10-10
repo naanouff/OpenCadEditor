@@ -1,4 +1,5 @@
 import { couperRectangles } from '../revolution.ts'
+import { solveurGcs } from '../solveurGcs.ts'
 import { ErreurApi, type Ajout, type Contexte, type Domaine, type Operation } from '../types.ts'
 
 function profil(contexte: Contexte, operation: Operation): Ajout | undefined {
@@ -81,6 +82,10 @@ function exigerEsquisse(contexte: Contexte) {
   if (!contexte.esquisse) throw new ErreurApi('aucune esquisse')
   const etat = contexte.solveur.etat(contexte.esquisse, contexte.parametres)
   if (!etat.ferme || etat.degres > 0 || etat.statut === 'surcontraint') {
+    throw new ErreurApi('esquisse non contrainte')
+  }
+  const resolue = solveurGcs.resoudre(contexte.esquisse, contexte.parametres)
+  if (resolue.polylines.length === 0) {
     throw new ErreurApi('esquisse non contrainte')
   }
 }

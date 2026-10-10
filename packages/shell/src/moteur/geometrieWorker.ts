@@ -1,6 +1,10 @@
 import { Session, type Maillage } from '@opencad/api-parametrique'
 import { chargerKernel, type OcctKernelModule } from '../occt/chargerKernel.ts'
-import { historiqueCompatibleOcct, maillagePipelineOcct } from '../occt/pipelineOcct.ts'
+import {
+  historiqueCompatibleOcct,
+  historiqueCornesSession,
+  maillagePipelineOcct,
+} from '../occt/pipelineOcct.ts'
 import type { Demande, Reponse } from './protocole.ts'
 
 const session = new Session()
@@ -30,7 +34,13 @@ function repondre(sequence: number, maille: Maillage) {
 }
 
 function maillageCourant(kernel: OcctKernelModule | null): Maillage {
-  if (kernel && historiqueCompatibleOcct(session.historique(), session.pointeCourante())) {
+  const historique = session.historique()
+  const pointe = session.pointeCourante()
+  // BREP Session = référence visuelle ; ne pas le remplacer par un solide OCCT immature.
+  if (historiqueCornesSession(historique, pointe)) {
+    return session.maillage()
+  }
+  if (kernel && historiqueCompatibleOcct(historique, pointe)) {
     try {
       return maillagePipelineOcct(kernel, session)
     } catch (erreur) {

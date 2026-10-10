@@ -46,9 +46,11 @@ function profilRevolution(entites: EntiteEsquisse[], evaluer: (e: string) => num
   return fermer(xyz)
 }
 
+const SUPPORTS_XZ = new Set(['plan.dessus', 'plan.3h', 'face.dessus', 'face.dessous'])
+
 /**
  * Résout l'esquisse (GCS) puis émet des polylignes 3D.
- * - `plan.dessus` / `plan.3h` : coins résolus → XZ
+ * - `plan.dessus` / `plan.3h` / `face.*` : coins résolus → XZ (y via `yPlan`)
  * - `plan.12h` : profil révolution (rayon, hauteur) → XY
  */
 export function polylinesDepuisEsquisse(
@@ -66,7 +68,7 @@ export function polylinesDepuisEsquisse(
     if (segments.length >= 2) return [profilRevolution(entites, evaluer)]
   }
 
-  if (support === 'plan.dessus' || support === 'plan.3h') {
+  if (SUPPORTS_XZ.has(support)) {
     const resolue = solveurGcs.resoudre(esquisse, parametres)
     if (resolue.statut === 'surcontraint') throw new Error('esquisse surcontrainte')
     if (resolue.statut === 'sous-contraint' || resolue.degres > 0) {

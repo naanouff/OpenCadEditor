@@ -3,6 +3,19 @@ import type { EntiteEsquisse } from '@opencad/api-parametrique'
 import { polylinesDepuisEsquisse } from '../src/occt/esquissePolylines.ts'
 
 describe('esquisse → polylines', () => {
+  it('place un cercle sur face.dessus à yPlan', () => {
+    const polys = polylinesDepuisEsquisse(
+      {
+        support: 'face.dessus',
+        entites: [{ id: 'c1', sorte: 'cercle', degres: 0, diametre: '10' }],
+      },
+      new Map(),
+      { yPlan: 8, segmentsCercle: 8 },
+    )
+    expect(polys).toHaveLength(1)
+    expect(polys[0]![1]).toBe(8)
+  })
+
   it('ferme un rectangle plan.dessus en XZ', () => {
     const entites: EntiteEsquisse[] = [
       { id: 'r1', sorte: 'rectangle', degres: 0, largeur: '10', longueur: '20' },

@@ -66,4 +66,102 @@ extrude 8
     expect(crete).toBe(false)
     expect(stats(maille).rayonMax).toBeLessThan(3.5)
   }, 180_000)
+
+  it('poche sur face.dessus après extrude', async () => {
+    const occt = await chargerKernel()
+    const session = new Session({ geometrie: false })
+    session.executer(`
+piece boite
+esquisse plan.dessus
+rectangle
+cote largeur 20
+cote longueur 20
+cote ecart 0
+extrude 8
+esquisse face.dessus
+cercle
+cote diametre 8
+enleve 2
+`)
+    const maille = maillagePipelineOcct(occt, session)
+    expect(maille.indices.length).toBeGreaterThan(0)
+    const { yMax } = stats(maille)
+    expect(yMax).toBeGreaterThan(7.5)
+    expect(yMax).toBeLessThan(8.5)
+    // Fond de poche : anneau du cylindre à y ≈ hauteur − profondeur (pas de sommet au centre).
+    let fondPoche = false
+    for (let i = 0; i < maille.positions.length; i += 3) {
+      const y = maille.positions[i + 1]!
+      const r = Math.hypot(maille.positions[i]!, maille.positions[i + 2]!)
+      if (Math.abs(r - 4) < 0.2 && Math.abs(y - 6) < 0.35) fondPoche = true
+    }
+    expect(fondPoche).toBe(true)
+  }, 120_000)
+
+  it('extrude un contour de corne résolu par le GCS', async () => {
+    const occt = await chargerKernel()
+    const session = new Session({ geometrie: false })
+    session.executer(`
+piece corne
+param diametre_boite 40
+param entrecorne 20
+param longueur_corne 4.2
+param largeur_bout 2.2
+param largeur_racine 6
+param rayon_racine 3
+esquisse plan.dessus
+cercle
+cote diametre diametre_boite
+cercle
+concentrique cercle.exterieur
+cote diametre diametre_boite - 5
+extrude 2
+esquisse plan.dessus
+segment
+cote ecart entrecorne
+segment
+cote debord longueur_corne
+cote largeur largeur_bout
+segment
+cote largeur largeur_racine
+arc
+cote rayon rayon_racine
+arc
+concentrique cercle.exterieur
+symetrie vertical
+symetrie horizontal
+extrude 8
+`)
+    expect(session.historique().filter((o) => o.type === 'extrude')).toHaveLength(2)
+    const maille = maillagePipelineOcct(occt, session)
+    expect(maille.indices.length).toBeGreaterThan(0)
+    expect(stats(maille).yMax).toBeGreaterThan(7)
+  }, 120_000)
+
+  it('face.dessus suit une nouvelle hauteur d’extrusion', async () => {
+    const occt = await chargerKernel()
+    const session = new Session({ geometrie: false })
+    session.executer(`
+piece boite
+esquisse plan.dessus
+rectangle
+cote largeur 20
+cote longueur 20
+cote ecart 0
+extrude 12
+esquisse face.dessus
+cercle
+cote diametre 8
+enleve 3
+`)
+    const maille = maillagePipelineOcct(occt, session)
+    expect(stats(maille).yMax).toBeGreaterThan(11.5)
+    let fondPoche = false
+    for (let i = 0; i < maille.positions.length; i += 3) {
+      const y = maille.positions[i + 1]!
+      const r = Math.hypot(maille.positions[i]!, maille.positions[i + 2]!)
+      if (Math.abs(r - 4) < 0.2 && Math.abs(y - 9) < 0.35) fondPoche = true
+    }
+    expect(fondPoche).toBe(true)
+  }, 120_000)
 })

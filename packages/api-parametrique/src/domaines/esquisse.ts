@@ -106,6 +106,7 @@ export const domaineEsquisse: Domaine = {
           throw new ErreurApi(`cible inconnue: ${operation.arguments.cible}`)
         }
         const entite = derniere(contexte)
+        entite.concentrique = operation.arguments.cible
         entite.degres = Math.max(0, entite.degres - 1)
       },
       defaire() {},
@@ -131,9 +132,13 @@ export const domaineEsquisse: Domaine = {
       dansHistorique: true,
       faire(contexte, operation) {
         if (!contexte.esquisse) return
-        if (operation.arguments.axe !== 'vertical' && operation.arguments.axe !== 'horizontal') {
-          throw new ErreurApi(`axe inconnu: ${operation.arguments.axe}`)
+        const axe = operation.arguments.axe
+        if (axe !== 'vertical' && axe !== 'horizontal') {
+          throw new ErreurApi(`axe inconnu: ${axe}`)
         }
+        const liste = contexte.esquisse.symetries ?? []
+        liste.push(axe)
+        contexte.esquisse.symetries = liste
       },
       defaire() {},
     },

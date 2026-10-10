@@ -69,12 +69,10 @@ La règle de développement est le TDD ([developpement.md](../developpement.md))
 ## Ce qui manque pour le produit annoncé
 
 - Import / export OpenCAD (`.cadom` / `.cadompart`). STEP hors modèle de vérité.
-- Sprint 25 : pipeline historique → wires → OCCT (**fait**).
-- Sprint 26 : GCS amorcé (rectangle / cercle / profil ; statut UI).
-- Sprint 27 préparé : pointe d’arbre ([pointe-arbre.md](../veille/pointe-arbre.md)).
-- Naming topologique, paliers 3–4, carrure via pipeline générique seulement.
+- Sprint 25–27 : pipeline OCCT, GCS amorcé, pointe d’arbre (**faits**).
+- Suite préparée : [topo-faces](../veille/topo-faces.md) → [gcs-enrichi](../veille/gcs-enrichi.md) → [carrure-pipeline](../veille/carrure-pipeline.md) → [datums-origine](../veille/datums-origine.md) (sprints 28–31).
 - Ruban, souris sur l’esquisse, Electron, assemblage multi-pièces.
-- Un seul tesselleur (carrure encore faces exactes + `noyauProvisoire`).
+- Un seul tesselleur (carrure encore faces exactes + `noyauProvisoire` jusqu’au sprint 30).
 
 ## Lecture utile
 
