@@ -24,7 +24,7 @@ flowchart LR
 
 ## Rapatriement
 
-Sous-module `vendor/occt-wasm` @ tag `v0.2.0`, même pattern que `vendor/w3dts`. Consommation : `dist/occt-kernel.js`, `occt-kernel.wasm`, `js/kernel-batch.mjs`. Chargement dans le **worker** géométrie uniquement.
+Sous-module `vendor/occt-wasm` @ tag `v0.2.0`, même pattern que `vendor/w3dts`. Les binaires ne sont pas dans le git du sous-module : release → `packages/shell/occt/` via `scripts/fetch-occt-kernel.mjs`. Batch : `vendor/occt-wasm/js/kernel-batch.mjs` (alias `@naanouff/occt-wasm/kernel/batch`). Chargement dans le **worker** géométrie (`chargerKernel`).
 
 ## Pièces pilotes
 

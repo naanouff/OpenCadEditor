@@ -13,6 +13,8 @@ const ici = path.dirname(fileURLToPath(import.meta.url))
 const paquets = path.resolve(ici, '../../vendor/w3dts/packages')
 const coreSrc = path.resolve(paquets, 'core/src')
 const editorUi = path.resolve(paquets, 'editor-ui/src')
+const occtWasm = path.resolve(ici, '../../vendor/occt-wasm')
+const occtArtefacts = path.resolve(ici, 'occt')
 
 function surchargeCamera(): Plugin {
   const fichiers: Record<string, string> = {
@@ -53,6 +55,14 @@ export default defineConfig({
         find: '@opencad/api-parametrique',
         replacement: path.resolve(ici, '../api-parametrique/src/index.ts'),
       },
+      {
+        find: '@naanouff/occt-wasm/kernel/batch',
+        replacement: path.resolve(occtWasm, 'js/kernel-batch.mjs'),
+      },
+      {
+        find: '@naanouff/occt-wasm/kernel',
+        replacement: path.resolve(occtArtefacts, 'occt-kernel.js'),
+      },
       { find: '@w3dts-core-src', replacement: coreSrc },
       {
         find: '@naanouff/w3dts-core',
@@ -90,11 +100,17 @@ export default defineConfig({
     dedupe: ['react', 'react-dom'],
   },
   optimizeDeps: {
-    exclude: ['@opencad/api-parametrique', '@naanouff/w3dts-editor-ui'],
+    exclude: ['@opencad/api-parametrique', '@naanouff/w3dts-editor-ui', '@naanouff/occt-wasm/kernel'],
   },
+  assetsInclude: ['**/*.wasm'],
   server: {
     fs: {
       allow: [path.resolve(ici, '../..')],
     },
   },
+  test: {
+    testTimeout: 120_000,
+    hookTimeout: 120_000,
+  },
 })
+

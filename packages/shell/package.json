@@ -4,7 +4,8 @@
   "type": "module",
   "scripts": {
     "test": "vitest run",
-    "dev": "vite"
+    "dev": "vite",
+    "fetch-occt": "node ../../scripts/fetch-occt-kernel.mjs"
   },
   "dependencies": {
     "@opencad/api-parametrique": "file:../api-parametrique",

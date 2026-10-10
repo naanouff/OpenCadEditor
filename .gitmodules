@@ -1,3 +1,7 @@
 [submodule "vendor/w3dts"]
 	path = vendor/w3dts
 	url = https://github.com/naanouff/w3dts.git
+# occt-wasm @ v0.2.0 (gitlink) ; artefacts wasm : packages/shell/occt via scripts/fetch-occt-kernel.mjs
+[submodule "vendor/occt-wasm"]
+	path = vendor/occt-wasm
+	url = https://github.com/naanouff/occt-wasm.git

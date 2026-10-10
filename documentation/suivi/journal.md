@@ -332,3 +332,7 @@ Le moteur B-Rep d’OpenCadEditor est **occt-kernel**. Le noyau OpenCAD est **d�
 
 Flux aligné sur occt-wasm : `feature/*` | `fix/*` → `develop` → `main` → tag `v*`. Doc : [gitflow.md](../gitflow.md). Rulesets versionnés dans `.github/rulesets/` (`gitflow-protect-main`, `gitflow-protect-develop`) : PR obligatoire, pas de suppression ni de force-push ; bypass admin. Branche par défaut GitHub : `main`. La branche historique `feature/initial` ne fait plus partie du flux courant.
 
+## 2026-10-10 — Sprint 24 commencé : feature/noyau-occt
+
+Branche `feature/noyau-occt` depuis `develop`. Sous-module `vendor/occt-wasm` @ tag `v0.2.0`. Artefacts `occt-kernel.js` / `.wasm` dans `packages/shell/occt/` (script `scripts/fetch-occt-kernel.mjs`). Alias Vite `@naanouff/occt-wasm/kernel` et `kernel/batch`. Smoke Vitest : box → tessellate et extrude → cut (`packages/shell/tests/occtKernel.test.ts`). Le worker précharge le kernel ; le maillage affiché vient encore de `Session` / `noyauProvisoire` jusqu’à la validation vis et carrure.
+
