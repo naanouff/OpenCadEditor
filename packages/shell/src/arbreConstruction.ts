@@ -12,6 +12,10 @@ export type NoeudArbre = {
   /** Ouvre la vue de cette esquisse. */
   esquisse?: boolean
   support?: string
+  /** Fonction qui porte la pointe de reconstruction. */
+  estPointe?: boolean
+  /** Après la pointe : visible mais hors reconstruction. */
+  apresPointe?: boolean
 }
 
 const SOUS_ESQUISSE = new Set(['cercle', 'rectangle', 'segment', 'arc', 'concentrique', 'cote', 'symetrie'])
@@ -58,6 +62,11 @@ const PLANS_ORIGINE = [
   { id: 'plan.3h', libelle: 'Plan 3h' },
 ]
 
+function marquerApres(noeud: NoeudArbre) {
+  noeud.apresPointe = true
+  for (const enfant of noeud.enfants ?? []) marquerApres(enfant)
+}
+
 function noeud(index: number, operation: Operation, enfants?: NoeudArbre[], interrupteur = false): NoeudArbre {
   return {
     id: `${index}-${operation.domaine}-${operation.type}`,
@@ -69,7 +78,7 @@ function noeud(index: number, operation: Operation, enfants?: NoeudArbre[], inte
 }
 
 /** Origine, puis une fonction par extrusion ou enlèvement. L'esquisse est l'enfant de la fonction. */
-export function fonctions(historique: Operation[]): NoeudArbre[] {
+export function fonctions(historique: Operation[], pointe: number | null = null): NoeudArbre[] {
   const liste: NoeudArbre[] = [
     {
       id: 'origine',
@@ -100,22 +109,40 @@ export function fonctions(historique: Operation[]): NoeudArbre[] {
       return
     }
     if (operation.type === 'pas') {
-      liste.push(noeud(index, operation, undefined, true))
+      const n = noeud(index, operation, undefined, true)
+      if (pointe !== null && index === pointe) n.estPointe = true
+      if (pointe !== null && index > pointe) marquerApres(n)
+      liste.push(n)
       return
     }
     if (operation.type !== 'extrude' && operation.type !== 'enlever' && operation.type !== 'revolution') return
     const enfant = esquisseNoeud()
-    liste.push(noeud(index, operation, enfant ? [enfant] : undefined, true))
+    const n = noeud(index, operation, enfant ? [enfant] : undefined, true)
+    if (pointe !== null && index === pointe) n.estPointe = true
+    if (pointe !== null && index > pointe) marquerApres(n)
+    liste.push(n)
     esquisse = []
   })
 
   const ouverte = esquisseNoeud()
-  if (ouverte) liste.push(ouverte)
+  if (ouverte) {
+    if (pointe !== null) {
+      const dernierFonction = [...liste].reverse().find((n) => n.interrupteur)
+      if (dernierFonction && dernierFonction.index !== undefined && dernierFonction.index >= pointe) {
+        marquerApres(ouverte)
+      }
+    }
+    liste.push(ouverte)
+  }
   return liste
 }
 
 /** Arbre de construction : pièce, origine, fonctions. Les paramètres restent hors de l'arbre. */
-export function arbreConstruction(piece: string | null, historique: Operation[]): NoeudArbre[] {
+export function arbreConstruction(
+  piece: string | null,
+  historique: Operation[],
+  pointe: number | null = null,
+): NoeudArbre[] {
   if (!piece) return []
-  return [{ id: `piece-${piece}`, libelle: piece, enfants: fonctions(historique) }]
+  return [{ id: `piece-${piece}`, libelle: piece, enfants: fonctions(historique, pointe) }]
 }

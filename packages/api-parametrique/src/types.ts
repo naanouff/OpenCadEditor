@@ -101,6 +101,8 @@ export type Piece = {
   /** Demi-profil de la dernière révolution, rayon et hauteur. Le pas de vis s'y applique. */
   demiProfil: { r: number; y: number }[] | null
   compteur: number
+  /** Index historique de la dernière fonction rejouée ; `null` = fin. */
+  pointe: number | null
 }
 
 export type Contexte = {

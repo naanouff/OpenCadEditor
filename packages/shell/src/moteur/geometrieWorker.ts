@@ -30,7 +30,7 @@ function repondre(sequence: number, maille: Maillage) {
 }
 
 function maillageCourant(kernel: OcctKernelModule | null): Maillage {
-  if (kernel && historiqueCompatibleOcct(session.historique())) {
+  if (kernel && historiqueCompatibleOcct(session.historique(), session.pointeCourante())) {
     try {
       return maillagePipelineOcct(kernel, session)
     } catch (erreur) {
@@ -60,7 +60,14 @@ onmessage = (event: MessageEvent<Demande>) => {
       } catch {
         // Rien à annuler.
       }
-    } else session.activer(demande.index, demande.actif)
+    } else if (demande.sorte === 'activer') session.activer(demande.index, demande.actif)
+    else if (demande.sorte === 'pointe') {
+      try {
+        session.poserPointe(demande.cible)
+      } catch {
+        // L’interface a déjà signalé l’erreur.
+      }
+    }
     repondre(demande.sequence, maillageCourant(kernel))
   })()
 }

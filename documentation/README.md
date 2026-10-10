@@ -67,5 +67,7 @@ Suivi du projet et notes de travail. Ce dossier n’appartient pas au moteur : l
 | [sprints/sprint-25-pipeline-occt.md](sprints/sprint-25-pipeline-occt.md) | Sprint features génériques + vis sur le pipeline |
 | [veille/gcs-esquisse.md](veille/gcs-esquisse.md) | GCS v1 : contraintes, résolution, statut |
 | [sprints/sprint-26-gcs-esquisse.md](sprints/sprint-26-gcs-esquisse.md) | Sprint solveur d’esquisse (GCS) |
+| [veille/pointe-arbre.md](veille/pointe-arbre.md) | Pointe de reconstruction : préfixe d’historique |
+| [sprints/sprint-27-pointe-arbre.md](sprints/sprint-27-pointe-arbre.md) | Sprint arbre palier 2 : pointe annulable + UI |
 
 La veille précède chaque sprint. Le prototype (API, shell, carrure, vis) est dans `packages/`. OpenCadEditor est l’éditeur. CADOM (`.cadom`) est le format d’assemblage OpenCAD, pas un logiciel. L’intention est dans `.cadompart`. L’état consolidé est dans [suivi/analyse.md](suivi/analyse.md) ; le détail daté reste dans le journal.

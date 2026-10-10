@@ -1,6 +1,7 @@
 import {
   Session,
   evaluateurProvisoire,
+  rejouables,
   union,
   type EntiteEsquisse,
   type Esquisse,
@@ -13,34 +14,7 @@ import { polylinesDepuisEsquisse } from './esquissePolylines.ts'
 import { accrocherSolide, opsCouper, opsExtrude, opsRevolution } from './opsDepuisFonction.ts'
 import { maillageDepuisTessellate } from './maillageDepuisTessellate.ts'
 
-const SOUS_ESQUISSE = new Set(['cercle', 'rectangle', 'segment', 'arc', 'concentrique', 'cote', 'symetrie'])
-const CONSOMME = new Set(['extrude', 'enlever', 'revolution'])
-
 type EtatEsquisse = { support: string; entites: EntiteEsquisse[] }
-
-function rejouables(historique: Operation[]): Operation[] {
-  const sortie: Operation[] = []
-  let tampon: Operation[] = []
-  for (const operation of historique) {
-    if (operation.type === 'ouvrir') {
-      sortie.push(...tampon)
-      tampon = [operation]
-      continue
-    }
-    if (SOUS_ESQUISSE.has(operation.type)) {
-      tampon.push(operation)
-      continue
-    }
-    if (CONSOMME.has(operation.type)) {
-      if (operation.actif !== false) sortie.push(...tampon, operation)
-      tampon = []
-      continue
-    }
-    if (operation.actif !== false) sortie.push(operation)
-  }
-  sortie.push(...tampon)
-  return sortie
-}
 
 function appliquerCote(entite: EntiteEsquisse, cible: string, expression: string) {
   if (cible === 'diametre') entite.diametre = expression
@@ -99,20 +73,21 @@ type Compilation = {
   entitesPas: EntiteEsquisse[] | null
 }
 
-function compiler(historique: Operation[]): Compilation {
+function compiler(historique: Operation[], pointe: number | null = null): Compilation {
   const parametres = new Map<string, string>()
   let esquisse: EtatEsquisse | null = null
   let solidAs: string | null = null
   const ops: KernelBatchOp[] = []
   let uid = 0
   let yMax = 0
-  const pas = rejouables(historique).some((op) => op.type === 'pas')
+  const opsRejouees = rejouables(historique, pointe)
+  const pas = opsRejouees.some((op) => op.type === 'pas')
   let entitesPas: EntiteEsquisse[] | null = null
   let revolutions = 0
 
   const evaluer = (expression: string) => evaluateurProvisoire.evaluer(expression, parametres)
 
-  for (const operation of rejouables(historique)) {
+  for (const operation of opsRejouees) {
     if (operation.type === 'param') {
       parametres.set(operation.arguments.nom, operation.arguments.expression)
       continue
@@ -208,7 +183,7 @@ function compiler(historique: Operation[]): Compilation {
  * `pas` : OCCT ne porte que tête + Pozi ; le filet hôte fournit le fût (pas d'hélice kernel v1).
  */
 export function maillagePipelineOcct(occt: OcctKernelModule, session: Session): MaillageOmbre {
-  const compilation = compiler(session.historique())
+  const compilation = compiler(session.historique(), session.pointeCourante())
   const occtPart = tesselle(occt, compilation.ops, compilation.solidAs)
   if (!compilation.pas) {
     if (!occtPart.normales) throw new Error('maillage sans normales')
@@ -232,9 +207,9 @@ export function maillagePipelineOcct(occt: OcctKernelModule, session: Session): 
 }
 
 /** True si l'historique se compile en ops OCCT (sinon le worker garde Session / noyauProvisoire). */
-export function historiqueCompatibleOcct(historique: Operation[]): boolean {
+export function historiqueCompatibleOcct(historique: Operation[], pointe: number | null = null): boolean {
   try {
-    compiler(historique)
+    compiler(historique, pointe)
     return true
   } catch {
     return false
