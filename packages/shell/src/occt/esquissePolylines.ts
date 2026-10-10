@@ -1,5 +1,7 @@
 import {
+  datumParId,
   evaluateurProvisoire,
+  gcsVersMonde,
   solveurGcs,
   type EntiteEsquisse,
   type Esquisse,
@@ -9,7 +11,7 @@ import {
 export type Polyline3 = number[]
 
 export type OptionsPolylines = {
-  /** Hauteur Y du plan pour `plan.dessus` (défaut 0). */
+  /** Altitude le long de la normale du datum (défaut 0). */
   yPlan?: number
   segmentsCercle?: number
 }
@@ -26,11 +28,24 @@ function fermer(xyz: number[]): Polyline3 {
   return xyz
 }
 
-function cercleXz(rayon: number, y: number, segments: number): Polyline3 {
+function cercleSurDatum(
+  rayon: number,
+  altitude: number,
+  segments: number,
+  support: string,
+): Polyline3 {
+  const datum = datumParId(support)
   const xyz: number[] = []
   for (let i = 0; i < segments; i++) {
     const a = (i / segments) * Math.PI * 2
-    xyz.push(Math.cos(a) * rayon, y, Math.sin(a) * rayon)
+    const u = Math.cos(a) * rayon
+    const v = Math.sin(a) * rayon
+    if (datum) {
+      xyz.push(...gcsVersMonde(datum, u, v, altitude))
+    } else {
+      // face.* : plan XZ à altitude Y (même convention que l’ancien cercleXz)
+      xyz.push(u, altitude, v)
+    }
   }
   return fermer(xyz)
 }
@@ -46,12 +61,10 @@ function profilRevolution(entites: EntiteEsquisse[], evaluer: (e: string) => num
   return fermer(xyz)
 }
 
-const SUPPORTS_XZ = new Set(['plan.dessus', 'plan.3h', 'face.dessus', 'face.dessous'])
-
 /**
- * Résout l'esquisse (GCS) puis émet des polylignes 3D.
- * - `plan.dessus` / `plan.3h` / `face.*` : coins résolus → XZ (y via `yPlan`)
+ * Résout l'esquisse (GCS) puis émet des polylignes 3D via les datums d’origine.
  * - `plan.12h` : profil révolution (rayon, hauteur) → XY
+ * - datums / `face.*` : points GCS → monde
  */
 export function polylinesDepuisEsquisse(
   esquisse: Esquisse,
@@ -68,7 +81,9 @@ export function polylinesDepuisEsquisse(
     if (segments.length >= 2) return [profilRevolution(entites, evaluer)]
   }
 
-  if (SUPPORTS_XZ.has(support)) {
+  const datum = datumParId(support)
+  const faceTopo = support === 'face.dessus' || support === 'face.dessous'
+  if (datum || faceTopo) {
     const resolue = solveurGcs.resoudre(esquisse, parametres)
     if (resolue.statut === 'surcontraint') throw new Error('esquisse surcontrainte')
     if (resolue.statut === 'sous-contraint' || resolue.degres > 0) {
@@ -80,13 +95,12 @@ export function polylinesDepuisEsquisse(
 
     for (const poly of resolue.polylines) {
       if (poly.points.length === 1) {
-        // Cercle : un point bord + rayon depuis le centre
         const bord = pts.get(poly.points[0]!)
         const centreId = poly.points[0]!.replace(/\.p$/, '.o')
         const centre = pts.get(centreId)
         if (bord && centre) {
           const r = Math.hypot(bord.u - centre.u, bord.v - centre.v)
-          sortie.push(cercleXz(r, yPlan, segmentsCercle))
+          sortie.push(cercleSurDatum(r, yPlan, segmentsCercle, support))
         }
         continue
       }
@@ -94,7 +108,8 @@ export function polylinesDepuisEsquisse(
       for (const id of poly.points) {
         const p = pts.get(id)
         if (!p) throw new Error(`point inconnu ${id}`)
-        xyz.push(p.u, yPlan, p.v)
+        if (datum) xyz.push(...gcsVersMonde(datum, p.u, p.v, yPlan))
+        else xyz.push(p.u, yPlan, p.v)
       }
       sortie.push(fermer(xyz))
     }

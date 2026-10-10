@@ -1,4 +1,4 @@
-import { congesDe, contourPan, geometriePlan, pansDeCorne } from '@opencad/api-parametrique'
+import { congesDe, contourPan, datumParId, geometriePlan, pansDeCorne } from '@opencad/api-parametrique'
 import type { Frontiere, Maillage } from '@opencad/api-parametrique'
 
 const PAS = 48
@@ -10,11 +10,12 @@ export function pasGrille(etendueMm: number) {
   return 10
 }
 
-/** Repère du plan d'esquisse. Y est la verticale. */
+/** Repère du plan d'esquisse (datums d’origine ou face.*) . Y est la verticale. */
 export function repere(support: string) {
-  if (support === 'plan.3h') return { normale: [1, 0, 0], axeU: [0, 1, 0], axeV: [0, 0, 1] }
-  if (support === 'plan.12h') return { normale: [0, 0, 1], axeU: [1, 0, 0], axeV: [0, 1, 0] }
+  const datum = datumParId(support)
+  if (datum) return { normale: [...datum.normale], axeU: [...datum.axeU], axeV: [...datum.axeV] }
   if (support === 'face.dessous') return { normale: [0, -1, 0], axeU: [1, 0, 0], axeV: [0, 0, -1] }
+  // face.dessus et repli : même orientation que plan.dessus
   return { normale: [0, 1, 0], axeU: [1, 0, 0], axeV: [0, 0, -1] }
 }
 

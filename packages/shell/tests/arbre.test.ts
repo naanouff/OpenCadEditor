@@ -72,6 +72,25 @@ cercle
     expect(enfants[1]!.enfants!.map((n) => n.libelle)).toEqual(['Cercle'])
   })
 
+  it('compte un second extrude latéral comme seconde fonction', () => {
+    const session = new Session()
+    session.executer(`
+piece piece
+param d 10
+esquisse plan.dessus
+cercle
+cote diametre d
+extrude 4
+esquisse plan.3h
+cercle
+cote diametre 2
+extrude 3
+`)
+    const enfants = arbreConstruction(session.pieceCourante(), session.historique())[0]!.enfants!
+    expect(enfants.map((n) => n.libelle)).toEqual(['Origine', 'Extrusion 4', 'Extrusion 3'])
+    expect(enfants[2]!.enfants!.map((n) => n.libelle)).toEqual(['Esquisse plan.3h'])
+  })
+
   it('libellé d’enlèvement travers', () => {
     expect(
       libelleOperation({

@@ -46,10 +46,10 @@ La commande `pointe` prend un rang, ou la fin. Annuler restaure la pointe préc�
 
 Chaque `extrude` / `enlever` / `revolution` consomme **son** esquisse résolue (GCS → wires) dans le replay OCCT (`pipelineOcct` + pointe). Deux cercles concentriques → anneau ; une poche sur `face.*` → cut ; un contour de corne → extrude + fuse. Un second tube est une seconde fonction sur le même pipeline.
 
-Prérequis : [topo-faces.md](topo-faces.md), [gcs-enrichi.md](gcs-enrichi.md), [carrure-pipeline.md](carrure-pipeline.md). Finalisation / isolement du chemin motif : [sprint 31](../sprints/sprint-31-datums-origine.md).
+**Fait** avec [topo-faces.md](topo-faces.md), [gcs-enrichi.md](gcs-enrichi.md), [carrure-pipeline.md](carrure-pipeline.md) et [sprint 31](../sprints/sprint-31-datums-origine.md) : historiques OCCT sans nouveaux `Ajout` ; composition multi-extrude.
 
 ## Palier 4 — Plans d’origine
 
-Les trois plans `plan.dessus`, `plan.12h`, `plan.3h` deviennent les **datums** de l’origine, dérivés de `Session.document().repere` ([modele-document.md](modele-document.md)). Une seule table alimente la validation d’esquisse, `esquissePolylines`, `dessin.repere` et les nœuds Origine de l’arbre. Une face de solide reste un support valide (registre topo).
+**Fait** ([datums-origine.md](datums-origine.md), [sprint 31](../sprints/sprint-31-datums-origine.md)).
 
-Plan : [datums-origine.md](datums-origine.md), [sprint 31](../sprints/sprint-31-datums-origine.md).
+Les trois plans `plan.dessus`, `plan.12h`, `plan.3h` sont les **datums** de l’origine, dérivés de `Session.document().repere`. Une seule table (`datumsOrigine`) alimente la validation d’esquisse, `esquissePolylines`, `dessin.repere` et les nœuds Origine. Une face de solide reste un support valide (registre topo).

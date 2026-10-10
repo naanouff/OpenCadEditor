@@ -21,3 +21,7 @@ Hors sprint : réordonnancement, suppression, esquisse partagée FreeCAD.
 
 - [datums-origine.md](../veille/datums-origine.md) et [arbre-fonctions.md](../veille/arbre-fonctions.md) disent les paliers 3–4 branchés.
 - [direction-modeleur.md](../veille/direction-modeleur.md) items 3–6 et feuille de route topo→carrure à jour.
+
+## État
+
+Codé sur `feature/datums-origine` : table unique, mapping UV/GCS testé, composition 2ᵉ extrude = 2ᵉ fonction.

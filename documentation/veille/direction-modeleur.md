@@ -57,13 +57,11 @@ Sans GCS + features génériques → OCCT, le dépôt reste un **générateur pa
 
 1. Esquisse résolue (polylines évaluées) + `extrude` / `revolution` / `enlever` → `runBatch` OCCT — [sprint 25](../sprints/sprint-25-pipeline-occt.md) (**fait**).
 2. Remplacer `construireVis` spécial par ce pipeline (**fait**).
-3. Solveur d’esquisse 2D (GCS) — [sprint 26](../sprints/sprint-26-gcs-esquisse.md) / [gcs-esquisse.md](gcs-esquisse.md) (**amorcé**) ; enrichissement anneau/cornes — [gcs-enrichi.md](gcs-enrichi.md) / [sprint 29](../sprints/sprint-29-gcs-enrichi.md) (**en cours**).
+3. Solveur d’esquisse 2D (GCS) — [sprint 26](../sprints/sprint-26-gcs-esquisse.md) / [gcs-esquisse.md](gcs-esquisse.md) ; enrichissement — [gcs-enrichi.md](gcs-enrichi.md) / [sprint 29](../sprints/sprint-29-gcs-enrichi.md) (**fait**).
 4. Pointe de reconstruction (arbre palier 2) — [pointe-arbre.md](pointe-arbre.md) / [sprint 27](../sprints/sprint-27-pointe-arbre.md) (**fait**).
 5. Références topologiques (faces) — [topo-faces.md](topo-faces.md) / [sprint 28](../sprints/sprint-28-topo-faces.md) (**fait**).
-6. Carrure via pipeline générique — [carrure-pipeline.md](carrure-pipeline.md) / [sprint 30](../sprints/sprint-30-carrure-pipeline.md) (**en cours**).
-7. Datums d’origine + palier arbre 3 — [datums-origine.md](datums-origine.md) / [sprint 31](../sprints/sprint-31-datums-origine.md) (**préparé**).
-
-Ordre d’exécution des sprints : **28 → 29 → 30 → 31**.
+6. Carrure via pipeline générique — [carrure-pipeline.md](carrure-pipeline.md) / [sprint 30](../sprints/sprint-30-carrure-pipeline.md) (**fait**).
+7. Datums d’origine + palier arbre 3 — [datums-origine.md](datums-origine.md) / [sprint 31](../sprints/sprint-31-datums-origine.md) (**en cours**).
 
 ## Arrêt d’investissement
 

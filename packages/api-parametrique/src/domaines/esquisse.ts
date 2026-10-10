@@ -1,6 +1,5 @@
+import { estDatumOrigine } from '../datums.ts'
 import { ErreurApi, type Domaine, type EntiteEsquisse } from '../types.ts'
-
-const PLANS = new Set(['plan.dessus', 'plan.12h', 'plan.3h'])
 
 function rouvrirSiBesoin(contexte: {
   esquisse: { support: string; entites: EntiteEsquisse[] } | null
@@ -41,7 +40,7 @@ export const domaineEsquisse: Domaine = {
       dansHistorique: true,
       faire(contexte, operation) {
         const support = operation.arguments.support
-        if (!PLANS.has(support) && !contexte.noyau.aFace(contexte.solide, support)) {
+        if (!estDatumOrigine(support) && !contexte.noyau.aFace(contexte.solide, support)) {
           throw new ErreurApi(`${support} absente`)
         }
         contexte.esquisse = { support, entites: [] }

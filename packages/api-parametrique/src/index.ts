@@ -6,6 +6,14 @@ export {
   rejouables,
 } from './session.ts'
 export { ErreurApi, REPERE_REFERENCE } from './types.ts'
+export {
+  datumsOrigine,
+  datumParId,
+  estDatumOrigine,
+  gcsVersMonde,
+  uvVersMonde,
+} from './datums.ts'
+export type { DatumPlan } from './datums.ts'
 export { evaluateurProvisoire } from './evaluateur.ts'
 export { solveurGcs, solveurProvisoire } from './solveur.ts'
 export type { Contrainte, EsquisseResolue, PointResolu } from './solveur.ts'
