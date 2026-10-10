@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { Session } from '@opencad/api-parametrique'
+import { ecrire, lire } from '@opencad/format-opencad'
 import { chargerKernel } from '../src/occt/chargerKernel.ts'
 import { maillagePipelineOcct } from '../src/occt/pipelineOcct.ts'
 import { SCRIPT_VIS } from '../src/scriptVis.ts'
@@ -49,6 +50,20 @@ extrude 8
       if (y > 14 && y < 24 && Math.abs(r - 3) < 0.15) crete = true
     }
     expect(crete).toBe(true)
+  }, 180_000)
+
+  it('rouvre le .cadompart de la vis avec le même maillage OCCT', async () => {
+    const occt = await chargerKernel()
+    const depart = new Session({ geometrie: false })
+    depart.executer(SCRIPT_VIS)
+    const lecture = lire(ecrire(depart))
+    const relu = new Session({ geometrie: false })
+    relu.executer(lecture.script)
+    for (const index of lecture.eteins) relu.activer(index, false)
+    const avant = maillagePipelineOcct(occt, depart)
+    const apres = maillagePipelineOcct(occt, relu)
+    expect(apres.indices.length).toBe(avant.indices.length)
+    expect(apres.positions.length).toBe(avant.positions.length)
   }, 180_000)
 
   it('pointe avant pas : pas de filet dans le maillage OCCT', async () => {

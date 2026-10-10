@@ -4,6 +4,7 @@ export type Demande =
   | { sorte: 'annuler'; sequence: number }
   | { sorte: 'activer'; index: number; actif: boolean; sequence: number }
   | { sorte: 'pointe'; cible: number | 'fin'; sequence: number }
+  | { sorte: 'ouvrir'; script: string; eteins: number[]; sequence: number }
 
 export type Reponse = {
   sequence: number

@@ -36,6 +36,7 @@ Prototype paramétrique (sprints 03–23) : langage texte, `noyauProvisoire` Typ
 ```text
 documentation/              suivi, veille et sprints
 packages/api-parametrique/  session, domaines, CSG provisoire
+packages/format-opencad/   lecture et écriture `.cadompart`
 packages/shell/             hôte React, Dockview, viewport (`pnpm dev`)
 vendor/w3dts/               moteur WebGPU (sous-module)
 vendor/occt-wasm/           sources occt-wasm @ v0.2.0 (sous-module)

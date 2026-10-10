@@ -44,6 +44,6 @@ Sous-module `vendor/occt-wasm` @ tag `v0.2.0`, même pattern que `vendor/w3dts`.
 
 ## Hors de cette décision
 
-- Import PMI (`occt-step`), lecture/écriture fichiers OpenCAD sur disque.
+- Import PMI (`occt-step`). Lecture et écriture `.cadompart` : [fichier-cadompart.md](fichier-cadompart.md), sprint 32. `.cadom`, `.cadomesh` et `.cadombrep` restent après.
 - Solveur d’esquisse GCS (sprint 26).
 - Remplacement total du filet hélicoïdal dans OCCT.

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { Session } from '@opencad/api-parametrique'
+import { ecrire, lire } from '@opencad/format-opencad'
 import { chargerKernel } from '../src/occt/chargerKernel.ts'
 import {
   historiqueCompatibleOcct,
@@ -134,5 +135,21 @@ describe('carrure pipeline OCCT', () => {
     const maille = maillagePipelineOcct(occt, session)
     expect(maille.indices.length).toBeGreaterThan(100)
     expect(rayonMax(maille)).toBeGreaterThan(18)
+  }, 180_000)
+
+  it('rouvre le .cadompart de la carrure avec le même maillage OCCT', async () => {
+    const occt = await chargerKernel()
+    const depart = new Session({ geometrie: false })
+    depart.executer(SCRIPT_CARRURE)
+    const lecture = lire(ecrire(depart))
+    const relu = new Session({ geometrie: false })
+    relu.executer(lecture.script)
+    for (const index of lecture.eteins) relu.activer(index, false)
+    const avant = maillagePipelineOcct(occt, depart)
+    const apres = maillagePipelineOcct(occt, relu)
+    expect(apres.indices.length).toBe(avant.indices.length)
+    expect(apres.positions.length).toBe(avant.positions.length)
+    const somme = (valeurs: number[]) => valeurs.reduce((total, valeur) => total + valeur, 0)
+    expect(somme(apres.positions)).toBeCloseTo(somme(avant.positions), 4)
   }, 180_000)
 })

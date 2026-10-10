@@ -6,6 +6,7 @@ export type Moteur = {
   annuler(sequence: number): void
   activer(index: number, actif: boolean, sequence: number): void
   pointe(cible: number | 'fin', sequence: number): void
+  ouvrir(script: string, eteins: number[], sequence: number): void
 }
 
 /** Une réponse n’est appliquée que si son numéro est encore celui de la demande en cours. */
@@ -15,7 +16,7 @@ export function reponseUtile(sequence: number, attendue: number) {
 
 /** Session complète sur le fil appelant. Les tests Node passent par là. */
 export function moteurSynchrone(recevoir: (maillage: Maillage, sequence: number) => void): Moteur {
-  const session = new Session()
+  let session = new Session()
   const pousser = (sequence: number) => recevoir(session.maillage(), sequence)
   return {
     executer(script, sequence) {
@@ -44,6 +45,12 @@ export function moteurSynchrone(recevoir: (maillage: Maillage, sequence: number)
     },
     pointe(cible, sequence) {
       session.poserPointe(cible)
+      pousser(sequence)
+    },
+    ouvrir(script, eteins, sequence) {
+      session = new Session()
+      session.executer(script)
+      for (const index of eteins) session.activer(index, false)
       pousser(sequence)
     },
   }

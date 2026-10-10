@@ -56,6 +56,10 @@ export default defineConfig({
         replacement: path.resolve(ici, '../api-parametrique/src/index.ts'),
       },
       {
+        find: '@opencad/format-opencad',
+        replacement: path.resolve(ici, '../format-opencad/src/index.ts'),
+      },
+      {
         find: '@naanouff/occt-wasm/kernel/batch',
         replacement: path.resolve(occtWasm, 'js/kernel-batch.mjs'),
       },
@@ -100,7 +104,12 @@ export default defineConfig({
     dedupe: ['react', 'react-dom'],
   },
   optimizeDeps: {
-    exclude: ['@opencad/api-parametrique', '@naanouff/w3dts-editor-ui', '@naanouff/occt-wasm/kernel'],
+    exclude: [
+      '@opencad/api-parametrique',
+      '@opencad/format-opencad',
+      '@naanouff/w3dts-editor-ui',
+      '@naanouff/occt-wasm/kernel',
+    ],
   },
   assetsInclude: ['**/*.wasm'],
   server: {

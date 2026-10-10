@@ -1,0 +1,21 @@
+{
+  "name": "@opencad/format-opencad",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "proto": "pbjs -t static-module -w es6 -o src/gen/cadompart.js proto/cadompart.proto && pbts -o src/gen/cadompart.d.ts src/gen/cadompart.js"
+  },
+  "dependencies": {
+    "@opencad/api-parametrique": "file:../api-parametrique",
+    "protobufjs": "^7.5.4"
+  },
+  "devDependencies": {
+    "protobufjs-cli": "^1.1.3",
+    "typescript": "^5.6.3",
+    "vitest": "^2.1.8"
+  }
+}

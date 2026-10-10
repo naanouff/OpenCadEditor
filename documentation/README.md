@@ -77,5 +77,9 @@ Suivi du projet et notes de travail. Ce dossier n’appartient pas au moteur : l
 | [sprints/sprint-30-carrure-pipeline.md](sprints/sprint-30-carrure-pipeline.md) | Sprint anneau + cuts + cornes OCCT |
 | [veille/datums-origine.md](veille/datums-origine.md) | Plans d’origine = datums document |
 | [sprints/sprint-31-datums-origine.md](sprints/sprint-31-datums-origine.md) | Sprint paliers arbre 3–4 |
+| [veille/fichier-cadompart.md](veille/fichier-cadompart.md) | Lecture et écriture `.cadompart` |
+| [sprints/sprint-32-fichier-cadompart.md](sprints/sprint-32-fichier-cadompart.md) | Sprint du codec protobuf et du panneau Document |
+| [veille/pas-cadompart.md](veille/pas-cadompart.md) | Filet `pas` : marqueur `helix` nommé `pas` |
+| [sprints/sprint-33-pas-cadompart.md](sprints/sprint-33-pas-cadompart.md) | Sprint de ce marqueur, vis rouverte |
 
 La veille précède chaque sprint. Le prototype (API, shell, carrure, vis) est dans `packages/`. OpenCadEditor est l’éditeur. CADOM (`.cadom`) est le format d’assemblage OpenCAD, pas un logiciel. L’intention est dans `.cadompart`. L’état consolidé est dans [suivi/analyse.md](suivi/analyse.md) ; le détail daté reste dans le journal.

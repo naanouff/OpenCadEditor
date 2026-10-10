@@ -406,3 +406,27 @@ Branche depuis `feature/gcs-enrichi`. Anneau OCCT = extrude Øext + cut Øint ; 
 
 Carrure (28–30) sur `develop`. Branche `feature/datums-origine` : table `datumsOrigine(repere)` partagée par validation d’esquisse, polylines (`gcsVersMonde`), `dessin.repere` et nœuds Origine. Composition : second extrude = seconde fonction.
 
+## 2026-10-10 — Fichier `.cadompart` consigné, sprint 32 prêt
+
+[fichier-cadompart.md](../veille/fichier-cadompart.md) et [sprint-32-fichier-cadompart.md](../sprints/sprint-32-fichier-cadompart.md). Le fichier de travail est l’intention : protobuf `CadompartFile` v0.2, unité millimètres, historique relu par `Session.executer`. Paquet prévu `packages/format-opencad` ; l’API reste sans dépendance. Expressions, auteur, pointe et `pas` ne font pas l’aller-retour. `.cadom`, `.cadomesh` et `.cadombrep` restent après. Pas encore de code ; branche prévue `feature/fichier-cadompart`.
+
+## 2026-10-10 — Sprint 32 commencé : feature/fichier-cadompart
+
+Branche depuis `develop`. Proto OpenCAD `73473f6` copié, module statique, codec dans `packages/format-opencad`. Aller-retour paramètre évalué, cercle, rectangle (quatre lignes), enlèvement, révolution, feature éteinte, mètres → millimètres. `pas`, feature inconnue, id dupliqué et corps vide sont refusés. Le panneau Document ouvre et enregistre ; le sélecteur est injecté. `concentrique`, `arc` et `symetrie` sont enregistrés. `pas` reste refusé. La carrure enregistrée puis rouverte reconstruit le même maillage, noyau provisoire et pipeline OCCT.
+
+## 2026-10-10 — Carrure : aller-retour du fichier
+
+Le script de carrure s’écrit et se relit. Le maillage relu est identique. Une esquisse rouverte sans commande `esquisse` (trou du tube) redevient une esquisse à la lecture. La `symetrie` posée après l’enlèvement de la barrette, esquisse déjà consommée, n’est pas réécrite.
+
+## 2026-10-10 — Variables du `.cadompart`
+
+Un paramètre, une cote et une extrusion gardent leur expression (`20*2`, `diametre_boite - 2 * epaisseur_paroi`, `hauteur_carrure`). La valeur évaluée reste dans le fichier. Un fichier en mètres ignore ce texte et convertit le nombre. Un profil de révolution et plusieurs rectangles gardent aussi leurs formules.
+
+## 2026-10-10 — Filet `pas` consigné, sprint 33 prêt
+
+[pas-cadompart.md](../veille/pas-cadompart.md) et [sprint-33-pas-cadompart.md](../sprints/sprint-33-pas-cadompart.md). `pas` s’écrit en feature `helix` dont `name` vaut `pas` : `pitch` évalué, esquisse de la révolution précédente, axe Y. La lecture réémet la commande ; le filet se recalcule. La spec OpenCAD et le proto restent v0.2 (`Feature.name` suffit, pas de v0.3). Une hélice d’un autre nom reste refusée. Pas encore de code ; branche prévue `feature/pas-cadompart` depuis `feature/fichier-cadompart`.
+
+## 2026-10-10 — Sprint 33 commencé : feature/pas-cadompart
+
+Branche depuis `feature/fichier-cadompart`. `pas` est une feature `helix` nommée `pas`. La lecture réémet la commande. La vis rouverte a le même maillage OCCT. Une hélice d’un autre nom est refusée. Le proto reste v0.2.
+

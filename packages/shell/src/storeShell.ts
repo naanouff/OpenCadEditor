@@ -1,4 +1,6 @@
 import type { MaillageOmbre } from '@opencad/api-parametrique'
+import { ecrire, lire } from '@opencad/format-opencad'
+import { selecteurCourant } from './fichierShell.ts'
 import { Hote } from './hote.ts'
 import { reponseUtile } from './moteur/moteur.ts'
 import { moteurWorker } from './moteur/moteurWorker.ts'
@@ -90,6 +92,31 @@ export const storeShell = {
     envoyer((sequence) => moteur?.pointe(cible, sequence))
     revision += 1
     prevenir()
+  },
+  enregistrer() {
+    return ecrire(hote.session)
+  },
+  ouvrir(octets: Uint8Array) {
+    const lecture = lire(octets)
+    const suivant = new Hote(navigateur ? { geometrie: false } : undefined)
+    suivant.executer(lecture.script)
+    for (const index of lecture.eteins) suivant.session.activer(index, false)
+    vueEsquisse = null
+    maillageAffiche = null
+    hote = suivant
+    envoyer((sequence) => moteur?.ouvrir(lecture.script, lecture.eteins, sequence))
+    revision += 1
+    prevenir()
+  },
+  async demanderOuverture() {
+    const octets = await selecteurCourant().ouvrir()
+    if (!octets) return
+    this.ouvrir(octets)
+  },
+  async demanderEnregistrement() {
+    const octets = ecrire(hote.session)
+    const nom = `${hote.session.pieceCourante() ?? 'piece'}.cadompart`
+    await selecteurCourant().enregistrer(octets, nom)
   },
   esquisseVue: () => vueEsquisse,
   voirEsquisse(index: number | null) {
