@@ -1,6 +1,6 @@
 import { Session, type Maillage } from '@opencad/api-parametrique'
 import { chargerKernel, type OcctKernelModule } from '../occt/chargerKernel.ts'
-import { maillageVisHybride } from '../occt/construireVis.ts'
+import { historiqueCompatibleOcct, maillagePipelineOcct } from '../occt/pipelineOcct.ts'
 import type { Demande, Reponse } from './protocole.ts'
 
 const session = new Session()
@@ -30,14 +30,11 @@ function repondre(sequence: number, maille: Maillage) {
 }
 
 function maillageCourant(kernel: OcctKernelModule | null): Maillage {
-  if (kernel && session.pieceCourante() === 'vis') {
-    const actuel = session.maillage()
-    if (actuel.indices.length > 0) {
-      try {
-        return maillageVisHybride(kernel)
-      } catch (erreur) {
-        console.error(erreur instanceof Error ? erreur.message : String(erreur))
-      }
+  if (kernel && historiqueCompatibleOcct(session.historique())) {
+    try {
+      return maillagePipelineOcct(kernel, session)
+    } catch (erreur) {
+      console.error(erreur instanceof Error ? erreur.message : String(erreur))
     }
   }
   return session.maillage()
