@@ -1,7 +1,9 @@
 import { useState, type ReactElement } from 'react'
 import { Panel } from '@naanouff/w3dts-editor-ui'
 import { encode } from '@opencad/cadom'
+import { octetsCadomeshBoite } from './assemblageCadomesh.ts'
 import { assemblageBoiteComplete } from './assemblageBoite.ts'
+import { selecteurNavigateur } from './fichierShell.ts'
 import { SCRIPT_BOITE } from './scriptBoite.ts'
 import { SCRIPT_CARRURE } from './scriptCarrure.ts'
 import { SCRIPT_COURONNE } from './scriptCouronne.ts'
@@ -39,6 +41,22 @@ export function DebugVue(): ReactElement {
     } catch (erreur) {
       setMessage(erreur instanceof Error ? erreur.message : String(erreur))
     }
+  }
+
+  const exporterCadomesh = () => {
+    void (async () => {
+      try {
+        setMessage('Export .cadomesh…')
+        const map = await octetsCadomeshBoite()
+        for (const [uri, octets] of map) {
+          const nom = uri.replace(/^\.\//, '')
+          await selecteurNavigateur.enregistrer(octets, nom)
+        }
+        setMessage(`${map.size} fichiers .cadomesh exportés`)
+      } catch (erreur) {
+        setMessage(erreur instanceof Error ? erreur.message : String(erreur))
+      }
+    })()
   }
 
   return (
@@ -100,6 +118,13 @@ export function DebugVue(): ReactElement {
             onClick={chargerAssemblage}
           >
             Load boîte Complete
+          </button>
+          <button
+            type="button"
+            className="rounded border border-[var(--color-border-default)] bg-[var(--color-surface-input)] px-3 py-1.5 text-left text-[var(--color-text-primary)] hover:bg-[var(--color-surface-hover)]"
+            onClick={exporterCadomesh}
+          >
+            Export .cadomesh
           </button>
           {message ? (
             <p className="m-0 font-mono text-[11px] text-[var(--color-text-secondary)]">{message}</p>

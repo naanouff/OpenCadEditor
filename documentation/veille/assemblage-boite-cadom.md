@@ -1,6 +1,6 @@
 # Assemblage boîte `.cadom`
 
-Sprints : [52](../sprints/sprint-52-assemblage-boite-cadom.md) (Design), [53](../sprints/sprint-53-assemblage-complete.md) (Complete bindings). Pièces : 48–51. SDK : `@opencad/cadom`.
+Sprints : [52](../sprints/sprint-52-assemblage-boite-cadom.md) (Design), [53](../sprints/sprint-53-assemblage-complete.md) (Complete bindings), [54](../sprints/sprint-54-assemblage-cadomesh.md) (octets mesh). Pièces : 48–51. SDK : `@opencad/cadom` + `@opencad/kernel/cadomesh`.
 
 ## But
 
@@ -11,7 +11,7 @@ Un document `.cadom` unit les cinq pièces sous « Boîte Milgauss ».
 | Design | `assemblageBoiteMilgauss()` | `parametric` → `.cadompart` |
 | Complete | `assemblageBoiteComplete()` | + `mesh` → `.cadomesh` |
 
-Transforms locaux indicatifs (mm) — pas de mates. Les URI `.cadomesh` sont déclarées ; les octets mesh ne sont pas encore écrits (rebuild viewport = `SCRIPT_*` + OCCT).
+Transforms locaux indicatifs (mm) — pas de mates. Les octets `.cadomesh` sont produits via `octetsCadomeshBoite()` (rebuild OCCT + `ecrireCadomesh`). Le viewport Complete utilise encore le rebuild scripts.
 
 ```mermaid
 flowchart TB
@@ -29,4 +29,4 @@ flowchart TB
 
 ## Hors périmètre
 
-Écriture fichiers `.cadomesh` / zip, lecture assets externes, mates, Exact.
+Zip multi-fichiers, affichage viewport depuis mesh seul, mates, Exact.
