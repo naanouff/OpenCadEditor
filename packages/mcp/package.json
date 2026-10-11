@@ -1,0 +1,21 @@
+{
+  "name": "@opencad/mcp",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "vitest run",
+    "start": "tsx src/index.ts"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.17.4",
+    "@opencad/api-parametrique": "file:../api-parametrique",
+    "ws": "^8.18.3",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@types/ws": "^8.18.1",
+    "tsx": "^4.20.5",
+    "typescript": "^5.6.3",
+    "vitest": "^2.1.8"
+  }
+}

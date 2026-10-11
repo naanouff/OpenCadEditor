@@ -43,6 +43,14 @@ export class Hote {
     for (const panneau of this.panneaux) panneau.annuler?.(this)
   }
 
+  refaire() {
+    for (const panneau of this.panneaux) panneau.refaire?.(this)
+  }
+
+  viderJournal() {
+    for (const panneau of this.panneaux) panneau.vider?.()
+  }
+
   get journal(): EntreeJournal[] {
     return this.panneaux.flatMap((panneau) => panneau.journal ?? [])
   }

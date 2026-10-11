@@ -1,0 +1,11 @@
+﻿{
+  "mcpServers": {
+    "opencad": {
+      "command": "node",
+      "args": [
+        "packages/mcp/node_modules/tsx/dist/cli.mjs",
+        "packages/mcp/src/index.ts"
+      ]
+    }
+  }
+}

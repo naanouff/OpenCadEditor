@@ -7,7 +7,18 @@ import { moteurWorker } from './moteur/moteurWorker.ts'
 
 type Ecouteur = () => void
 
+export type MutationPont =
+  | { type: 'ligne'; texte: string }
+  | { type: 'executer'; script: string }
+  | { type: 'annuler'; journal: true }
+  | { type: 'refaire'; journal: true }
+  | { type: 'activer'; index: number; actif: boolean }
+  | { type: 'pointe'; cible: number | 'fin' }
+  | { type: 'remplacer'; script: string }
+
 const ecouteurs = new Set<Ecouteur>()
+let auditeurPont: ((mutation: MutationPont) => void) | null = null
+let silencePont = false
 
 const navigateur = typeof window !== 'undefined'
 let hote = new Hote(navigateur ? { geometrie: false } : undefined)
@@ -43,6 +54,11 @@ function prevenir() {
   for (const ecouteur of ecouteurs) ecouteur()
 }
 
+function publier(mutation: MutationPont) {
+  if (silencePont) return
+  auditeurPont?.(mutation)
+}
+
 export const storeShell = {
   hote: () => hote,
   revision: () => revision,
@@ -55,12 +71,24 @@ export const storeShell = {
       ecouteurs.delete(ecouteur)
     }
   },
+  brancherPont(auditeur: ((mutation: MutationPont) => void) | null) {
+    auditeurPont = auditeur
+  },
+  recevoir(faire: () => void) {
+    silencePont = true
+    try {
+      faire()
+    } finally {
+      silencePont = false
+    }
+  },
   ligne(texte: string) {
     vueEsquisse = null
     hote.ligne(texte)
     if (texte.trim()) envoyer((sequence) => moteur?.ligne(texte, sequence))
     revision += 1
     prevenir()
+    if (texte.trim()) publier({ type: 'ligne', texte })
   },
   executer(script: string) {
     vueEsquisse = null
@@ -68,6 +96,7 @@ export const storeShell = {
     envoyer((sequence) => moteur?.executer(script, sequence))
     revision += 1
     prevenir()
+    publier({ type: 'executer', script })
   },
   annuler() {
     vueEsquisse = null
@@ -75,6 +104,48 @@ export const storeShell = {
     envoyer((sequence) => moteur?.annuler(sequence))
     revision += 1
     prevenir()
+    publier({ type: 'annuler', journal: true })
+  },
+  annulerSession() {
+    vueEsquisse = null
+    try {
+      hote.session.annuler()
+    } catch {
+      // Rien à annuler.
+    }
+    envoyer((sequence) => moteur?.annuler(sequence))
+    revision += 1
+    prevenir()
+  },
+  refaire() {
+    vueEsquisse = null
+    hote.refaire()
+    envoyer((sequence) => moteur?.refaire(sequence))
+    revision += 1
+    prevenir()
+    publier({ type: 'refaire', journal: true })
+  },
+  refaireSession() {
+    vueEsquisse = null
+    try {
+      hote.session.refaire()
+    } catch {
+      // Rien à refaire.
+    }
+    envoyer((sequence) => moteur?.refaire(sequence))
+    revision += 1
+    prevenir()
+  },
+  remplacer(script: string) {
+    vueEsquisse = null
+    hote.session.reinitialiser()
+    hote.viderJournal()
+    if (script.trim()) hote.executer(script)
+    maillageAffiche = null
+    envoyer((sequence) => moteur?.remplacer(script, sequence))
+    revision += 1
+    prevenir()
+    publier({ type: 'remplacer', script })
   },
   rafraichir() {
     revision += 1
@@ -85,6 +156,7 @@ export const storeShell = {
     envoyer((sequence) => moteur?.activer(index, actif, sequence))
     revision += 1
     prevenir()
+    publier({ type: 'activer', index, actif })
   },
   pointe(cible: number | 'fin') {
     vueEsquisse = null
@@ -92,6 +164,7 @@ export const storeShell = {
     envoyer((sequence) => moteur?.pointe(cible, sequence))
     revision += 1
     prevenir()
+    publier({ type: 'pointe', cible })
   },
   enregistrer() {
     return ecrire(hote.session)

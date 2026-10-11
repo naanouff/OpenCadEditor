@@ -31,6 +31,16 @@ describe('terminal', () => {
     expect(hote.session.longueurHistorique).toBe(0)
   })
 
+  it('refaire rend la ligne et l’opération', () => {
+    const hote = new Hote()
+    hote.ligne('piece carrure')
+    hote.ligne('param diametre_boite 40')
+    hote.annuler()
+    hote.refaire()
+    expect(hote.journal.map((entree) => entree.ligne)).toEqual(['piece carrure', 'param diametre_boite 40'])
+    expect(hote.session.expression('diametre_boite')).toBe('40')
+  })
+
   it('enregistre un panneau sans que l’hôte cite son id', () => {
     const hote = new Hote()
     hote.enregistrer({

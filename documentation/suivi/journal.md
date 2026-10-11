@@ -430,3 +430,11 @@ Un paramètre, une cote et une extrusion gardent leur expression (`20*2`, `diame
 
 Branche depuis `feature/fichier-cadompart`. `pas` est une feature `helix` nommée `pas`. La lecture réémet la commande. La vis rouverte a le même maillage OCCT. Une hélice d’un autre nom est refusée. Le proto reste v0.2.
 
+## 2026-10-10 — MCP géométrie consigné, sprint 34 prêt
+
+[mcp-geometrie.md](../veille/mcp-geometrie.md) et [sprint-34-mcp-geometrie.md](../sprints/sprint-34-mcp-geometrie.md). Un agent pilote la `Session` par le langage de commandes déjà parsé (`commande`, `executer`, `etat`, annuler, refaire, pointe, activer). Le processus MCP répond tout de suite ; le nombre de triangles vient du worker OCCT quand le shell est connecté en WebSocket sur `127.0.0.1:47321`. Deux scripts différents au `bonjour` posent un conflit : seul `aligner` écrase. Pas d’outil par verbe, pas d’occt-wasm dans le processus MCP. Pas encore de code ; branche prévue `feature/mcp-geometrie` depuis `develop`.
+
+## 2026-10-10 — Sprint 34 commencé : feature/mcp-geometrie
+
+Branche depuis `develop`. `Session.reinitialiser` vide pièces, document et piles. Le paquet `packages/mcp` expose `commande`, `executer`, `etat`, `annuler`, `refaire`, `pointe`, `activer`, `aligner` sur stdio, et un WebSocket `127.0.0.1:47321`. Au `bonjour`, deux scripts différents posent un conflit sans écraser. Le shell dev s’y connecte ; une ligne reçue n’est pas renvoyée. Le worker reçoit `refaire` et `remplacer` sur la même session. Le viewport ouvert reste à confirmer.
+

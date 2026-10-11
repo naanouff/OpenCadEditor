@@ -81,4 +81,29 @@ revolution
     expect(tailles[1]!).toBeGreaterThan(0)
     expect(tailles[1]!).toBeLessThan(plein)
   })
+
+  it('remplacer repart d’une session vide', () => {
+    const tailles: number[] = []
+    const moteur = moteurSynchrone((maillage) => tailles.push(maillage.indices.length))
+    moteur.executer(
+      `
+piece pointe
+esquisse plan.12h
+segment
+cote rayon 0
+cote hauteur 0
+segment
+cote rayon 2
+cote hauteur 5
+segment
+cote rayon 0
+cote hauteur 5
+revolution
+`,
+      1,
+    )
+    expect(tailles.at(-1)).toBeGreaterThan(0)
+    moteur.remplacer('piece vide', 2)
+    expect(tailles.at(-1)).toBe(0)
+  })
 })
