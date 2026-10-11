@@ -1,6 +1,6 @@
 # OpenCadEditor
 
-Éditeur CAO web qui exploite les formats [OpenCAD](https://github.com/naanouff/OpenCAD/tree/develop). Le rendu et l’interface viennent de [w3dts](https://github.com/naanouff/w3dts), présent ici en sous-module (`vendor/w3dts`). Le solide exact au recalcul passe par [occt-wasm](https://github.com/naanouff/occt-wasm) / `occt-kernel` (sous-module prévu `vendor/occt-wasm`, sprint 24).
+Éditeur CAO web qui exploite les formats [OpenCAD](https://github.com/naanouff/OpenCAD/tree/develop). Le rendu et l’interface viennent de [w3dts](https://github.com/naanouff/w3dts), présent ici en sous-module (`vendor/w3dts`). Le solide exact au recalcul passe par [occt-wasm](https://github.com/naanouff/occt-wasm) / `occt-kernel` (`vendor/occt-wasm` @ v0.2.0) : bootstrap du futur **OpenCAD Kernel** (K3).
 
 OpenCadEditor est le logiciel. Les fichiers OpenCAD ne le sont pas.
 
@@ -8,42 +8,39 @@ OpenCadEditor est le logiciel. Les fichiers OpenCAD ne le sont pas.
 |------|----------------------|
 | Assemblage | `.cadom` |
 | Intention paramétrique | `.cadompart` |
-| Solide exact au recalcul | **occt-kernel** (noyau OpenCAD déprécié) |
+| Solide exact au recalcul | **occt-kernel** (bootstrap OpenCAD Kernel) |
 | Solide exact figé | `.cadombrep` (cache / archive ; BREP via OCCT) |
 | Affichage sans noyau | `.cadomesh` |
 | STEP / AP242 | import / échange seulement, hors du modèle de vérité |
 
-La doctrine formats reste celle d’OpenCAD (`documentation/opencad-doctrine.md` sur `develop`, 2026-09-16). Le choix de moteur B-Rep pour cet éditeur est consigné dans [documentation/veille/noyau-occt.md](documentation/veille/noyau-occt.md).
+Doctrine formats : OpenCAD (`documentation/opencad-doctrine.md` sur `develop`). Moteur : [documentation/veille/noyau-occt.md](documentation/veille/noyau-occt.md). Cap et phases : [documentation/suivi/feuille-de-route.md](documentation/suivi/feuille-de-route.md).
 
 ## État
 
-Prototype paramétrique (sprints 03–23) : langage texte, `noyauProvisoire` TypeScript encore en chemin, shell React/WebGPU. Deux pièces de référence — carrure Milgauss / Oyster et vis tête fraisée Pozi. Sprint 24 : rapatrier occt-kernel et valider les deux pièces. Analyse : [documentation/suivi/analyse.md](documentation/suivi/analyse.md). Suivi : [documentation/suivi/journal.md](documentation/suivi/journal.md).
+Prototype modeleur contraint (sprints 03–36) : langage texte, pipeline historique → GCS → wires → OCCT, shell React/WebGPU, `.cadompart`, MCP, pièces pilotes (carrure, vis, boulon M8). `noyauProvisoire` encore en secours (barrette / tube hors pipeline). Prochain : [sprint 37 — recalage](documentation/sprints/sprint-37-recalage.md) (P0). Analyse : [documentation/suivi/analyse.md](documentation/suivi/analyse.md). Journal : [documentation/suivi/journal.md](documentation/suivi/journal.md).
 
 | Note | Sujet |
 |------|--------|
+| [feuille-de-route.md](documentation/suivi/feuille-de-route.md) | Cap, phases P0–P4 / O1–O4, garde-fous |
 | [analyse.md](documentation/suivi/analyse.md) | État du dépôt, couches, limites |
-| [noyau-occt.md](documentation/veille/noyau-occt.md) | Décision : occt-kernel remplace le noyau OpenCAD |
+| [direction-modeleur.md](documentation/veille/direction-modeleur.md) | Pivot FreeCAD / Creo web |
+| [noyau-occt.md](documentation/veille/noyau-occt.md) | occt-kernel bootstrap du kernel OpenCAD |
 | [occt-kernel.md](documentation/suivi/occt-kernel.md) | Vérification v0.2.0 |
-| [modelisation-parametrique.md](documentation/veille/modelisation-parametrique.md) | Vocabulaire et place des formats |
-| [existant.md](documentation/veille/existant.md) | Outils de CAO existants |
-| [fonctionnalites.md](documentation/veille/fonctionnalites.md) | Fonctions par logiciel |
-| [matrice-swot.md](documentation/veille/matrice-swot.md) | Comparaison |
-| [modeleur-ideal.md](documentation/veille/modeleur-ideal.md) | Fonctions réunies du modeleur idéal |
 | [swot.md](documentation/veille/swot.md) | SWOT d’OpenCadEditor |
 
 ## Dépôt
 
 ```text
 documentation/              suivi, veille et sprints
-packages/api-parametrique/  session, domaines, CSG provisoire
+packages/api-parametrique/  session, domaines, GCS, noyau provisoire (secours)
 packages/format-opencad/   lecture et écriture `.cadompart`
-packages/shell/             hôte React, Dockview, viewport (`pnpm dev`)
+packages/mcp/               serveur MCP (langage de commandes + pont viewport)
+packages/shell/             hôte React, Dockview, viewport, pipeline OCCT (`pnpm dev`)
 vendor/w3dts/               moteur WebGPU (sous-module)
 vendor/occt-wasm/           sources occt-wasm @ v0.2.0 (sous-module)
 packages/shell/occt/        artefacts occt-kernel.wasm (release)
 ```
 
-
-Gitflow : `feature/*` → `develop` → `main` → tag — [documentation/gitflow.md](documentation/gitflow.md).
+Gitflow : `feature/*` | `fix/*` | `chore/*` → `develop` → `main` → tag — [documentation/gitflow.md](documentation/gitflow.md).
 
 Le client bureau (Electron) n’est pas encore dans ce dépôt.

@@ -62,7 +62,9 @@ Le workflow [`.github/workflows/branch-policy.yml`](../.github/workflows/branch-
 | `develop` | `feature/*`, `fix/*`, `chore/*` |
 | `main` | `develop` uniquement |
 
-Pas de PR `feature/*` / `fix/*` → `main`. La CI échoue sur ces PR ; les rulesets n’imposent pas encore ce check comme statut requis (solo-dev).
+Pas de PR `feature/*` / `fix/*` → `main`. La CI échoue sur ces PR.
+
+Le workflow [`.github/workflows/ci.yml`](../.github/workflows/ci.yml) lance Vitest (job `tests`) : api, format, mcp toujours ; shell si le secret `SUBMODULES_PAT` (PAT accès `w3dts` privé) est défini. Les rulesets versionnés exigent ce statut ; synchroniser l’API GitHub après une run verte sur `develop` (sprint 37).
 
 ## Promotion et release
 

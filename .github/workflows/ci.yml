@@ -1,0 +1,75 @@
+# Vitest sur les quatre paquets. Voir documentation/sprints/sprint-37-recalage.md.
+# tsc --noEmit hors périmètre : imports `.ts` et typages cassés sous tsc pur (écart noté sprint 37).
+# vendor/w3dts est privé : secret optionnel SUBMODULES_PAT (repo scope) pour les tests shell.
+name: ci
+
+on:
+  pull_request:
+    branches: [main, develop]
+  push:
+    branches: [main, develop]
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      CI: true
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: false
+
+      - name: occt-wasm (public)
+        run: git submodule update --init vendor/occt-wasm
+
+      - name: w3dts (privé, optionnel)
+        id: w3dts
+        env:
+          TOKEN: ${{ secrets.SUBMODULES_PAT }}
+        run: |
+          if [ -z "$TOKEN" ]; then
+            echo "present=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::Secret SUBMODULES_PAT absent — tests shell ignorés (w3dts privé)."
+            exit 0
+          fi
+          git config --global url."https://x-access-token:${TOKEN}@github.com/".insteadOf "https://github.com/"
+          git submodule update --init vendor/w3dts
+          echo "present=true" >> "$GITHUB_OUTPUT"
+
+      - name: Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      # pnpm 9 : pas de politique onlyBuiltDependencies (pnpm 11 local crée des stubs).
+      - name: pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.9
+
+      - name: api-parametrique
+        working-directory: packages/api-parametrique
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm test
+
+      - name: format-opencad
+        working-directory: packages/format-opencad
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm test
+
+      - name: mcp
+        working-directory: packages/mcp
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm test
+
+      - name: shell
+        if: steps.w3dts.outputs.present == 'true'
+        working-directory: packages/shell
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm test

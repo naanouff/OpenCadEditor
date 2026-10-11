@@ -4,11 +4,13 @@ Suivi du projet et notes de travail. Ce dossier n’appartient pas au moteur : l
 
 | Dossier | Rôle |
 |---------|------|
-| [gitflow.md](gitflow.md) | Branches : feature/fix → develop → main → tag ; suppression auto post-merge |
+| [suivi/feuille-de-route.md](suivi/feuille-de-route.md) | Cap, phases P0–P4 / O1–O4 / W1, garde-fous (2026-10-11) |
+| [gitflow.md](gitflow.md) | Branches : feature/fix/chore → develop → main → tag ; suppression auto post-merge |
 | [suivi/analyse.md](suivi/analyse.md) | État du dépôt : couches, langage, géométrie, manques |
 | [suivi/occt-kernel.md](suivi/occt-kernel.md) | Vérification : occt-wasm v0.2.0 et kernel B-Rep |
-| [veille/noyau-occt.md](veille/noyau-occt.md) | Décision : occt-kernel remplace le noyau OpenCAD |
-| [sprints/sprint-24-noyau-occt.md](sprints/sprint-24-noyau-occt.md) | Sprint : sous-module, worker, vis + carrure |
+| [veille/noyau-occt.md](veille/noyau-occt.md) | occt-kernel bootstrap de l’OpenCAD Kernel (K3) |
+| [veille/recalage-cap.md](veille/recalage-cap.md) | Veille P0 : test, CI, doc, hygiène |
+| [sprints/sprint-37-recalage.md](sprints/sprint-37-recalage.md) | Sprint P0 : suite verte + CI tests |
 | [suivi/journal.md](suivi/journal.md) | Décisions datées et état des choix encore ouverts |
 | [developpement.md](developpement.md) | Règle de base : TDD |
 | [veille/](veille/) | Veille fonctionnelle avant développement du modeleur |
@@ -87,5 +89,8 @@ Suivi du projet et notes de travail. Ce dossier n’appartient pas au moteur : l
 | [sprints/sprint-35-boulon-hexagonal.md](sprints/sprint-35-boulon-hexagonal.md) | Sprint du verbe `hexagone` et du script MCP |
 | [veille/gitflow-protection.md](veille/gitflow-protection.md) | Gitflow : suppression auto, CI politique, nettoyage |
 | [sprints/sprint-36-gitflow.md](sprints/sprint-36-gitflow.md) | Sprint de finalisation des protections GitHub |
+| [suivi/feuille-de-route.md](suivi/feuille-de-route.md) | Feuille de route moyen terme éditeur + OpenCAD |
+| [veille/recalage-cap.md](veille/recalage-cap.md) | Recalage du cap avant P1 / O1 |
+| [sprints/sprint-37-recalage.md](sprints/sprint-37-recalage.md) | Sprint : test tube-bout, CI, doc, workspace |
 
-La veille précède chaque sprint. Le prototype (API, shell, carrure, vis) est dans `packages/`. OpenCadEditor est l’éditeur. CADOM (`.cadom`) est le format d’assemblage OpenCAD, pas un logiciel. L’intention est dans `.cadompart`. L’état consolidé est dans [suivi/analyse.md](suivi/analyse.md) ; le détail daté reste dans le journal.
+La veille précède chaque sprint. Le prototype (API, shell, format, MCP) est dans `packages/`. OpenCadEditor est l’éditeur. CADOM (`.cadom`) est le format d’assemblage OpenCAD, pas un logiciel. L’intention est dans `.cadompart`. Cap : [suivi/feuille-de-route.md](suivi/feuille-de-route.md). État consolidé : [suivi/analyse.md](suivi/analyse.md) ; détail daté : journal.

@@ -75,4 +75,4 @@ Sans GCS + features génériques → OCCT, le dépôt reste un **générateur pa
 | Bonne direction stratégique ? | **Oui** : historique + OCCT + arbre + formats. |
 | Prêt pour FreeCAD / Creo ? | **Non** : manque GCS, features génériques, topo. |
 | Risque principal ? | Continuer les **compilateurs de pièce** au-dessus d’OCCT. |
-| Prochain geste ? | Suite hors sprints 25–31 : barrette/tube OCCT, cercles natifs kernel, ou nouveau palier à consignier. |
+| Prochain geste ? | [feuille-de-route.md](../suivi/feuille-de-route.md) : P0 recalage (sprint 37), puis P1 barrette/tube + retrait provisoire ; OpenCAD O1–O2 en parallèle. |
