@@ -35,4 +35,4 @@ Hors sprint : P1, O1, required reviews, réparation `tsc` globale.
 
 ## État
 
-Codé sur `feature/recalage` : `tube-bout` → fixture `SCRIPT_CARRURE` ; `ci.yml` (job `tests`) ; rulesets JSON avec required check `tests` (à sync API post-merge) ; `pnpm-workspace.yaml` parasites retirés ; branches locales mergées supprimées ; doc alignée. `tsc` hors CI (écart). `vendor/w3dts` privé : secret repo `SUBMODULES_PAT` pour lancer les tests shell en Actions ; sinon api / format / mcp seulement.
+Fait (PR [#12](https://github.com/naanouff/OpenCadEditor/pull/12) mergée dans `develop`). `tube-bout` → fixture ; `ci.yml` job `tests` vert ; rulesets GitHub sync (check `tests`, app Actions 15368) ; stubs workspace ignorés ; branches locales nettoyées ; doc alignée. Écarts : `tsc` hors CI ; tests shell CI seulement avec secret `SUBMODULES_PAT`.
