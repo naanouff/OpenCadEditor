@@ -7,6 +7,7 @@ import {
   type LateLoadPlan,
 } from '@opencad/cadom'
 import { ecrire, lire } from '@opencad/format-opencad'
+import { maillageDepuisAssemblage } from './assemblageMaillage.ts'
 import { chargeurCourant } from './chargeurAsset.ts'
 import { selecteurCourant } from './fichierShell.ts'
 import { Hote } from './hote.ts'
@@ -81,6 +82,32 @@ function reinitialiserStatuts(plan: LateLoadPlan) {
   statutsAssets = new Map(plan.assets.map((a) => [a.assetId, { etat: 'en_attente' as const }]))
 }
 
+let generationAssemblage = 0
+
+async function reconstruireMaillageAssemblage() {
+  const doc = assemblage
+  if (!doc) return
+  const generation = ++generationAssemblage
+  construction = true
+  revision += 1
+  prevenir()
+  try {
+    const maille = await maillageDepuisAssemblage(doc)
+    if (generation !== generationAssemblage || assemblage !== doc) return
+    maillageAffiche = maille
+  } catch (erreur) {
+    if (generation !== generationAssemblage) return
+    console.error(erreur instanceof Error ? erreur.message : String(erreur))
+    maillageAffiche = null
+  } finally {
+    if (generation === generationAssemblage) {
+      construction = false
+      revision += 1
+      prevenir()
+    }
+  }
+}
+
 function chargerAssemblage(octets: Uint8Array) {
   const logical = decode(octets)
   if (
@@ -93,8 +120,11 @@ function chargerAssemblage(octets: Uint8Array) {
   }
   assemblage = CadomDocument.fromLogical(logical)
   reinitialiserStatuts(planLateLoad(assemblage))
+  maillageAffiche = null
+  vueEsquisse = null
   revision += 1
   prevenir()
+  void reconstruireMaillageAssemblage()
 }
 
 export const storeShell = {
