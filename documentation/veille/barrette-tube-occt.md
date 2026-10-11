@@ -26,9 +26,9 @@ La fin du script carrure (`plan.12h` barrette, `plan.3h` tube) ne doit plus êtr
 
 Sans chevauchement depuis la peau, un cylindre depuis X = 0 traverse le vide intérieur (faux).
 
-## Géométrie barrette (report sprint 39)
+## Géométrie barrette (sprint 39)
 
-Le script actuel ne positionne pas le trou : `decrire` invente quatre axes X. Tant que le GCS n’a pas de cote de position (ou un script à quatre trous explicites), porter la barrette en OCCT sans motif reviendrait à recopier `decrire`. **Hors sprint 38.**
+Le script ne positionne pas le trou (cercle GCS à l’origine). Placement **pédagogique** dans le pipeline, aligné sur `decrire` : quatre cylindres d’axe X, `z = ±(peau + longueur_corne − recul_barrette)`, `y` à mi-épaisseur de bout. Documenté comme provisoire jusqu’à cotes de position GCS.
 
 ## Direction d’extrusion sur datum
 
@@ -47,4 +47,4 @@ Aujourd’hui, sans `face.*`, le pipeline extrude toujours en +Y. Il doit suivre
 
 ## État
 
-Tube branché sur `feature/tube-occt` (sprint 38). Barrettes reportées au sprint 39.
+Tube : fait (sprint 38, PR #14). Barrettes : `feature/barrette-occt` (sprint 39).

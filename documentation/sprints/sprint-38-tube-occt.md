@@ -24,4 +24,4 @@ Hors sprint : barrettes, fillet, retrait `noyauProvisoire`, `polygone n`.
 
 ## État
 
-Codé sur `feature/tube-occt` : direction datum, altitude peau + chevauchement, décalage mi-hauteur, tige traversante ; test `fuse le tube de couronne et ouvre le trou de tige`. Barrettes toujours ignorées (sprint 39).
+Fait (PR [#14](https://github.com/naanouff/OpenCadEditor/pull/14) mergée). Direction datum, altitude peau + chevauchement, décalage mi-hauteur, tige traversante ; test tube vert. Barrettes → sprint 39.
