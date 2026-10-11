@@ -6,6 +6,7 @@ import {
   type EntiteEsquisse,
   type Esquisse,
 } from '@opencad/api-parametrique'
+import { resoudreViaKernel } from './gcsKernel.ts'
 
 /** Polyligne XYZ plate pour `make_wire_polyline` (dernier point = premier si fermée). */
 export type Polyline3 = number[]
@@ -84,7 +85,8 @@ export function polylinesDepuisEsquisse(
   const datum = datumParId(support)
   const faceTopo = support === 'face.dessus' || support === 'face.dessous'
   if (datum || faceTopo) {
-    const resolue = solveurGcs.resoudre(esquisse, parametres)
+    // O2-8 : rectangle / cercle / polygone → GCS `@opencad/kernel` ; sinon solveur local.
+    const resolue = resoudreViaKernel(esquisse, parametres) ?? solveurGcs.resoudre(esquisse, parametres)
     if (resolue.statut === 'surcontraint') throw new Error('esquisse surcontrainte')
     if (resolue.statut === 'sous-contraint' || resolue.degres > 0) {
       throw new Error('esquisse sous-contrainte')
