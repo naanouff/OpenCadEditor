@@ -1,10 +1,17 @@
 # Assemblage boîte `.cadom`
 
-Sprint : [sprint-52-assemblage-boite-cadom.md](../sprints/sprint-52-assemblage-boite-cadom.md). Pièces : sprints 48–51. SDK : `@opencad/cadom`.
+Sprints : [52](../sprints/sprint-52-assemblage-boite-cadom.md) (Design), [53](../sprints/sprint-53-assemblage-complete.md) (Complete bindings). Pièces : 48–51. SDK : `@opencad/cadom`.
 
 ## But
 
-Un document `.cadom` unit les cinq pièces de la boîte sous une racine « Boîte Milgauss ». Chaque nœud lie un asset `cadompart` (rôle parametric). Transforms locaux indicatifs (mm) — pas de solveur de mates.
+Un document `.cadom` unit les cinq pièces sous « Boîte Milgauss ».
+
+| Badge | API | Assets par pièce |
+|-------|-----|------------------|
+| Design | `assemblageBoiteMilgauss()` | `parametric` → `.cadompart` |
+| Complete | `assemblageBoiteComplete()` | + `mesh` → `.cadomesh` |
+
+Transforms locaux indicatifs (mm) — pas de mates. Les URI `.cadomesh` sont déclarées ; les octets mesh ne sont pas encore écrits (rebuild viewport = `SCRIPT_*` + OCCT).
 
 ```mermaid
 flowchart TB
@@ -18,8 +25,8 @@ flowchart TB
 
 ## Viewport
 
-À l’ouverture, le shell reconstruit chaque pièce connue (`SCRIPT_*` via OCCT), applique le `world` du nœud et fusionne dans `maillageAffiche`. Les URI non mappées restent hors vue.
+À l’ouverture, reconstruction des pièces connues (`SCRIPT_*`), transforms monde, fusion `maillageAffiche`.
 
 ## Hors périmètre
 
-Lecture binaire des `.cadompart` assets, mates, Complete export.
+Écriture fichiers `.cadomesh` / zip, lecture assets externes, mates, Exact.

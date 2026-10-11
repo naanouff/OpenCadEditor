@@ -1,8 +1,12 @@
 import { describe, expect, it } from 'vitest'
 import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { CadomDocument, decode, encode, planLateLoad } from '@opencad/cadom'
-import { assemblageBoiteMilgauss, BOITE_ID } from '../src/assemblageBoite.ts'
+import { CadomDocument, decode, encode, lintWriterTruth, planLateLoad } from '@opencad/cadom'
+import {
+  assemblageBoiteComplete,
+  assemblageBoiteMilgauss,
+  BOITE_ID,
+} from '../src/assemblageBoite.ts'
 import { DocumentVue } from '../src/DocumentVue.tsx'
 import { storeShell } from '../src/storeShell.ts'
 
@@ -60,4 +64,17 @@ describe('assemblage boîte Milgauss', () => {
     expect(y).toBeCloseTo(0)
     expect(z).toBeCloseTo(0)
   })
+
+  it('Complete : mesh + parametric par pièce, lint writer clean', () => {
+    const logical = assemblageBoiteComplete()
+    expect(logical.assets.filter((a) => a.kind === 'cadomesh')).toHaveLength(5)
+    expect(logical.assets.filter((a) => a.kind === 'cadompart')).toHaveLength(5)
+    const lunette = logical.nodes.find((n) => n.id === BOITE_ID.lunette)!
+    expect(lunette.assetBindings.map((b) => b.role)).toEqual(['mesh', 'parametric'])
+    const plan = planLateLoad(CadomDocument.fromLogical(logical))
+    expect(plan.assets.filter((a) => a.role === 'mesh')).toHaveLength(5)
+    expect(plan.assets.filter((a) => a.role === 'parametric')).toHaveLength(5)
+    expect(lintWriterTruth(CadomDocument.fromLogical(logical))).toEqual([])
+  })
 })
+
