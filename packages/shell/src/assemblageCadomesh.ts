@@ -85,7 +85,12 @@ export function maillageDepuisCadomesh(
     if (!asset) continue
     const octets = octetsParUri.get(asset.uri)
     if (!octets) continue
-    const file = lireCadomesh(octets)
+    let file
+    try {
+      file = lireCadomesh(octets)
+    } catch {
+      continue
+    }
     if (file.indices.length === 0) continue
     const normales =
       file.normals.length === file.positions.length

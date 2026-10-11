@@ -96,10 +96,16 @@ async function reconstruireMaillageAssemblage() {
   revision += 1
   prevenir()
   try {
+    let maille: MaillageOmbre | null = null
     const meshOctets = octetsMeshDepuisStatuts(doc, statutsAssets)
-    const depuisMesh =
-      meshOctets.size > 0 ? maillageDepuisCadomesh(doc, meshOctets) : null
-    const maille = depuisMesh ?? (await maillageDepuisAssemblage(doc))
+    if (meshOctets.size > 0) {
+      try {
+        maille = maillageDepuisCadomesh(doc, meshOctets)
+      } catch {
+        maille = null
+      }
+    }
+    maille ??= await maillageDepuisAssemblage(doc)
     if (generation !== generationAssemblage || assemblage !== doc) return
     maillageAffiche = maille
   } catch (erreur) {
