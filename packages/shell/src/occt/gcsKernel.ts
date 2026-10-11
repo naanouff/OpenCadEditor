@@ -1,6 +1,6 @@
 /**
  * Pont Session → `@opencad/kernel/sketch` (O2-8).
- * Motifs supportés : rectangle, cercle, polygone/hex/octo (sans corne / segment).
+ * Motifs supportés : rectangle, cercle (+ concentrique), polygone/hex/octo (sans corne / segment).
  */
 import { resoudreEsquisse, type EsquisseKernel, type EsquisseResolue } from '@opencad/kernel/sketch'
 import type { Esquisse } from '@opencad/api-parametrique'
@@ -32,7 +32,7 @@ export function esquisseVersKernel(esquisse: Esquisse): EsquisseKernel {
     if (e.sorte === 'rectangle') {
       rectangles.push({ id: e.id, longueur: e.longueur, largeur: e.largeur })
     } else if (e.sorte === 'cercle') {
-      cercles.push({ id: e.id, diametre: e.diametre })
+      cercles.push({ id: e.id, diametre: e.diametre, concentrique: e.concentrique })
     } else if (e.sorte === 'polygone' || e.sorte === 'hexagone' || e.sorte === 'octogone') {
       const pans =
         e.sorte === 'polygone' ? (e.pans ?? 0) : e.sorte === 'hexagone' ? 6 : 8
