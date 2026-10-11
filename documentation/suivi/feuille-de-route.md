@@ -61,7 +61,7 @@ flowchart LR
 | **O2** Paquet kernel | OpenCAD | O2-1…15 | fait | `@opencad/kernel` ; extract éditeur (carrure / tube / pas) |
 | **O3** Writers | OpenCAD | — | fait (K3-7/8) | `.cadomesh` / `.cadombrep` |
 | **O4** SDK `.cadom` | OpenCAD | O4-1…3 | fait | MVP A : DAG, overrides, late-load, lint |
-| **P3** Assemblage | OpenCadEditor | 44–47 | en cours (44–45) | `.cadom` + plan late-load ; suite pièces / fetch |
+| **P3** Assemblage | OpenCadEditor | 44–47 | en cours (44–46) | open/save `.cadom` + plan late-load ; suite fetch / pièces |
 | **P4** Ergonomie | OpenCadEditor | 45–48 | à venir | Souris, sélection faces, ruban |
 
 ### P0 — Recalage (sprint 37)
@@ -85,7 +85,7 @@ Veille : [recalage-cap.md](../veille/recalage-cap.md). Sprint : [sprint-37-recal
 
 ### P3 — Boîte en assemblage (sprints 44–47)
 
-Sprint 44 : ouvrir `.cadom` + arbre Document ([fichier-cadom.md](../veille/fichier-cadom.md)). Sprint 45 : plan late-load ([cadom-late-load.md](../veille/cadom-late-load.md)). Ensuite : fetch meshes ; pièces génériques ; export Complete.
+Sprint 44–46 : ouvrir / plan late-load / enregistrer `.cadom` ([fichier-cadom.md](../veille/fichier-cadom.md)). Ensuite : fetch meshes ; pièces génériques ; export Complete.
 
 ### P4 — Ergonomie (sprints 45–48)
 
