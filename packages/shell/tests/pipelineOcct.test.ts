@@ -113,6 +113,49 @@ enleve 2
     expect(fondPoche).toBe(true)
   }, 120_000)
 
+  it('O2-14: cornes prismatiques via kernel (après anneau)', async () => {
+    const occt = await chargerKernel()
+    const session = new Session({ geometrie: false })
+    session.executer(`
+piece carrure
+param diametre_boite 40
+param entrecorne 20
+param longueur_corne 4.2
+param largeur_bout 2.2
+param largeur_racine 6
+param rayon_racine 3
+param hauteur_carrure 8
+param plongee_bout 1.2
+param epaisseur_bout 2
+esquisse plan.dessus
+cercle
+cote diametre diametre_boite
+cercle
+concentrique cercle.exterieur
+cote diametre diametre_boite - 5
+extrude hauteur_carrure
+esquisse plan.dessus
+segment
+cote ecart entrecorne
+segment
+cote debord longueur_corne
+cote largeur largeur_bout
+segment
+cote largeur largeur_racine
+arc
+cote rayon rayon_racine
+arc
+concentrique cercle.exterieur
+symetrie vertical
+symetrie horizontal
+extrude hauteur_carrure
+`)
+    const maille = maillagePipelineOcct(occt, session)
+    expect(maille.indices.length).toBeGreaterThan(0)
+    expect(stats(maille).yMax).toBeGreaterThan(7)
+    expect(stats(maille).rayonMax).toBeGreaterThan(22)
+  }, 120_000)
+
   it('O2-13: anneau concentrique via kernel', async () => {
     const occt = await chargerKernel()
     const session = new Session({ geometrie: false })

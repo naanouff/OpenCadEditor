@@ -1,8 +1,8 @@
 /**
  * Pont historique Session → `@opencad/kernel/compiler` (O2-9+).
  * Motifs supportés : plan.dessus / plan.12h / plan.3h, face.dessus/dessous,
- * rectangle/cercle/polygone/segment, concentrique, extrude / revolution / enlever / fillet.
- * Hors scope : pas, corne, symétrie…
+ * rectangle/cercle/polygone/segment/arc, concentrique, symétrie, extrude / revolution /
+ * enlever / fillet (corne + élévation inclus). Hors scope : pas hybride.
  */
 import {
   compilerHistorique,
@@ -28,15 +28,26 @@ const TYPES = new Set([
   'hexagone',
   'octogone',
   'segment',
+  'arc',
   'cote',
   'concentrique',
+  'symetrie',
   'extrude',
   'revolution',
   'enlever',
   'fillet',
 ])
 
-const COTES = new Set(['longueur', 'largeur', 'rayon', 'hauteur', 'diametre', 'entreplat'])
+const COTES = new Set([
+  'longueur',
+  'largeur',
+  'rayon',
+  'hauteur',
+  'diametre',
+  'entreplat',
+  'ecart',
+  'debord',
+])
 
 /** Convertit un préfixe rejouable ; `null` si une op / support n’est pas géré. */
 export function historiqueVersKernel(
@@ -45,7 +56,7 @@ export function historiqueVersKernel(
 ): OperationKernel[] | null {
   const ops = rejouables(historique, pointe)
   if (ops.length === 0) return null
-  if (ops.some((o) => o.type === 'pas' || o.type === 'symetrie')) {
+  if (ops.some((o) => o.type === 'pas')) {
     return null
   }
   const out: OperationKernel[] = []
@@ -74,6 +85,10 @@ export function historiqueVersKernel(
       out.push({ type: 'segment' })
       continue
     }
+    if (op.type === 'arc') {
+      out.push({ type: 'arc' })
+      continue
+    }
     if (op.type === 'polygone') {
       const pans = Number(a.pans)
       if (!(pans >= 3)) return null
@@ -99,7 +114,9 @@ export function historiqueVersKernel(
           | 'rayon'
           | 'hauteur'
           | 'diametre'
-          | 'entreplat',
+          | 'entreplat'
+          | 'ecart'
+          | 'debord',
         expression: a.expression!,
       })
       continue
@@ -107,6 +124,12 @@ export function historiqueVersKernel(
     if (op.type === 'concentrique') {
       if (!a.cible) return null
       out.push({ type: 'concentrique', cible: a.cible })
+      continue
+    }
+    if (op.type === 'symetrie') {
+      const axe = a.axe
+      if (axe !== 'vertical' && axe !== 'horizontal') return null
+      out.push({ type: 'symetrie', axe })
       continue
     }
     if (op.type === 'extrude') {

@@ -11,6 +11,7 @@ import {
   type Operation,
 } from '@opencad/api-parametrique'
 import { opsBarrettesPedagogiques } from '@opencad/kernel/barrettes'
+import { opsElevationCornes } from '@opencad/kernel/elevation'
 import { runBatch, type KernelBatchOp, type OcctKernelModule } from './chargerKernel.ts'
 import { polylinesDepuisEsquisse, type Polyline3 } from './esquissePolylines.ts'
 import { indicesDepuisSelecteurs, parseSelecteursAretes, type AreteKernel } from './aretesOcct.ts'
@@ -149,90 +150,6 @@ function scriptProfil(entites: EntiteEsquisse[]): string {
     lignes.push('segment', `cote rayon ${e.rayon}`, `cote hauteur ${e.hauteur}`)
   }
   return lignes.join('\n')
-}
-
-/** Rectangle XZ à altitude `y`, enroulement pour extrusion +Y. */
-function rectangleXz(
-  a0: number,
-  a1: number,
-  u0: number,
-  u1: number,
-  y: number,
-  sx: number,
-  sz: number,
-): Polyline3 {
-  let pts: [number, number, number][] = [
-    [sx * a0, y, sz * u0],
-    [sx * a1, y, sz * u0],
-    [sx * a1, y, sz * u1],
-    [sx * a0, y, sz * u1],
-  ]
-  let aire = 0
-  for (let i = 0; i < 4; i++) {
-    const p = pts[i]!
-    const q = pts[(i + 1) % 4]!
-    aire += p[0] * q[2] - q[0] * p[2]
-  }
-  if (aire < 0) pts = pts.reverse()
-  const xyz: number[] = []
-  for (const p of pts) xyz.push(p[0], p[1], p[2])
-  xyz.push(pts[0]![0], pts[0]![1], pts[0]![2])
-  return xyz
-}
-
-/**
- * Découpe le bout des cornes (plongee / épaisseur) après l’extrusion prismatique,
- * pour que le solide OCCT suive la découpe d’élévation déjà visible en fil de fer Session.
- */
-function opsElevationCornes(
-  solidAs: string,
-  parametres: Map<string, string>,
-  evaluer: (expression: string) => number,
-  uid: () => string,
-): { ops: KernelBatchOp[]; solidAs: string } {
-  if (!parametres.has('epaisseur_bout') || !parametres.has('plongee_bout')) {
-    return { ops: [], solidAs }
-  }
-  const H = evaluer('hauteur_carrure')
-  const plongee = evaluer('plongee_bout')
-  const epaisseur = evaluer('epaisseur_bout')
-  if (!(epaisseur > 0) || !(H > plongee + epaisseur)) return { ops: [], solidAs }
-  const rayonPeau = evaluer('diametre_boite') / 2
-  const a0 = evaluer('entrecorne') / 2
-  const debord = parametres.has('longueur_corne') ? evaluer('longueur_corne') : 4.2
-  const largeurRacine = parametres.has('largeur_racine') ? evaluer('largeur_racine') : 6
-  const yTipBas = plongee
-  const yTipHaut = plongee + epaisseur
-  const a1 = a0 + largeurRacine + 1
-  const u0 = rayonPeau - 0.2
-  const u1 = rayonPeau + debord + 1
-  const ops: KernelBatchOp[] = []
-  let courant = solidAs
-  for (const sx of [1, -1] as const) {
-    for (const sz of [1, -1] as const) {
-      const haut = opsExtrude(
-        rectangleXz(a0 - 0.05, a1, u0, u1, yTipHaut, sx, sz),
-        [0, H - yTipHaut + 1, 0],
-        uid(),
-      )
-      ops.push(...haut.ops)
-      const cutH = opsCouper(courant, haut.as, uid())
-      ops.push(...cutH.ops)
-      courant = cutH.solidAs
-      if (yTipBas > 1e-6) {
-        const bas = opsExtrude(
-          rectangleXz(a0 - 0.05, a1, u0, u1, 0, sx, sz),
-          [0, yTipBas, 0],
-          uid(),
-        )
-        ops.push(...bas.ops)
-        const cutB = opsCouper(courant, bas.as, uid())
-        ops.push(...cutB.ops)
-        courant = cutB.solidAs
-      }
-    }
-  }
-  return { ops, solidAs: courant }
 }
 
 type FilletEnAttente = {
@@ -454,7 +371,7 @@ function compiler(historique: Operation[], pointe: number | null = null): Compil
         }
         const profilCorne = sketch.entites.some((e) => e.sorte === 'segment' && e.ecart)
         if (profilCorne && solidAs) {
-          const elev = opsElevationCornes(solidAs, parametres, evaluer, () => String(uid++))
+          const elev = opsElevationCornes(solidAs, parametres, 1, () => String(uid++))
           ops.push(...elev.ops)
           solidAs = elev.solidAs
         }
