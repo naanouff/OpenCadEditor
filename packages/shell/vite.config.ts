@@ -67,6 +67,20 @@ export default defineConfig({
         ),
       },
       {
+        find: '@opencad/kernel/sketch',
+        replacement: path.resolve(
+          ici,
+          '../../vendor/opencad/packages/kernel/src/sketchSolve.ts',
+        ),
+      },
+      {
+        find: '@opencad/kernel/polylines',
+        replacement: path.resolve(
+          ici,
+          '../../vendor/opencad/packages/kernel/src/polylinesDepuisResolue.ts',
+        ),
+      },
+      {
         find: '@opencad/kernel',
         replacement: path.resolve(ici, '../../vendor/opencad/packages/kernel/src/index.ts'),
       },

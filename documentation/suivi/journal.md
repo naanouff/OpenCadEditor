@@ -588,3 +588,7 @@ Kernel : résolution cercle + densification polylines ; bump `vendor/opencad`.
 
 Kernel : polygone régulier (entreplat) ; bump `vendor/opencad`.
 
+## 2026-10-11 — O2-8 GCS kernel dans shell
+
+`esquissePolylines` délègue rectangle/cercle/polygone à `@opencad/kernel/sketch`.
+
