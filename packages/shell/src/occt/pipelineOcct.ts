@@ -14,6 +14,7 @@ import { runBatch, type KernelBatchOp, type OcctKernelModule } from './chargerKe
 import { polylinesDepuisEsquisse, type Polyline3 } from './esquissePolylines.ts'
 import { indicesDepuisSelecteurs, parseSelecteursAretes, type AreteKernel } from './aretesOcct.ts'
 import { accrocherSolide, opsCouper, opsExtrude, opsFillet, opsRevolution } from './opsDepuisFonction.ts'
+import { compilerViaKernel } from './historiqueKernel.ts'
 import { maillageDepuisTessellate } from './maillageDepuisTessellate.ts'
 import {
   directionCoupe,
@@ -304,6 +305,32 @@ type Compilation = {
 }
 
 function compiler(historique: Operation[], pointe: number | null = null): Compilation {
+  // O2-9 : préfixe simple → `@opencad/kernel/compiler` (mm) ; sinon chemin local.
+  const viaKernel = compilerViaKernel(historique, pointe)
+  if (viaKernel?.solidAs && viaKernel.ops.length > 0) {
+    let yMax = 0
+    let yMin = 0
+    for (const op of viaKernel.ops) {
+      if (op.op === 'extrude' && Array.isArray(op.args) && op.args.length >= 4) {
+        const dy = Number(op.args[2])
+        if (Number.isFinite(dy)) {
+          yMax = Math.max(yMax, dy)
+          yMin = Math.min(yMin, 0)
+        }
+      }
+    }
+    return {
+      ops: viaKernel.ops,
+      solidAs: viaKernel.solidAs,
+      pas: false,
+      parametres: viaKernel.parametres,
+      entitesPas: null,
+      fillets: [],
+      yMin,
+      yMax,
+    }
+  }
+
   const parametres = new Map<string, string>()
   let esquisse: EtatEsquisse | null = null
   let dernierSupport: string | null = null
