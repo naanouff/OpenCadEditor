@@ -83,7 +83,10 @@ function ViewportVue(_props: IDockviewPanelProps) {
     const maille = storeShell.utiliseMoteur()
       ? (storeShell.maillageAffiche() ?? { positions: [], normales: [], indices: [] })
       : hote.session.maillage()
-    void afficher(canevas, hote.session.frontiere(), posee, maille).catch((erreur: unknown) => {
+    // Volume moteur (OCCT) : fil via aretesBrep — pas besoin du motif decrire.
+    const frontiere =
+      !posee && maille.indices.length > 0 ? { faces: [] } : hote.session.frontiere()
+    void afficher(canevas, frontiere, posee, maille).catch((erreur: unknown) => {
       console.error(erreur instanceof Error ? erreur.message : String(erreur))
     })
   }, [hote, revision])

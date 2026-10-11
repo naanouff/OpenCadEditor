@@ -516,3 +516,11 @@ PR [#17](https://github.com/naanouff/OpenCadEditor/pull/17) mergée.
 
 Verbe `fillet` + sélecteurs `arete.*` via `list_edges` / `fillet_edges`.
 
+## 2026-10-11 — Sprint 42 terminé
+
+PR [#18](https://github.com/naanouff/OpenCadEditor/pull/18) mergée.
+
+## 2026-10-11 — Sprint 43 : feature/retrait-provisoire
+
+Wireframe viewport via `aretesBrep` (volume OCCT) ; `decrire` n’est plus la source d’affichage.
+

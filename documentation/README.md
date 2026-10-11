@@ -101,5 +101,7 @@ Suivi du projet et notes de travail. Ce dossier n’appartient pas au moteur : l
 | [sprints/sprint-41-polygone-n.md](sprints/sprint-41-polygone-n.md) | Sprint : polygone n + alias hex/octo |
 | [veille/fillet-aretes.md](veille/fillet-aretes.md) | Fillet OCCT + refs arêtes |
 | [sprints/sprint-42-fillet-aretes.md](sprints/sprint-42-fillet-aretes.md) | Sprint : fillet + arete.* |
+| [veille/retrait-provisoire.md](veille/retrait-provisoire.md) | Découplage affichage / provisoire |
+| [sprints/sprint-43-retrait-provisoire.md](sprints/sprint-43-retrait-provisoire.md) | Sprint : wireframe OCCT, pas decrire |
 
 La veille précède chaque sprint. Le prototype (API, shell, format, MCP) est dans `packages/`. OpenCadEditor est l’éditeur. CADOM (`.cadom`) est le format d’assemblage OpenCAD, pas un logiciel. L’intention est dans `.cadompart`. Cap : [suivi/feuille-de-route.md](suivi/feuille-de-route.md). État consolidé : [suivi/analyse.md](suivi/analyse.md) ; détail daté : journal.

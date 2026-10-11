@@ -17,4 +17,4 @@ Hors sprint : `chamfer`, picking UI (P4), retrait `noyauProvisoire`.
 
 ## État
 
-Codé sur `feature/fillet-occt`.
+Fait (PR [#18](https://github.com/naanouff/OpenCadEditor/pull/18) mergée).

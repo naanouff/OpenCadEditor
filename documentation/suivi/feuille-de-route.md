@@ -55,7 +55,7 @@ flowchart LR
 | Phase | Dépôt | Sprints | Statut | Contenu |
 |-------|-------|---------|--------|---------|
 | **P0** Recalage | OpenCadEditor | [37](../sprints/sprint-37-recalage.md) | fait (PR #12) | Test, CI, doc, workspace, branches |
-| **P1** Sortie du provisoire | OpenCadEditor | 38–42 | en cours (38–41 faits ; 42 fillet ; reste retrait provisoire) | Barrette/tube OCCT, fillet, retrait `noyauProvisoire`, `polygone n` |
+| **P1** Sortie du provisoire | OpenCadEditor | 38–43 | en cours (38–42 faits ; 43 découplage affichage ; reste delete provisoire / W1) | Barrette/tube OCCT, fillet, retrait `noyauProvisoire`, `polygone n` |
 | **O1** Doctrine + dialecte | OpenCAD | — | à venir | K3-1 (occt-wasm, licence), cadompart v0.3, fermer #55 |
 | **W1** Kernel WASM | occt-wasm | — | à venir | Arcs/cercles natifs, helix ou sweep (sinon filet cosmétique) |
 | **O2** Paquet kernel | OpenCAD | — | à venir | Extraire pipeline + GCS ; entrée `CadompartFile` ; goldens K3-3…K3-5 |
