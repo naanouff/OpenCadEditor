@@ -552,3 +552,7 @@ Solveur rectangle H/V/distance + extrude gated (issue [#65](https://github.com/n
 
 Ids topo `face:{i}` / `edge:{i}` (issue [#67](https://github.com/naanouff/OpenCAD/issues/67)).
 
+## 2026-10-11 — O2 / K3-7
+
+Writer `.cadomesh` depuis tessellate (issue [#69](https://github.com/naanouff/OpenCAD/issues/69)).
+
