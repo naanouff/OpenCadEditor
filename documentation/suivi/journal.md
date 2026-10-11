@@ -536,3 +536,7 @@ PR [#19](https://github.com/naanouff/OpenCadEditor/pull/19) mergée. P1 éditeur
 
 Paquet `@opencad/kernel` + CI dans OpenCAD (issue [#59](https://github.com/naanouff/OpenCAD/issues/59)).
 
+## 2026-10-11 — O2 / K3-3
+
+Golden extrude plaque via `occt-kernel` (issue [#61](https://github.com/naanouff/OpenCAD/issues/61)).
+
