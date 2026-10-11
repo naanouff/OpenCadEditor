@@ -68,6 +68,10 @@ export function libelleOperation(operation: Operation): string {
       return 'Révolution'
     case 'pas':
       return 'Pas de vis'
+    case 'fillet':
+      return args.aretes
+        ? `Fillet ${args.expression} ${args.aretes}`
+        : `Fillet ${args.expression}`
     default:
       return operation.type
   }
@@ -119,7 +123,7 @@ export function fonctions(historique: Operation[], pointe: number | null = null)
       esquisse.push({ index, operation })
       return
     }
-    if (operation.type === 'pas') {
+    if (operation.type === 'pas' || operation.type === 'fillet') {
       const n = noeud(index, operation, undefined, true)
       if (pointe !== null && index === pointe) n.estPointe = true
       if (pointe !== null && index > pointe) marquerApres(n)

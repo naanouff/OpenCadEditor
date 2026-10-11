@@ -12,7 +12,8 @@ import {
 } from '@opencad/api-parametrique'
 import { runBatch, type KernelBatchOp, type OcctKernelModule } from './chargerKernel.ts'
 import { polylinesDepuisEsquisse, type Polyline3 } from './esquissePolylines.ts'
-import { accrocherSolide, opsCouper, opsExtrude, opsRevolution } from './opsDepuisFonction.ts'
+import { indicesDepuisSelecteurs, parseSelecteursAretes, type AreteKernel } from './aretesOcct.ts'
+import { accrocherSolide, opsCouper, opsExtrude, opsFillet, opsRevolution } from './opsDepuisFonction.ts'
 import { maillageDepuisTessellate } from './maillageDepuisTessellate.ts'
 import {
   directionCoupe,
@@ -286,12 +287,20 @@ function opsElevationCornes(
   return { ops, solidAs: courant }
 }
 
+type FilletEnAttente = {
+  expression: string
+  selecteurs: string[]
+}
+
 type Compilation = {
   ops: KernelBatchOp[]
   solidAs: string
   pas: boolean
   parametres: Map<string, string>
   entitesPas: EntiteEsquisse[] | null
+  fillets: FilletEnAttente[]
+  yMin: number
+  yMax: number
 }
 
 function compiler(historique: Operation[], pointe: number | null = null): Compilation {
@@ -308,6 +317,7 @@ function compiler(historique: Operation[], pointe: number | null = null): Compil
   const pas = opsRejouees.some((op) => op.type === 'pas')
   let entitesPas: EntiteEsquisse[] | null = null
   let revolutions = 0
+  const fillets: FilletEnAttente[] = []
 
   const evaluer = (expression: string) => evaluateurProvisoire.evaluer(expression, parametres)
   const assurerEsquisse = () => {
@@ -361,6 +371,15 @@ function compiler(historique: Operation[], pointe: number | null = null): Compil
       continue
     }
     if (operation.type === 'pas') continue
+
+    if (operation.type === 'fillet') {
+      if (!solidAs) throw new Error('fillet sans solide')
+      fillets.push({
+        expression: operation.arguments.expression,
+        selecteurs: parseSelecteursAretes(operation.arguments.aretes),
+      })
+      continue
+    }
 
     if (!esquisse) throw new Error(`fonction ${operation.type} sans esquisse`)
     const sketch: Esquisse = {
@@ -537,7 +556,38 @@ function compiler(historique: Operation[], pointe: number | null = null): Compil
   }
 
   if (!solidAs || ops.length === 0) throw new Error('pipeline: aucune feature OCCT')
-  return { ops, solidAs, pas, parametres, entitesPas }
+  return { ops, solidAs, pas, parametres, entitesPas, fillets, yMin, yMax }
+}
+
+/** Applique les fillets en résolvant les sélecteurs via `list_edges`. */
+function appliquerFillets(
+  occt: OcctKernelModule,
+  compilation: Compilation,
+): { ops: KernelBatchOp[]; solidAs: string } {
+  let { ops, solidAs } = compilation
+  if (compilation.fillets.length === 0) return { ops, solidAs }
+  const evaluer = (expression: string) =>
+    evaluateurProvisoire.evaluer(expression, compilation.parametres)
+  let uid = 0
+  for (const fillet of compilation.fillets) {
+    const rayon = evaluer(fillet.expression)
+    let indices: number[] | null = null
+    if (fillet.selecteurs.length > 0) {
+      const listed = runBatch(occt, [
+        { op: 'arena_clear' },
+        ...ops,
+        { op: 'list_edges', args: [{ handle: solidAs }], as: 'edges' },
+      ])
+      if (!listed.ok) throw new Error(listed.error ?? 'list_edges failed')
+      const payload = listed.aliases?.edges as { ok?: boolean; edges?: AreteKernel[] } | undefined
+      const edges = payload?.edges ?? []
+      indices = indicesDepuisSelecteurs(edges, fillet.selecteurs, compilation.yMin, compilation.yMax)
+    }
+    const feat = opsFillet(solidAs, rayon, indices, String(uid++))
+    ops = [...ops, ...feat.ops]
+    solidAs = feat.solidAs
+  }
+  return { ops, solidAs }
 }
 
 /**
@@ -546,7 +596,8 @@ function compiler(historique: Operation[], pointe: number | null = null): Compil
  */
 export function maillagePipelineOcct(occt: OcctKernelModule, session: Session): MaillageOmbre {
   const compilation = compiler(session.historique(), session.pointeCourante())
-  const occtPart = tesselle(occt, compilation.ops, compilation.solidAs)
+  const apresFillet = appliquerFillets(occt, compilation)
+  const occtPart = tesselle(occt, apresFillet.ops, apresFillet.solidAs)
   if (!compilation.pas) {
     if (!occtPart.normales) throw new Error('maillage sans normales')
     return {

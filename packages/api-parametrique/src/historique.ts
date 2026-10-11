@@ -16,7 +16,7 @@ export const SOUS_ESQUISSE = new Set([
 export const CONSOMME_ESQUISSE = new Set(['extrude', 'enlever', 'revolution'])
 
 /** Fonctions qui peuvent porter la pointe de reconstruction. */
-export const TYPES_FONCTION = new Set(['extrude', 'enlever', 'revolution', 'pas'])
+export const TYPES_FONCTION = new Set(['extrude', 'enlever', 'revolution', 'pas', 'fillet'])
 
 export function indexesFonctions(historique: Operation[]): number[] {
   const indexes: number[] = []
@@ -66,7 +66,7 @@ export function rejouables(historique: Operation[], pointe: number | null = null
       }
       continue
     }
-    if (operation.type === 'pas') {
+    if (operation.type === 'pas' || operation.type === 'fillet') {
       if (operation.actif !== false) {
         sortie.push(operation)
         if (pointe !== null && i === pointe) return sortie

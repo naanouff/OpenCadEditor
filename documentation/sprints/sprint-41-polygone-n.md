@@ -15,4 +15,4 @@ Code [polygone-n.md](../veille/polygone-n.md). Branche : `feature/polygone-n`.
 
 ## État
 
-Codé sur `feature/polygone-n`.
+Fait (PR [#17](https://github.com/naanouff/OpenCadEditor/pull/17) mergée).

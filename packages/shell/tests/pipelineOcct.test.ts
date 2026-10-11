@@ -153,6 +153,26 @@ extrude 8
     expect(stats(maille).yMax).toBeGreaterThan(7)
   }, 120_000)
 
+  it('fillet arete.haut sur une boîte extrudée', async () => {
+    const occt = await chargerKernel()
+    const session = new Session({ geometrie: false })
+    session.executer(`
+piece boite
+esquisse plan.dessus
+rectangle
+cote largeur 20
+cote longueur 20
+cote ecart 0
+extrude 8
+fillet 1 arete.haut
+`)
+    const maille = maillagePipelineOcct(occt, session)
+    expect(maille.indices.length).toBeGreaterThan(0)
+    const { yMax } = stats(maille)
+    expect(yMax).toBeGreaterThan(7)
+    expect(yMax).toBeLessThan(9)
+  }, 120_000)
+
   it('face.dessus suit une nouvelle hauteur d’extrusion', async () => {
     const occt = await chargerKernel()
     const session = new Session({ geometrie: false })
