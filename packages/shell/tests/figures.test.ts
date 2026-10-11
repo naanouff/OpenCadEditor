@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import type { Frontiere, MaillageOmbre } from '@opencad/api-parametrique'
 import { documentCad } from '../src/documentCad.ts'
 import { geometriePlan } from '@opencad/api-parametrique'
-import { aretesVives, filDeFer } from '../src/dessin.ts'
+import { aretesBrep, aretesVives, filDeFer } from '../src/dessin.ts'
 
 const figures: Frontiere = {
   faces: [
@@ -29,17 +29,20 @@ describe('boîte et traversée', () => {
     expect(fil.segmentCount).toBeGreaterThan(12)
   })
 
-  it('tire le fil de fer des faces exactes, pas des découpes du maillage', () => {
-    // Deux triangles coplanaires qui ne partagent pas leurs sommets : la découpe BSP
-    // laisse des arêtes ouvertes au milieu de la face, absentes de la topologie.
+  it('sans volume, tire le fil des faces exactes', () => {
+    expect(documentCad(figures).brepWireframe.segmentCount).toBe(filDeFer(figures).segmentCount)
+  })
+
+  it('avec volume, préfère aretesBrep au motif decrire', () => {
     const volume: MaillageOmbre = {
       positions: [0, 0, 0, 4, 0, 0, 2, 4, 0, 0.01, 0, 0, 4.01, 0, 0, 2.01, 4, 0],
       normales: [0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1],
       indices: [0, 1, 2, 3, 4, 5],
     }
-    const exact = filDeFer(figures).segmentCount
+    const duVolume = aretesBrep(volume).length / 6
     expect(aretesVives(volume).length / 6).toBeGreaterThan(0)
-    expect(documentCad(figures, null, volume).brepWireframe.segmentCount).toBe(exact)
+    expect(documentCad(figures, null, volume).brepWireframe.segmentCount).toBe(duVolume)
+    expect(duVolume).not.toBe(filDeFer(figures).segmentCount)
   })
 
   it('coupe les arêtes des cornes à la peau, omet le cercle enterré de la tige', () => {

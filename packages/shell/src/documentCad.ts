@@ -48,7 +48,7 @@ export function documentCad(
   const solide = !esquisse && volume && volume.indices.length > 0 ? volume : null
   return {
     brepWireframe: enMetres(
-      esquisse ? [] : frontiere.faces.length > 0 ? filDeFer(frontiere).position.array : solide ? aretesBrep(solide) : [],
+      esquisse ? [] : solide ? aretesBrep(solide) : frontiere.faces.length > 0 ? filDeFer(frontiere).position.array : [],
     ),
     grille: enMetres(grilleMm),
     esquisse: enMetres(esquisseMm),
