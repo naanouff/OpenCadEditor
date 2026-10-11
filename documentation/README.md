@@ -83,5 +83,7 @@ Suivi du projet et notes de travail. Ce dossier n’appartient pas au moteur : l
 | [sprints/sprint-33-pas-cadompart.md](sprints/sprint-33-pas-cadompart.md) | Sprint de ce marqueur, vis rouverte |
 | [veille/mcp-geometrie.md](veille/mcp-geometrie.md) | MCP : langage de commandes, session et viewport |
 | [sprints/sprint-34-mcp-geometrie.md](sprints/sprint-34-mcp-geometrie.md) | Sprint du serveur stdio et du pont local |
+| [veille/boulon-hexagonal.md](veille/boulon-hexagonal.md) | Boulon M8 : tête hexagone, fût fileté, bout plat |
+| [sprints/sprint-35-boulon-hexagonal.md](sprints/sprint-35-boulon-hexagonal.md) | Sprint du verbe `hexagone` et du script MCP |
 
 La veille précède chaque sprint. Le prototype (API, shell, carrure, vis) est dans `packages/`. OpenCadEditor est l’éditeur. CADOM (`.cadom`) est le format d’assemblage OpenCAD, pas un logiciel. L’intention est dans `.cadompart`. L’état consolidé est dans [suivi/analyse.md](suivi/analyse.md) ; le détail daté reste dans le journal.

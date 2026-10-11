@@ -153,6 +153,46 @@ function resoudreCercle(entite: EntiteEsquisse, parametres: Map<string, string>)
   }
 }
 
+/**
+ * Polygone régulier à pans plats (hex / octo) ; `entreplat` = distance entre pans opposés.
+ * `n` côtés ; premier sommet à π/n pour des pans horizontaux/verticaux.
+ */
+function resoudrePolygoneRegulier(
+  entite: EntiteEsquisse,
+  parametres: Map<string, string>,
+  n: number,
+): EsquisseResolue {
+  if (!entite.entreplat) {
+    return {
+      points: [],
+      polylines: [],
+      degres: 1,
+      ferme: true,
+      statut: 'sous-contraint',
+      contraintes: [],
+    }
+  }
+  const entreplat = evaluer(entite.entreplat, parametres)
+  const rayon = entreplat / (2 * Math.cos(Math.PI / n))
+  const points: PointResolu[] = []
+  const ids: string[] = []
+  for (let i = 0; i < n; i++) {
+    const angle = Math.PI / n + (i * 2 * Math.PI) / n
+    const id = `${entite.id}.${i}`
+    points.push({ id, u: rayon * Math.cos(angle), v: rayon * Math.sin(angle) })
+    ids.push(id)
+  }
+  if (ids[0]) ids.push(ids[0])
+  return {
+    points,
+    polylines: [{ points: ids }],
+    degres: 0,
+    ferme: true,
+    statut: 'contraint',
+    contraintes: [],
+  }
+}
+
 /** Arc du plus court chemin de angle0 → angle1 (Δ dans (−π, π]). */
 function densifierArcCourt(
   cx: number,
@@ -330,6 +370,15 @@ function resoudre(
   const rectangles = entites.filter((e) => e.sorte === 'rectangle')
   const cercles = entites.filter((e) => e.sorte === 'cercle')
   const segments = entites.filter((e) => e.sorte === 'segment')
+  const hexagones = entites.filter((e) => e.sorte === 'hexagone')
+  const octogones = entites.filter((e) => e.sorte === 'octogone')
+
+  if (hexagones.length === 1 && entites.length === 1) {
+    return resoudrePolygoneRegulier(hexagones[0]!, parametres, 6)
+  }
+  if (octogones.length === 1 && entites.length === 1) {
+    return resoudrePolygoneRegulier(octogones[0]!, parametres, 8)
+  }
 
   if (rectangles.length === 1 && cercles.length === 0 && entites.length === 1) {
     const r = rectangles[0]!

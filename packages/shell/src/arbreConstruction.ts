@@ -18,7 +18,17 @@ export type NoeudArbre = {
   apresPointe?: boolean
 }
 
-const SOUS_ESQUISSE = new Set(['cercle', 'rectangle', 'segment', 'arc', 'concentrique', 'cote', 'symetrie'])
+const SOUS_ESQUISSE = new Set([
+  'cercle',
+  'rectangle',
+  'segment',
+  'arc',
+  'octogone',
+  'hexagone',
+  'concentrique',
+  'cote',
+  'symetrie',
+])
 
 export function libelleOperation(operation: Operation): string {
   const args = operation.arguments
