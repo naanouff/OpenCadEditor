@@ -25,6 +25,7 @@ const SOUS_ESQUISSE = new Set([
   'arc',
   'octogone',
   'hexagone',
+  'polygone',
   'concentrique',
   'cote',
   'symetrie',
@@ -45,6 +46,12 @@ export function libelleOperation(operation: Operation): string {
       return 'Segment'
     case 'arc':
       return 'Arc'
+    case 'hexagone':
+      return 'Hexagone'
+    case 'octogone':
+      return 'Octogone'
+    case 'polygone':
+      return `Polygone ${args.pans}`
     case 'concentrique':
       return `Concentrique ${args.cible}`
     case 'cote':

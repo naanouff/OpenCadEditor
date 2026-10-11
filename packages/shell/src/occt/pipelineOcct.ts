@@ -127,7 +127,15 @@ function opsBarrettesPedagogiques(
   return { ops, solidAs: courant }
 }
 
-const ENTITES_ESQUISSE = new Set(['cercle', 'rectangle', 'segment', 'arc', 'octogone', 'hexagone'])
+const ENTITES_ESQUISSE = new Set([
+  'cercle',
+  'rectangle',
+  'segment',
+  'arc',
+  'octogone',
+  'hexagone',
+  'polygone',
+])
 
 type EtatEsquisse = {
   support: string
@@ -320,10 +328,19 @@ function compiler(historique: Operation[], pointe: number | null = null): Compil
     }
     if (ENTITES_ESQUISSE.has(operation.type)) {
       assurerEsquisse()
+      const pans =
+        operation.type === 'polygone'
+          ? Number(operation.arguments.pans)
+          : operation.type === 'hexagone'
+            ? 6
+            : operation.type === 'octogone'
+              ? 8
+              : undefined
       esquisse!.entites.push({
         id: `${operation.type}.${uid++}`,
         sorte: operation.type as EntiteEsquisse['sorte'],
         degres: 0,
+        ...(pans !== undefined && Number.isFinite(pans) ? { pans } : {}),
       })
       continue
     }

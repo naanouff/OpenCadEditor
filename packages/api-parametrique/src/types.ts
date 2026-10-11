@@ -11,7 +11,7 @@ export type Operation = {
 
 export type EntiteEsquisse = {
   id: string
-  sorte: 'cercle' | 'rectangle' | 'segment' | 'arc' | 'octogone' | 'hexagone'
+  sorte: 'cercle' | 'rectangle' | 'segment' | 'arc' | 'octogone' | 'hexagone' | 'polygone'
   degres: number
   diametre?: string
   ecart?: string
@@ -19,8 +19,10 @@ export type EntiteEsquisse = {
   largeur?: string
   longueur?: string
   rayon?: string
-  /** Distance entre deux pans opposés d’un polygone régulier (hex / octo). */
+  /** Distance entre deux pans opposés d’un polygone régulier. */
   entreplat?: string
+  /** Nombre de pans (`polygone <n>`). */
+  pans?: number
   /** Cote axiale de l'extrémité d'un segment, pour une révolution. */
   hauteur?: string
   /** Cible d’une relation `concentrique` posée sur cette entité. */

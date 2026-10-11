@@ -97,5 +97,7 @@ Suivi du projet et notes de travail. Ce dossier n’appartient pas au moteur : l
 | [sprints/sprint-39-barrette-occt.md](sprints/sprint-39-barrette-occt.md) | Sprint : trous de barrette OCCT |
 | [veille/carrure-occt-affichage.md](veille/carrure-occt-affichage.md) | Affichage carrure via pipeline OCCT |
 | [sprints/sprint-40-carrure-occt-affichage.md](sprints/sprint-40-carrure-occt-affichage.md) | Sprint : retire historiqueCornesSession |
+| [veille/polygone-n.md](veille/polygone-n.md) | Verbe polygone n |
+| [sprints/sprint-41-polygone-n.md](sprints/sprint-41-polygone-n.md) | Sprint : polygone n + alias hex/octo |
 
 La veille précède chaque sprint. Le prototype (API, shell, format, MCP) est dans `packages/`. OpenCadEditor est l’éditeur. CADOM (`.cadom`) est le format d’assemblage OpenCAD, pas un logiciel. L’intention est dans `.cadompart`. Cap : [suivi/feuille-de-route.md](suivi/feuille-de-route.md). État consolidé : [suivi/analyse.md](suivi/analyse.md) ; détail daté : journal.

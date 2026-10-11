@@ -28,6 +28,13 @@ export const domaineEsquisse: Domaine = {
     arc: () => ({ type: 'arc', arguments: {}, noms: [] }),
     octogone: () => ({ type: 'octogone', arguments: {}, noms: [] }),
     hexagone: () => ({ type: 'hexagone', arguments: {}, noms: [] }),
+    polygone: (reste) => {
+      const pans = Number(reste.trim())
+      if (!Number.isInteger(pans) || pans < 3) {
+        throw new ErreurApi('polygone: pans entier ≥ 3 requis')
+      }
+      return { type: 'polygone', arguments: { pans: String(pans) }, noms: [] }
+    },
     concentrique: (reste) => ({ type: 'concentrique', arguments: { cible: reste }, noms: [] }),
     cote: (reste) => {
       const espace = reste.indexOf(' ')
@@ -108,6 +115,7 @@ export const domaineEsquisse: Domaine = {
           id: `octogone.${contexte.piece.compteur++}`,
           sorte: 'octogone',
           degres: 1,
+          pans: 8,
         })
       },
       defaire() {},
@@ -120,6 +128,22 @@ export const domaineEsquisse: Domaine = {
           id: `hexagone.${contexte.piece.compteur++}`,
           sorte: 'hexagone',
           degres: 1,
+          pans: 6,
+        })
+      },
+      defaire() {},
+    },
+    polygone: {
+      dansHistorique: true,
+      faire(contexte, operation) {
+        rouvrirSiBesoin(contexte)
+        const pans = Number(operation.arguments.pans)
+        if (!Number.isInteger(pans) || pans < 3) throw new ErreurApi('polygone: pans entier ≥ 3 requis')
+        contexte.esquisse!.entites.push({
+          id: `polygone.${contexte.piece.compteur++}`,
+          sorte: 'polygone',
+          degres: 1,
+          pans,
         })
       },
       defaire() {},

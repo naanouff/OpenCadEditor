@@ -370,14 +370,14 @@ function resoudre(
   const rectangles = entites.filter((e) => e.sorte === 'rectangle')
   const cercles = entites.filter((e) => e.sorte === 'cercle')
   const segments = entites.filter((e) => e.sorte === 'segment')
-  const hexagones = entites.filter((e) => e.sorte === 'hexagone')
-  const octogones = entites.filter((e) => e.sorte === 'octogone')
-
-  if (hexagones.length === 1 && entites.length === 1) {
-    return resoudrePolygoneRegulier(hexagones[0]!, parametres, 6)
-  }
-  if (octogones.length === 1 && entites.length === 1) {
-    return resoudrePolygoneRegulier(octogones[0]!, parametres, 8)
+  const polygones = entites.filter(
+    (e) => e.sorte === 'polygone' || e.sorte === 'hexagone' || e.sorte === 'octogone',
+  )
+  if (polygones.length === 1 && entites.length === 1) {
+    const poly = polygones[0]!
+    const n =
+      poly.sorte === 'hexagone' ? 6 : poly.sorte === 'octogone' ? 8 : (poly.pans ?? 0)
+    if (n >= 3) return resoudrePolygoneRegulier(poly, parametres, n)
   }
 
   if (rectangles.length === 1 && cercles.length === 0 && entites.length === 1) {

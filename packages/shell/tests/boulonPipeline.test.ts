@@ -59,6 +59,12 @@ describe('boulon pipeline OCCT', () => {
     expect(historiqueCompatibleOcct(session.historique(), session.pointeCourante())).toBe(true)
   })
 
+  it('compile polygone 6 comme alias hexagone', () => {
+    const session = new Session({ geometrie: false })
+    session.executer(SCRIPT_TETE_HEX.replace('hexagone', 'polygone 6'))
+    expect(historiqueCompatibleOcct(session.historique(), session.pointeCourante())).toBe(true)
+  })
+
   it('maille une tête hexagonale extrudée', async () => {
     const occt = await chargerKernel()
     const session = new Session({ geometrie: false })
