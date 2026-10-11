@@ -1,14 +1,22 @@
 import { planLateLoad, type CadomDocument, type LateLoadPlan } from '@opencad/cadom'
 import type { LigneDocument } from './documentAffichage.ts'
+import type { StatutAsset } from './storeShell.ts'
 
 function idCourt(id: string) {
   return id.length > 8 ? id.slice(0, 8) : id
 }
 
-/** Lignes Document pour un graphe `.cadom` (nœuds + plan late-load). */
+function libelleStatut(statut: StatutAsset | null | undefined) {
+  if (!statut || statut.etat === 'en_attente') return 'en attente'
+  if (statut.etat === 'ok') return `ok · ${statut.octets?.byteLength ?? 0} o`
+  return `erreur · ${statut.message ?? '?'}`
+}
+
+/** Lignes Document pour un graphe `.cadom` (nœuds + plan late-load + statuts). */
 export function lignesAssemblage(
   doc: CadomDocument,
   plan: LateLoadPlan = planLateLoad(doc),
+  statuts: ReadonlyMap<string, StatutAsset> = new Map(),
 ): LigneDocument[] {
   const lignes: LigneDocument[] = [
     {
@@ -31,16 +39,17 @@ export function lignesAssemblage(
   for (const root of doc.rootIds) visiter(root, 0)
 
   if (plan.assets.length > 0) {
+    const ok = plan.assets.filter((a) => statuts.get(a.assetId)?.etat === 'ok').length
     lignes.push({
       id: 'cadom-assets',
       libelle: 'Assets',
-      valeur: `${plan.assets.length} · late-load`,
+      valeur: `${ok}/${plan.assets.length} chargés`,
     })
     for (const asset of plan.assets) {
       lignes.push({
         id: `asset-${asset.assetId}`,
         libelle: `· ${asset.role}`,
-        valeur: asset.uri,
+        valeur: `${asset.uri} · ${libelleStatut(statuts.get(asset.assetId))}`,
       })
     }
   }

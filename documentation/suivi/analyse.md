@@ -36,7 +36,7 @@ Pas de `package.json` racine : chaque paquet a son propre lockfile.
 
 Domaines : `parametres`, `esquisse` (dont polygones, GCS), `solide`, `revolution` (+ `pas` filet).
 
-`.cadompart` : aller-retour via `format-opencad` (sprints 32–33), expressions et `pas`/`helix` compris. `.cadom` : ouvrir / plan late-load / enregistrer via `@opencad/cadom` (sprints 44–46) ; fetch mesh pas encore. Dialecte expressions : cadompart v0.3 (O1).
+`.cadompart` : aller-retour via `format-opencad` (sprints 32–33), expressions et `pas`/`helix` compris. `.cadom` : ouvrir / plan / enregistrer / fetch injectable (sprints 44–47) ; decode mesh viewport pas encore. Dialecte expressions : cadompart v0.3 (O1).
 
 ## Géométrie
 

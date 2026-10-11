@@ -24,6 +24,6 @@ Octets `.cadompart` (version 0.2) restent le chemin pièce. Si `lire` refuse, te
 
 Si `assemblage` est chargé → `encode(toLogical())` + nom `{root}.cadom`. Sinon → `.cadompart` (session pièce).
 
-## Hors périmètre (sprints suivants)
+## Hors périmètre
 
-Fetch URI / decode `.cadomesh` / glb, pièces lunette/fond/verre/couronne, mates.
+Decode `.cadomesh` / glb + viewport, pièces lunette/fond/verre/couronne, mates. Fetch : [cadom-fetch-assets.md](cadom-fetch-assets.md) (sprint 47).
