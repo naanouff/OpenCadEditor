@@ -458,3 +458,17 @@ Verbe `hexagone` (GCS, `R = entreplat / (2·cos(π/6))`). Pipeline : rejeu `hexa
 
 Branche `feature/gitflow` depuis `develop`. `delete_branch_on_merge` activé sur le dépôt. Workflow [branch-policy.yml](../../.github/workflows/branch-policy.yml) : vers `main` seule `develop` ; vers `develop` `feature/*` | `fix/*` | `chore/*`. Doc [gitflow.md](../gitflow.md) et veille alignées. Nettoyage one-shot sur origin : `feature/pas-cadompart`, `mcp-geometrie`, `boulon-hexagonal`, `datums-origine`, `carrure-pipeline`, `pointe-arbre`, `gcs-esquisse`, `pipeline-occt`, `noyau-occt`, `initial`, `chore/feuille-route-31`.
 
+## 2026-10-11 — Point projet et feuille de route
+
+État des sprints 03–36 confronté au cap ([direction-modeleur.md](../veille/direction-modeleur.md)) et à la doctrine OpenCAD. Cap tenu sur le pipeline générique ; écarts : test `tube-bout` rouge, pas de CI de tests, doc en retard, `noyauProvisoire` encore présent, dérive d’axe (MCP / boulon / gitflow).
+
+Arbitrages : (1) OpenCAD Kernel = occt-kernel en bootstrap, pipeline à extraire vers OpenCAD (O2) ; (2) dialecte d’expressions versionné en cadompart v0.3 (O1). Feuille de route : [feuille-de-route.md](feuille-de-route.md) (phases P0–P4, O1–O4, W1). [noyau-occt.md](../veille/noyau-occt.md), README et [analyse.md](analyse.md) alignés (plus de « noyau OpenCAD déprécié »).
+
+## 2026-10-11 — Sprint 37 préparé : recalage P0
+
+[recalage-cap.md](../veille/recalage-cap.md) et [sprint-37-recalage.md](../sprints/sprint-37-recalage.md). Suite verte (`tube-bout` → fixture `SCRIPT_CARRURE`), workflow `ci.yml`, required check après première run verte, suppression des `pnpm-workspace.yaml` parasites sous `packages/`, nettoyage branches locales. Branche prévue `chore/recalage` depuis `develop`. Pas encore de code.
+
+## 2026-10-11 — Sprint 37 commencé : feature/recalage
+
+Branche `feature/recalage` depuis `develop`. `tube-bout.test.ts` importe `SCRIPT_CARRURE` depuis `tests/fixtures/scriptCarrure.ts` (suite api 97/97). Workflow [ci.yml](../../.github/workflows/ci.yml) : job `tests`, vitest sur les quatre paquets ; `tsc` hors CI (imports `.ts` + typages cassés). Rulesets JSON : required check `tests` (sync API après merge + run verte). Stubs `packages/*/pnpm-workspace.yaml` ignorés (`.gitignore`) + `pnpm.onlyBuiltDependencies` dans chaque `package.json`. Branches locales déjà dans `develop` supprimées (`chore/feuille-route-31`, `feature/boulon-hexagonal`, `carrure-pipeline`, `datums-origine`, `fichier-cadompart`, `gcs-enrichi`, `initial`, `mcp-geometrie`, `pas-cadompart`, `pointe-arbre`, `topo-faces`).
+

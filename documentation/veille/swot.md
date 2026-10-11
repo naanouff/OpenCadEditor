@@ -1,6 +1,6 @@
 # SWOT — OpenCadEditor
 
-Périmètre évalué : OpenCadEditor, éditeur web (client Electron prévu) sur le shell `@naanouff/w3dts-viewer-editor` et les extensions EDEX. Il exploite les formats OpenCAD de la branche [develop](https://github.com/naanouff/OpenCAD/tree/develop). CADOM (`.cadom`) est le format d’assemblage, pas l’éditeur. L’intention paramétrique est `.cadompart`, recalculée par **occt-kernel** (décision 2026-10-10 ; le noyau OpenCAD est déprécié comme cible moteur — [noyau-occt.md](noyau-occt.md)). L’affichage sans noyau est `.cadomesh`. Le STEP est hors du modèle de vérité.
+Périmètre évalué : OpenCadEditor, éditeur web (client Electron prévu) sur le shell `@naanouff/w3dts-viewer-editor` et les extensions EDEX. Il exploite les formats OpenCAD de la branche [develop](https://github.com/naanouff/OpenCAD/tree/develop). CADOM (`.cadom`) est le format d’assemblage, pas l’éditeur. L’intention paramétrique est `.cadompart`, recalculée par **occt-kernel** (bootstrap OpenCAD Kernel K3 — [noyau-occt.md](noyau-occt.md), [feuille-de-route.md](../suivi/feuille-de-route.md)). L’affichage sans noyau est `.cadomesh`. Le STEP est hors du modèle de vérité.
 
 ## Forces
 
@@ -12,7 +12,7 @@ Périmètre évalué : OpenCadEditor, éditeur web (client Electron prévu) sur 
 
 ## Faiblesses
 
-- Le recalcul B-Rep est occt-kernel (vis hybride). Suite : pipeline générique puis GCS ([direction-modeleur.md](direction-modeleur.md)), pas un port carrure motif par motif. Carrure encore `noyauProvisoire`. Le noyau OpenCAD n’est plus attendu.
+- Le recalcul B-Rep est occt-kernel (filet encore hybride). Pipeline générique + GCS faits ([direction-modeleur.md](direction-modeleur.md)) ; barrette / tube et `noyauProvisoire` restent (P1). Kernel produit OpenCAD = extraction ultérieure (O2), pas un second moteur.
 - Le SDK et la spec continuent d’évoluer sur `develop` (CADOM v0.3.3 au moment de la lecture). L’éditeur dépend de ce contrat.
 - w3dts affiche des maillages. Il ne recalcule pas un `.cadompart`.
 - La connaissance fonctionnelle de la modélisation paramétrique n’est pas acquise dans l’équipe. Copier l’interface d’un SolidWorks sans en comprendre l’arbre de construction produirait un faux modeleur.
@@ -37,4 +37,4 @@ OpenCadEditor exploite des formats. Il n’est pas ces formats. Deux façons de 
 1. **Exploiter le graphe.** Placer les occurrences, les transforms et les surcharges d’un `.cadom`, afficher le `.cadomesh`. Pas encore de reconstruction.
 2. **Exploiter l’intention.** Esquisser, coter, reconstruire via `.cadompart` et **occt-kernel**, puis figer un `.cadombrep` (cache BREP).
 
-Décision moteur : [noyau-occt.md](noyau-occt.md). Sprint : [sprint-24-noyau-occt.md](../sprints/sprint-24-noyau-occt.md).
+La voie 2 est engagée (sprints 03–36). Suite : [feuille-de-route.md](../suivi/feuille-de-route.md). Moteur : [noyau-occt.md](noyau-occt.md).

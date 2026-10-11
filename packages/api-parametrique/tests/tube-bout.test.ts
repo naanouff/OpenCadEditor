@@ -1,6 +1,6 @@
 ﻿import { describe, expect, it } from 'vitest'
 import { Session } from '../src/index.ts'
-import { script } from './carrure.test.ts'
+import { SCRIPT_CARRURE as script } from './fixtures/scriptCarrure.ts'
 
 describe('bout du tube', () => {
   it('ferme le tube par un anneau et une paroi, laisse le perçage ouvert', () => {

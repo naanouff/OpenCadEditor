@@ -1,2 +1,4 @@
 node_modules/
 dist/
+# Stub pnpm approve-builds (pas un workspace monorepo)
+packages/*/pnpm-workspace.yaml

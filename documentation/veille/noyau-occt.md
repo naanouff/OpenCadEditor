@@ -1,12 +1,12 @@
-# Noyau B-Rep : occt-kernel remplace le noyau OpenCAD
+# Noyau B-Rep : occt-kernel bootstrap de l’OpenCAD Kernel
 
-Décision du 2026-10-10. Vérification préalable : [occt-kernel.md](../suivi/occt-kernel.md). Sprint : [sprint-24-noyau-occt.md](../sprints/sprint-24-noyau-occt.md).
+Décision du 2026-10-10 ; amendée le 2026-10-11 (feuille de route). Vérification : [occt-kernel.md](../suivi/occt-kernel.md). Sprint infra : [sprint-24-noyau-occt.md](../sprints/sprint-24-noyau-occt.md). Cap : [feuille-de-route.md](../suivi/feuille-de-route.md).
 
 ## Décision
 
 - **Moteur B-Rep** de OpenCadEditor : [`@naanouff/occt-wasm`](https://github.com/naanouff/occt-wasm) / artefact **`occt-kernel`** (v0.2.0).
-- Le **noyau OpenCAD** (recalcul `.cadompart` → `.cadombrep` dans le dépôt OpenCAD) est **déprécié** comme cible moteur dans ce projet. Il n’est pas branché ici ; on ne l’attend plus.
-- Les **formats** restent : `.cadom`, `.cadompart`, `.cadomesh`. STEP/BREP via OCCT = échange ou cache, jamais document de travail.
+- Ce moteur est le **bootstrap** du **OpenCAD Kernel (K3)** exigé par la doctrine OpenCAD : pas un moteur « externe à la place du produit ». Le pipeline (historique → wires → `runBatch`) sera extrait vers un paquet OpenCAD (phase **O2**) ; l’éditeur le consommera comme w3dts.
+- Les **formats** restent : `.cadom`, `.cadompart`, `.cadomesh`, `.cadombrep`. STEP/BREP via OCCT = échange ou cache, jamais document de travail.
 - L’**historique** reste dans la `Session` (puis `.cadompart`) ; OCCT calcule des handles éphémères et un maillage.
 
 ```mermaid
@@ -30,20 +30,20 @@ Sous-module `vendor/occt-wasm` @ tag `v0.2.0`, même pattern que `vendor/w3dts`.
 
 **Vis** — [scriptVis.ts](../../packages/shell/src/scriptVis.ts) via `construireVis` temporaire : corps / tête / Pozi en `revolve` + booléens OCCT. Filet `pas` hybride (maillage hôte) : pas d’hélice dans le kernel v1.
 
-**Carrure** — reste sur `noyauProvisoire` jusqu’au [pipeline générique](pipeline-occt.md). Porter la carrure motif par motif vers OCCT est **abandonné** ([direction-modeleur.md](direction-modeleur.md)).
+**Carrure** — anneau / poches / cornes sur le [pipeline générique](pipeline-occt.md) (sprint 30). Barrette et tube encore ignorés. Porter la carrure motif par motif vers OCCT reste **abandonné** ([direction-modeleur.md](direction-modeleur.md)).
 
-## Suite (après la preuve)
+## Suite (faite ou planifiée)
 
-1. Sprint 25 — historique → wires → OCCT sans `if (piece === 'vis')`.
-2. Sprint 26 — GCS.
-3. Carrure uniquement quand ce pipeline sait anneau + profil + cut.
+1. Sprints 25–31 — pipeline, GCS, pointe, faces, carrure, datums (**faits**).
+2. Sprints 32–36 — `.cadompart`, `pas`, MCP, boulon, gitflow (**faits**).
+3. Sprint 37 — recalage P0 ([recalage-cap.md](recalage-cap.md)).
+4. P1 — barrette / tube OCCT, retrait `noyauProvisoire` ; W1 occt-wasm (arcs, helix) ; O2 extraction kernel OpenCAD.
 
 ## Ce qui sort du chemin chaud
 
-`construireVis` spécialiste (sprint 25), puis `noyauProvisoire` / BSP quand le pipeline générique couvre les pièces. Pas de port carrure dédié.
+`construireVis` spécialiste (fait, sprint 25). `noyauProvisoire` / BSP quand P1 couvre barrette et tube. Pas de port carrure dédié.
 
 ## Hors de cette décision
 
-- Import PMI (`occt-step`). Lecture et écriture `.cadompart` : [fichier-cadompart.md](fichier-cadompart.md), sprint 32. `.cadom`, `.cadomesh` et `.cadombrep` restent après.
-- Solveur d’esquisse GCS (sprint 26).
-- Remplacement total du filet hélicoïdal dans OCCT.
+- Import PMI (`occt-step`). Lecture / écriture `.cadompart` : faite (32–33). Writers `.cadomesh` / `.cadombrep` : piste OpenCAD O3.
+- Remplacement total du filet hélicoïdal dans OCCT (W1).
