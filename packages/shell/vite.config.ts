@@ -74,6 +74,13 @@ export default defineConfig({
         ),
       },
       {
+        find: '@opencad/kernel/barrettes',
+        replacement: path.resolve(
+          ici,
+          '../../vendor/opencad/packages/kernel/src/barrettesKernel.ts',
+        ),
+      },
+      {
         find: '@opencad/kernel/sketch',
         replacement: path.resolve(
           ici,

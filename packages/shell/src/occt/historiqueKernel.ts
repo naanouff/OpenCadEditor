@@ -2,7 +2,7 @@
  * Pont historique Session → `@opencad/kernel/compiler` (O2-9+).
  * Motifs supportés : plan.dessus / plan.12h / plan.3h, face.dessus/dessous,
  * rectangle/cercle/polygone/segment, extrude / revolution / enlever / fillet.
- * Hors scope : pas, corne, concentrique, barrettes plan.12h…
+ * Hors scope : pas, corne, concentrique…
  */
 import {
   compilerHistorique,
