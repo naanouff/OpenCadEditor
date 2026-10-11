@@ -592,3 +592,7 @@ Kernel : polygone régulier (entreplat) ; bump `vendor/opencad`.
 
 `esquissePolylines` délègue rectangle/cercle/polygone à `@opencad/kernel/sketch`.
 
+## 2026-10-11 — O2-9 compiler mm + pont pipeline
+
+`pipelineOcct.compiler` : historique simple → `compilerHistorique({ unite: 'mm' })`.
+

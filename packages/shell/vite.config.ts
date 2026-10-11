@@ -67,6 +67,13 @@ export default defineConfig({
         ),
       },
       {
+        find: '@opencad/kernel/compiler',
+        replacement: path.resolve(
+          ici,
+          '../../vendor/opencad/packages/kernel/src/compilerHistorique.ts',
+        ),
+      },
+      {
         find: '@opencad/kernel/sketch',
         replacement: path.resolve(
           ici,
