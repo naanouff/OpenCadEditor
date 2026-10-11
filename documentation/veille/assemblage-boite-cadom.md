@@ -16,6 +16,10 @@ flowchart TB
   root --> couronne
 ```
 
+## Viewport
+
+À l’ouverture, le shell reconstruit chaque pièce connue (`SCRIPT_*` via OCCT), applique le `world` du nœud et fusionne dans `maillageAffiche`. Les URI non mappées restent hors vue.
+
 ## Hors périmètre
 
-Chargement / rebuild des `.cadompart`, meshes late-load, mates, Complete export.
+Lecture binaire des `.cadompart` assets, mates, Complete export.

@@ -26,7 +26,16 @@ export function DebugVue(): ReactElement {
   const chargerAssemblage = () => {
     try {
       storeShell.ouvrir(encode(assemblageBoiteMilgauss()))
-      setMessage('Boîte .cadom chargée')
+      setMessage('Boîte .cadom chargée — reconstruction 3D…')
+      const wait = () => {
+        if (storeShell.construction()) {
+          requestAnimationFrame(wait)
+          return
+        }
+        const n = storeShell.maillageAffiche()?.indices.length ?? 0
+        setMessage(n > 0 ? 'Boîte .cadom affichée' : 'Boîte .cadom : graphe seul (pas de maillage)')
+      }
+      requestAnimationFrame(wait)
     } catch (erreur) {
       setMessage(erreur instanceof Error ? erreur.message : String(erreur))
     }
