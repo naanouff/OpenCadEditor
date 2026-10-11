@@ -62,7 +62,7 @@ flowchart LR
 | **O3** Writers | OpenCAD | — | fait (K3-7/8) | `.cadomesh` / `.cadombrep` |
 | **O4** SDK `.cadom` | OpenCAD | O4-1…3 | fait | MVP A : DAG, overrides, late-load, lint |
 | **P3** Assemblage | OpenCadEditor | 44–47 | fait (graphe) | open/save/plan/fetch `.cadom` |
-| **P3b** Pièces boîte | OpenCadEditor | 48–52 | en cours (52) | Pièces + graphe `.cadom` multi-pièces ; suite Complete |
+| **P3b** Pièces boîte | OpenCadEditor | 48–53 | fait | Pièces + Design/Complete `.cadom` ; suite écriture `.cadomesh` / P4 |
 | **P4** Ergonomie | OpenCadEditor | 45–48 | à venir | Souris, sélection faces, ruban |
 
 ### P0 — Recalage (sprint 37)
@@ -90,7 +90,7 @@ Sprint 44–47 : ouvrir / plan / enregistrer / fetch injectable ([fichier-cadom.
 
 ### P3b — Pièces de la boîte (dès sprint 48)
 
-Sprint 48–51 : pièces. Sprint 52 : graphe multi-pièces ([assemblage-boite-cadom.md](../veille/assemblage-boite-cadom.md)). Ensuite : export Complete / rebuild depuis assets.
+Sprint 48–51 : pièces. Sprint 52–53 : Design + Complete bindings ([assemblage-boite-cadom.md](../veille/assemblage-boite-cadom.md)). Suite : octets `.cadomesh`, P4 ergonomie, W1 helix.
 
 ### P4 — Ergonomie (sprints 45–48)
 

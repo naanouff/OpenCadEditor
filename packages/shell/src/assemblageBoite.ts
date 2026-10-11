@@ -1,6 +1,6 @@
 /**
- * Assemblage `.cadom` boîte Milgauss — graphe multi-pièces (P3b → sprint 52).
- * Placements indicatifs (mm) ; pas de mates. Assets = refs `.cadompart` paramétriques.
+ * Assemblage `.cadom` boîte Milgauss — graphe multi-pièces (P3b).
+ * Design : refs `.cadompart`. Complete : + refs `.cadomesh` (rôle mesh).
  */
 import {
   CADOM_VERSION_MAJOR,
@@ -8,6 +8,7 @@ import {
   mat4Identity,
   mat4Multiply,
   type CadomLogical,
+  type CadomNode,
 } from '@opencad/cadom'
 
 export const BOITE_ID = {
@@ -22,6 +23,11 @@ export const BOITE_ID = {
   assetVerre: 'a0000001-0000-4000-8000-000000000030',
   assetFond: 'a0000001-0000-4000-8000-000000000040',
   assetCouronne: 'a0000001-0000-4000-8000-000000000050',
+  meshCarrure: 'm0000001-0000-4000-8000-000000000010',
+  meshLunette: 'm0000001-0000-4000-8000-000000000020',
+  meshVerre: 'm0000001-0000-4000-8000-000000000030',
+  meshFond: 'm0000001-0000-4000-8000-000000000040',
+  meshCouronne: 'm0000001-0000-4000-8000-000000000050',
 } as const
 
 /** Column-major translation (mm when document units = mm). */
@@ -47,21 +53,102 @@ function poseCouronne(): Float32Array {
   return mat4Multiply(mat4Translate(18, 4, 0), mat4RotYversX())
 }
 
+type PieceSpec = {
+  nodeId: string
+  name: string
+  transform: Float32Array
+  partAssetId: string
+  partUri: string
+  meshAssetId: string
+  meshUri: string
+}
+
+const PIECES: PieceSpec[] = [
+  {
+    nodeId: BOITE_ID.carrure,
+    name: 'Carrure',
+    transform: mat4Identity(),
+    partAssetId: BOITE_ID.assetCarrure,
+    partUri: './carrure.cadompart',
+    meshAssetId: BOITE_ID.meshCarrure,
+    meshUri: './carrure.cadomesh',
+  },
+  {
+    nodeId: BOITE_ID.lunette,
+    name: 'Lunette',
+    transform: mat4Translate(0, 8, 0),
+    partAssetId: BOITE_ID.assetLunette,
+    partUri: './lunette.cadompart',
+    meshAssetId: BOITE_ID.meshLunette,
+    meshUri: './lunette.cadomesh',
+  },
+  {
+    nodeId: BOITE_ID.verre,
+    name: 'Verre',
+    transform: mat4Translate(0, 8.2, 0),
+    partAssetId: BOITE_ID.assetVerre,
+    partUri: './verre.cadompart',
+    meshAssetId: BOITE_ID.meshVerre,
+    meshUri: './verre.cadomesh',
+  },
+  {
+    nodeId: BOITE_ID.fond,
+    name: 'Fond',
+    transform: mat4Translate(0, -1, 0),
+    partAssetId: BOITE_ID.assetFond,
+    partUri: './fond.cadompart',
+    meshAssetId: BOITE_ID.meshFond,
+    meshUri: './fond.cadomesh',
+  },
+  {
+    nodeId: BOITE_ID.couronne,
+    name: 'Couronne',
+    transform: poseCouronne(),
+    partAssetId: BOITE_ID.assetCouronne,
+    partUri: './couronne.cadompart',
+    meshAssetId: BOITE_ID.meshCouronne,
+    meshUri: './couronne.cadomesh',
+  },
+]
+
+function noeudPiece(spec: PieceSpec, complete: boolean): CadomNode {
+  const bindings = [{ role: 'parametric' as const, assetId: spec.partAssetId }]
+  if (complete) bindings.unshift({ role: 'mesh', assetId: spec.meshAssetId })
+  return {
+    id: spec.nodeId,
+    parentId: BOITE_ID.root,
+    name: spec.name,
+    semanticType: 'part',
+    visible: true,
+    localTransform: spec.transform,
+    assetBindings: bindings,
+  }
+}
+
+/** Design badge : parametric `.cadompart` only. */
 export function assemblageBoiteMilgauss(): CadomLogical {
+  return construire(false)
+}
+
+/** Complete badge : parametric + mesh `.cadomesh` URIs (bytes generated later). */
+export function assemblageBoiteComplete(): CadomLogical {
+  return construire(true)
+}
+
+function construire(complete: boolean): CadomLogical {
   const I = mat4Identity()
+  const assets = PIECES.flatMap((p) => {
+    const list = [{ id: p.partAssetId, uri: p.partUri, kind: 'cadompart' as const }]
+    if (complete) list.push({ id: p.meshAssetId, uri: p.meshUri, kind: 'cadomesh' as const })
+    return list
+  })
   return {
     versionMajor: CADOM_VERSION_MAJOR,
     versionMinor: CADOM_VERSION_MINOR,
     units: 'mm',
     upAxis: 'y',
     rootIds: [BOITE_ID.root],
-    assets: [
-      { id: BOITE_ID.assetCarrure, uri: './carrure.cadompart', kind: 'cadompart' },
-      { id: BOITE_ID.assetLunette, uri: './lunette.cadompart', kind: 'cadompart' },
-      { id: BOITE_ID.assetVerre, uri: './verre.cadompart', kind: 'cadompart' },
-      { id: BOITE_ID.assetFond, uri: './fond.cadompart', kind: 'cadompart' },
-      { id: BOITE_ID.assetCouronne, uri: './couronne.cadompart', kind: 'cadompart' },
-    ],
+    assets,
     nodes: [
       {
         id: BOITE_ID.root,
@@ -72,51 +159,7 @@ export function assemblageBoiteMilgauss(): CadomLogical {
         localTransform: I,
         assetBindings: [],
       },
-      {
-        id: BOITE_ID.carrure,
-        parentId: BOITE_ID.root,
-        name: 'Carrure',
-        semanticType: 'part',
-        visible: true,
-        localTransform: I,
-        assetBindings: [{ role: 'parametric', assetId: BOITE_ID.assetCarrure }],
-      },
-      {
-        id: BOITE_ID.lunette,
-        parentId: BOITE_ID.root,
-        name: 'Lunette',
-        semanticType: 'part',
-        visible: true,
-        localTransform: mat4Translate(0, 8, 0),
-        assetBindings: [{ role: 'parametric', assetId: BOITE_ID.assetLunette }],
-      },
-      {
-        id: BOITE_ID.verre,
-        parentId: BOITE_ID.root,
-        name: 'Verre',
-        semanticType: 'part',
-        visible: true,
-        localTransform: mat4Translate(0, 8.2, 0),
-        assetBindings: [{ role: 'parametric', assetId: BOITE_ID.assetVerre }],
-      },
-      {
-        id: BOITE_ID.fond,
-        parentId: BOITE_ID.root,
-        name: 'Fond',
-        semanticType: 'part',
-        visible: true,
-        localTransform: mat4Translate(0, -1, 0),
-        assetBindings: [{ role: 'parametric', assetId: BOITE_ID.assetFond }],
-      },
-      {
-        id: BOITE_ID.couronne,
-        parentId: BOITE_ID.root,
-        name: 'Couronne',
-        semanticType: 'part',
-        visible: true,
-        localTransform: poseCouronne(),
-        assetBindings: [{ role: 'parametric', assetId: BOITE_ID.assetCouronne }],
-      },
+      ...PIECES.map((p) => noeudPiece(p, complete)),
     ],
     overrides: [],
     extensions: [],
