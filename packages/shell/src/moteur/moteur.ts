@@ -6,6 +6,8 @@ export type Moteur = {
   annuler(sequence: number): void
   activer(index: number, actif: boolean, sequence: number): void
   pointe(cible: number | 'fin', sequence: number): void
+  refaire(sequence: number): void
+  remplacer(script: string, sequence: number): void
   ouvrir(script: string, eteins: number[], sequence: number): void
 }
 
@@ -45,6 +47,19 @@ export function moteurSynchrone(recevoir: (maillage: Maillage, sequence: number)
     },
     pointe(cible, sequence) {
       session.poserPointe(cible)
+      pousser(sequence)
+    },
+    refaire(sequence) {
+      try {
+        session.refaire()
+      } catch {
+        // Rien à refaire.
+      }
+      pousser(sequence)
+    },
+    remplacer(script, sequence) {
+      session.reinitialiser()
+      if (script.trim()) session.executer(script)
       pousser(sequence)
     },
     ouvrir(script, eteins, sequence) {

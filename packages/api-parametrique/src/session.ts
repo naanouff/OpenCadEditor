@@ -145,6 +145,19 @@ export class Session {
     this.passe.push(action)
   }
 
+  /** Vide les pièces, le document et les deux piles. L'objet Session reste le même. */
+  reinitialiser() {
+    this.pieces.clear()
+    this.active = null
+    this.passe.length = 0
+    this.futur.length = 0
+    this.enLot = false
+    this.sale = false
+    this.modele.auteur = ''
+    this.modele.version = '0.0.0'
+    this.modele.unite = 'mm'
+  }
+
   expression(nom: string) {
     return this.pieceActive().parametres.get(nom)
   }

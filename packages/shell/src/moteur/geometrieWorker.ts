@@ -77,6 +77,15 @@ onmessage = (event: MessageEvent<Demande>) => {
       } catch {
         // L’interface a déjà signalé l’erreur.
       }
+    } else if (demande.sorte === 'refaire') {
+      try {
+        session.refaire()
+      } catch {
+        // Rien à refaire.
+      }
+    } else if (demande.sorte === 'remplacer') {
+      session.reinitialiser()
+      if (demande.script.trim()) session.executer(demande.script)
     } else if (demande.sorte === 'ouvrir') {
       session = new Session()
       session.executer(demande.script)
