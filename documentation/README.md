@@ -95,5 +95,7 @@ Suivi du projet et notes de travail. Ce dossier n’appartient pas au moteur : l
 | [veille/barrette-tube-occt.md](veille/barrette-tube-occt.md) | Tube / barrette sur pipeline OCCT (P1) |
 | [sprints/sprint-38-tube-occt.md](sprints/sprint-38-tube-occt.md) | Sprint : tube couronne OCCT |
 | [sprints/sprint-39-barrette-occt.md](sprints/sprint-39-barrette-occt.md) | Sprint : trous de barrette OCCT |
+| [veille/carrure-occt-affichage.md](veille/carrure-occt-affichage.md) | Affichage carrure via pipeline OCCT |
+| [sprints/sprint-40-carrure-occt-affichage.md](sprints/sprint-40-carrure-occt-affichage.md) | Sprint : retire historiqueCornesSession |
 
 La veille précède chaque sprint. Le prototype (API, shell, format, MCP) est dans `packages/`. OpenCadEditor est l’éditeur. CADOM (`.cadom`) est le format d’assemblage OpenCAD, pas un logiciel. L’intention est dans `.cadompart`. Cap : [suivi/feuille-de-route.md](suivi/feuille-de-route.md). État consolidé : [suivi/analyse.md](suivi/analyse.md) ; détail daté : journal.
