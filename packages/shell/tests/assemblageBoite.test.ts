@@ -44,4 +44,20 @@ describe('assemblage boîte Milgauss', () => {
     expect(html).toContain('Couronne')
     expect(html).toContain('./lunette.cadompart')
   })
+
+  it('oriente la couronne : axe local +Y → monde +X (3 h)', () => {
+    const doc = CadomDocument.fromLogical(assemblageBoiteMilgauss())
+    const w = doc.getWorldMatrix(BOITE_ID.couronne)
+    // Origin (stem base) at wall mid-height
+    expect(w[12]).toBeCloseTo(18)
+    expect(w[13]).toBeCloseTo(4)
+    expect(w[14]).toBeCloseTo(0)
+    // Local +Y unit → world +X
+    const x = w[0]! * 0 + w[4]! * 1 + w[8]! * 0
+    const y = w[1]! * 0 + w[5]! * 1 + w[9]! * 0
+    const z = w[2]! * 0 + w[6]! * 1 + w[10]! * 0
+    expect(x).toBeCloseTo(1)
+    expect(y).toBeCloseTo(0)
+    expect(z).toBeCloseTo(0)
+  })
 })

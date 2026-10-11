@@ -6,6 +6,7 @@ import {
   CADOM_VERSION_MAJOR,
   CADOM_VERSION_MINOR,
   mat4Identity,
+  mat4Multiply,
   type CadomLogical,
 } from '@opencad/cadom'
 
@@ -30,6 +31,20 @@ function mat4Translate(x: number, y: number, z: number): Float32Array {
   m[13] = y
   m[14] = z
   return m
+}
+
+/**
+ * SCRIPT_COURONNE revolution axis = local +Y.
+ * Watch crown at 3 h needs axis along world +X → rotate so +Y maps to +X, then translate.
+ * (x,y,z) → (y, -x, z)
+ */
+function mat4RotYversX(): Float32Array {
+  return new Float32Array([0, -1, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1])
+}
+
+/** Stem base on case wall (r = 18), mid-height ; head further +X. */
+function poseCouronne(): Float32Array {
+  return mat4Multiply(mat4Translate(18, 4, 0), mat4RotYversX())
 }
 
 export function assemblageBoiteMilgauss(): CadomLogical {
@@ -99,8 +114,7 @@ export function assemblageBoiteMilgauss(): CadomLogical {
         name: 'Couronne',
         semanticType: 'part',
         visible: true,
-        // Peau Ø36 → x≈20 ; milieu hauteur carrure.
-        localTransform: mat4Translate(20, 4, 0),
+        localTransform: poseCouronne(),
         assetBindings: [{ role: 'parametric', assetId: BOITE_ID.assetCouronne }],
       },
     ],
