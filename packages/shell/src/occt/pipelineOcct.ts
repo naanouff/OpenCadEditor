@@ -1,5 +1,6 @@
 import {
   Session,
+  datumParId,
   evaluateurProvisoire,
   rejouables,
   union,
@@ -20,6 +21,57 @@ import {
   yPlanFace,
   type RegistreFaces,
 } from './registreFaces.ts'
+
+/** Chevauchement peau pour fuse du tube latéral (mm). */
+const CHEVAUCHE_TUBE = 0.3
+
+function directionDatum(
+  support: string,
+  profondeur: number,
+): readonly [number, number, number] {
+  const datum = datumParId(support)
+  if (!datum) return [0, profondeur, 0]
+  const n = datum.normale
+  return [n[0] * profondeur || 0, n[1] * profondeur || 0, n[2] * profondeur || 0]
+}
+
+/** Décalage monde pour centrer le tube à mi-hauteur de carrure (GCS cercle à u=v=0). */
+function decalerPolylines(polys: Polyline3[], dx: number, dy: number, dz: number): Polyline3[] {
+  if (dx === 0 && dy === 0 && dz === 0) return polys
+  return polys.map((poly) => {
+    const out: number[] = []
+    for (let i = 0; i < poly.length; i += 3) {
+      out.push(poly[i]! + dx, poly[i + 1]! + dy, poly[i + 2]! + dz)
+    }
+    return out
+  })
+}
+
+/**
+ * Altitude du wire sur un datum (le long de la normale).
+ * Tube `plan.3h` : peau extérieure − chevauchement, si `diametre_boite` est connu.
+ */
+function altitudeDatum(
+  support: string,
+  evaluer: (e: string) => number,
+  parametres: Map<string, string>,
+): number {
+  if (support === 'plan.3h' && parametres.has('diametre_boite')) {
+    return evaluer('diametre_boite') / 2 - CHEVAUCHE_TUBE
+  }
+  return 0
+}
+
+function decalageTube(
+  support: string,
+  evaluer: (e: string) => number,
+  parametres: Map<string, string>,
+): readonly [number, number, number] {
+  if (support === 'plan.3h' && parametres.has('hauteur_carrure')) {
+    return [0, evaluer('hauteur_carrure') / 2, 0]
+  }
+  return [0, 0, 0]
+}
 
 const ENTITES_ESQUISSE = new Set(['cercle', 'rectangle', 'segment', 'arc', 'octogone', 'hexagone'])
 
@@ -276,23 +328,27 @@ function compiler(historique: Operation[], pointe: number | null = null): Compil
 
     if (operation.type === 'extrude') {
       const profondeur = evaluer(operation.arguments.expression)
-      // Tube latéral : hors v1 carrure OCCT (fuse/cut sur plan.3h dégrade l’anneau).
-      if (sketch.support === 'plan.3h') {
-        esquisse = null
-        continue
-      }
       const face = faces.get(sketch.support)
-      const yPlan = face ? yPlanFace(face) : 0
+      const tubeLateral = sketch.support === 'plan.3h'
+      // Tube : fil à la peau (− chevauchement), extrude un peu plus long pour fuse.
+      const longueurExtrude = tubeLateral ? profondeur + CHEVAUCHE_TUBE : profondeur
+      const yPlan = face
+        ? yPlanFace(face)
+        : altitudeDatum(sketch.support, evaluer, parametres)
       const dir = face
         ? ([
-            face.normal[0] * profondeur,
-            face.normal[1] * profondeur,
-            face.normal[2] * profondeur,
+            face.normal[0] * longueurExtrude,
+            face.normal[1] * longueurExtrude,
+            face.normal[2] * longueurExtrude,
           ] as const)
-        : ([0, profondeur, 0] as const)
+        : directionDatum(sketch.support, longueurExtrude)
       let polys
       try {
         polys = polylinesDepuisEsquisse(sketch, parametres, { yPlan })
+        if (tubeLateral) {
+          const [dx, dy, dz] = decalageTube(sketch.support, evaluer, parametres)
+          polys = decalerPolylines(polys, dx, dy, dz)
+        }
       } catch {
         // Esquisse non encore supportée (ex. cercle sur plan.12h) : saute la feature.
         esquisse = null
@@ -300,7 +356,7 @@ function compiler(historique: Operation[], pointe: number | null = null): Compil
       }
       const cercles = sketch.entites.filter((e) => e.sorte === 'cercle')
       // Anneau : deux cercles concentriques → extrude l’extérieur, coupe l’intérieur.
-      if (cercles.length >= 2 && polys.length >= 2 && sketch.support !== 'plan.3h') {
+      if (cercles.length >= 2 && polys.length >= 2 && !tubeLateral) {
         const classes = polys
           .map((poly) => ({
             poly,
@@ -339,7 +395,7 @@ function compiler(historique: Operation[], pointe: number | null = null): Compil
           solidAs = elev.solidAs
         }
       }
-      if (sketch.support !== 'plan.3h') {
+      if (!tubeLateral) {
         if (face) {
           const yFin = face.origin[1] + face.normal[1] * profondeur
           yMax = Math.max(yMax, yFin, face.origin[1])
@@ -361,19 +417,33 @@ function compiler(historique: Operation[], pointe: number | null = null): Compil
       const face = faces.get(sketch.support)
       try {
         if (traverse && sketch.support === 'plan.12h') {
-          // Barrette : hors v1 — esquisse + feature ignorées pour garder le reste en OCCT.
+          // Barrette : sprint 39 — placement pédagogique hors GCS.
           esquisse = null
           continue
         }
-        if (traverse && sketch.support === 'plan.3h') {
-          esquisse = null
-          continue
+        const tubeLateral = sketch.support === 'plan.3h'
+        let yCut: number
+        let dir: readonly [number, number, number]
+        if (face) {
+          yCut = yPlanCoupe(face, profondeur)
+          dir = directionCoupe(face, profondeur)
+        } else if (tubeLateral && traverse) {
+          // Tige : fil près de l’axe, coupe à travers peau + bossage.
+          yCut = -CHEVAUCHE_TUBE
+          const portee =
+            (parametres.has('diametre_boite') ? evaluer('diametre_boite') / 2 : 0) +
+            profondeur +
+            CHEVAUCHE_TUBE * 2
+          dir = directionDatum(sketch.support, portee)
+        } else {
+          yCut = yMax - profondeur
+          dir = directionDatum(sketch.support, profondeur + 0.4)
         }
-        const yCut = face ? yPlanCoupe(face, profondeur) : yMax - profondeur
-        const polys = polylinesDepuisEsquisse(sketch, parametres, { yPlan: yCut })
-        const dir = face
-          ? directionCoupe(face, profondeur)
-          : ([0, profondeur + 0.4, 0] as const)
+        let polys = polylinesDepuisEsquisse(sketch, parametres, { yPlan: yCut })
+        if (tubeLateral) {
+          const [dx, dy, dz] = decalageTube(sketch.support, evaluer, parametres)
+          polys = decalerPolylines(polys, dx, dy, dz)
+        }
         for (const poly of polys) {
           const feat = opsExtrude(poly, dir, String(uid++))
           ops.push(...feat.ops)

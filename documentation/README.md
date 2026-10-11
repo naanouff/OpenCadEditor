@@ -92,5 +92,7 @@ Suivi du projet et notes de travail. Ce dossier n’appartient pas au moteur : l
 | [suivi/feuille-de-route.md](suivi/feuille-de-route.md) | Feuille de route moyen terme éditeur + OpenCAD |
 | [veille/recalage-cap.md](veille/recalage-cap.md) | Recalage du cap avant P1 / O1 |
 | [sprints/sprint-37-recalage.md](sprints/sprint-37-recalage.md) | Sprint : test tube-bout, CI, doc, workspace |
+| [veille/barrette-tube-occt.md](veille/barrette-tube-occt.md) | Tube / barrette sur pipeline OCCT (P1) |
+| [sprints/sprint-38-tube-occt.md](sprints/sprint-38-tube-occt.md) | Sprint : tube couronne OCCT |
 
 La veille précède chaque sprint. Le prototype (API, shell, format, MCP) est dans `packages/`. OpenCadEditor est l’éditeur. CADOM (`.cadom`) est le format d’assemblage OpenCAD, pas un logiciel. L’intention est dans `.cadompart`. Cap : [suivi/feuille-de-route.md](suivi/feuille-de-route.md). État consolidé : [suivi/analyse.md](suivi/analyse.md) ; détail daté : journal.

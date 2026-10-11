@@ -480,3 +480,7 @@ Première run Actions : clone `vendor/w3dts` en échec (`repository not found`).
 
 PR [#12](https://github.com/naanouff/OpenCadEditor/pull/12) mergée. Rulesets `gitflow-protect-develop` / `main` : status check `tests` (integration_id 15368) appliqué via API. Schéma JSON corrigé (`required_status_checks` + `strict_required_status_checks_policy`). Phase P0 marquée faite dans [feuille-de-route.md](feuille-de-route.md).
 
+## 2026-10-11 — Sprint 38 commencé : feature/tube-occt
+
+P1 : [barrette-tube-occt.md](../veille/barrette-tube-occt.md), [sprint-38-tube-occt.md](../sprints/sprint-38-tube-occt.md). Tube `plan.3h` via pipeline OCCT (altitude peau, fuse, tige traversante). Barrettes toujours ignorées (placement hors GCS → sprint 39). Test carrure pipeline : bossage + canal tige vide.
+
