@@ -500,3 +500,11 @@ PR [#15](https://github.com/naanouff/OpenCadEditor/pull/15) mergée.
 
 Retrait de `historiqueCornesSession` : le worker sert `maillagePipelineOcct` pour la carrure. Veille [carrure-occt-affichage.md](../veille/carrure-occt-affichage.md).
 
+## 2026-10-11 — Sprint 40 terminé
+
+PR [#16](https://github.com/naanouff/OpenCadEditor/pull/16) mergée. Écart ombré OCCT / fil BREP Session noté (fil encore `decrire`).
+
+## 2026-10-11 — Sprint 41 : feature/polygone-n
+
+Verbe `polygone <n>` (≥ 3) ; `hexagone` / `octogone` alias. GCS + pipeline.
+

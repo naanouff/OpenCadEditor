@@ -21,4 +21,4 @@ Hors sprint : fillet/chamfer, suppression complète de `decrire` / BSP, `polygon
 
 ## État
 
-Codé sur `feature/carrure-occt-affichage` : bypass retiré, `historiqueCornesSession` supprimée.
+Fait (PR [#16](https://github.com/naanouff/OpenCadEditor/pull/16) mergée). Bypass retiré, `historiqueCornesSession` supprimée.
