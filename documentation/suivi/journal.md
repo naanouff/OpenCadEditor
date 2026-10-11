@@ -572,3 +572,7 @@ Extract `opsCouper` / `accrocherSolide` (issue [#75](https://github.com/naanouff
 
 `compilerHistorique` Session-free (param / rectangle / extrude / fillet) + `opsFillet`.
 
+## 2026-10-11 — O2-4 revolve + enlever
+
+Compiler : `revolution`, `cercle` / `enlever` (cut).
+
