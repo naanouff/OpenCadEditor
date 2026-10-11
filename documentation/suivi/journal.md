@@ -560,3 +560,7 @@ Writer `.cadomesh` depuis tessellate (issue [#69](https://github.com/naanouff/Op
 
 Writer `.cadombrep` OCCT_BREP + topo (issue [#71](https://github.com/naanouff/OpenCAD/issues/71)).
 
+## 2026-10-11 — O2-1 wire/extrude
+
+Extract `opsExtrude` + polylines UV→XYZ (issue [#73](https://github.com/naanouff/OpenCAD/issues/73)).
+
