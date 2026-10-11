@@ -176,6 +176,13 @@ export const storeShell = {
     prevenir()
     if (texte.trim()) publier({ type: 'ligne', texte })
   },
+  /** Open sketch on a named face (`face.dessus` / `face.dessous`). No-op if already sketching. */
+  ouvrirEsquisseSurFace(faceId: string) {
+    if (hote.session.esquisseCourante()) return false
+    if (assemblage) return false
+    this.ligne(`esquisse ${faceId}`)
+    return hote.session.esquisseCourante() !== null
+  },
   executer(script: string) {
     vueEsquisse = null
     hote.executer(script)

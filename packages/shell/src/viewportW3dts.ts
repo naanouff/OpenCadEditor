@@ -139,6 +139,19 @@ class ProjetAnneau extends LitAbstractProject {
     scene.add(lumiere)
   }
 
+  cadrePick(): {
+    eye: [number, number, number]
+    target: [number, number, number]
+    up: [number, number, number]
+    demiHauteur: number
+  } | null {
+    const params = this.params
+    if (!params) return null
+    const controleur = params.cameraControllerManager.getActiveController()
+    if (!(controleur instanceof OrbitalCameraController)) return null
+    return controleur.getPickFrame()
+  }
+
   montrer(document: ReturnType<typeof documentCad>, esquisse: EsquissePosee | null) {
     const params = this.params
     if (!params) return
@@ -377,4 +390,9 @@ export function afficher(
     demarrage = demarrer(canevas)
   }
   return demarrage.then(() => projet?.montrer(document, esquisse))
+}
+
+/** Caméra active pour un pick NDC (null si moteur pas prêt). */
+export function cadreCameraPick() {
+  return projet?.cadrePick() ?? null
 }

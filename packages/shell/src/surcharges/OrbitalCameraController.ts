@@ -135,6 +135,27 @@ export class OrbitalCameraController implements ICameraController {
     return this.currentPolar;
   }
 
+  /** Eye / focus / ortho half-height for viewport face picking (P4). */
+  public getPickFrame(): {
+    eye: [number, number, number]
+    target: [number, number, number]
+    up: [number, number, number]
+    demiHauteur: number
+  } | null {
+    const transform = this.world.getComponent(this.cameraEntity, TransformComponent);
+    const camera = this.world.getComponent(this.cameraEntity, CameraComponent);
+    if (!transform || !camera) return null;
+    const up = this.useSavedViewUp
+      ? ([this._savedViewUp[0], this._savedViewUp[1], this._savedViewUp[2]] as [number, number, number])
+      : ([0, 1, 0] as [number, number, number]);
+    return {
+      eye: [transform.position[0], transform.position[1], transform.position[2]],
+      target: [this.currentFocusPoint[0], this.currentFocusPoint[1], this.currentFocusPoint[2]],
+      up,
+      demiHauteur: camera.orthographicHalfHeight,
+    };
+  }
+
   public setTarget(target: vec3): void {
     if (!target || target.length < 3) return;
     vec3.copy(this.targetFocusPoint, target);

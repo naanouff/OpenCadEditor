@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
 import type { DockviewApi, IDockviewPanelProps } from 'dockview'
 import {
   EditorDock,
@@ -10,9 +10,14 @@ import {
 import { ArbreConstructionVue } from './ArbreConstructionVue.tsx'
 import { DebugVue } from './DebugVue.tsx'
 import { DocumentVue } from './DocumentVue.tsx'
+import {
+  faceSousPointeur,
+  facesDepuisMaillage,
+  rayonOrthoDepuisNdc,
+} from './selectionFace.ts'
 import { storeShell } from './storeShell.ts'
 import { TerminalMonaco } from './TerminalMonaco.tsx'
-import { afficher } from './viewportW3dts.ts'
+import { afficher, cadreCameraPick } from './viewportW3dts.ts'
 
 const STORAGE_KEY = 'opencad.shell.dockview.layout.v4'
 const REQUIRED = ['viewport', 'terminal', 'parametres', 'historique', 'document', 'debug'] as const
@@ -75,6 +80,7 @@ function buildDefaultLayout(api: DockviewApi): void {
 function ViewportVue(_props: IDockviewPanelProps) {
   const { hote, revision } = useStoreShell()
   const ref = useRef<HTMLCanvasElement>(null)
+  const pointe = useRef<{ x: number; y: number } | null>(null)
   useEffect(() => {
     const canevas = ref.current
     if (!canevas) return
@@ -90,12 +96,53 @@ function ViewportVue(_props: IDockviewPanelProps) {
       console.error(erreur instanceof Error ? erreur.message : String(erreur))
     })
   }, [hote, revision])
+
+  const onPointerDown = (e: ReactPointerEvent) => {
+    if (e.button !== 0) return
+    pointe.current = { x: e.clientX, y: e.clientY }
+  }
+  const onPointerUp = (e: ReactPointerEvent) => {
+    const debut = pointe.current
+    pointe.current = null
+    if (e.button !== 0 || !debut) return
+    if (Math.hypot(e.clientX - debut.x, e.clientY - debut.y) > 4) return
+    if (hote.session.esquisseCourante() || storeShell.assemblage()) return
+    const canevas = ref.current
+    const cadre = cadreCameraPick()
+    if (!canevas || !cadre) return
+    const rect = canevas.getBoundingClientRect()
+    if (rect.width < 1 || rect.height < 1) return
+    const ndcX = ((e.clientX - rect.left) / rect.width) * 2 - 1
+    const ndcY = 1 - ((e.clientY - rect.top) / rect.height) * 2
+    const rayon = rayonOrthoDepuisNdc(
+      ndcX,
+      ndcY,
+      cadre.eye,
+      cadre.target,
+      cadre.up,
+      cadre.demiHauteur,
+      rect.width / rect.height,
+    )
+    const maille = storeShell.utiliseMoteur()
+      ? (storeShell.maillageAffiche() ?? { positions: [], normales: [], indices: [] })
+      : hote.session.maillage()
+    const face = faceSousPointeur(facesDepuisMaillage(maille.positions), rayon)
+    if (!face) return
+    try {
+      storeShell.ouvrirEsquisseSurFace(face)
+    } catch (erreur) {
+      console.error(erreur instanceof Error ? erreur.message : String(erreur))
+    }
+  }
+
   return (
     <div className="relative h-full w-full">
       <canvas
         ref={ref}
         className="block h-full w-full"
         style={{ background: 'var(--color-viewport-clear, #a8abad)' }}
+        onPointerDown={onPointerDown}
+        onPointerUp={onPointerUp}
       />
       {storeShell.construction() ? (
         <p className="pointer-events-none absolute left-3 top-3 m-0 font-ui text-[13px] text-[var(--color-text-primary)]">
