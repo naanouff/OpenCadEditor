@@ -64,6 +64,13 @@ export default defineConfig({
         replacement: path.resolve(ici, '../../vendor/opencad/packages/cadom/src/index.ts'),
       },
       {
+        find: '@opencad/kernel/cadomesh',
+        replacement: path.resolve(
+          ici,
+          '../../vendor/opencad/packages/kernel/src/writeCadomesh.ts',
+        ),
+      },
+      {
         find: '@opencad/kernel/ops',
         replacement: path.resolve(
           ici,
