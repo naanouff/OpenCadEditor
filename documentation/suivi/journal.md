@@ -530,5 +530,9 @@ PR [#19](https://github.com/naanouff/OpenCadEditor/pull/19) mergée. P1 éditeur
 
 ## 2026-10-11 — O1 OpenCAD
 
-[PR OpenCAD #58](https://github.com/naanouff/OpenCAD/pull/58) : K3-1 `occt-kernel` + dialecte `opencad.expr.v0` (issue [#57](https://github.com/naanouff/OpenCAD/issues/57)). #55 / #53 fermés.
+[PR OpenCAD #58](https://github.com/naanouff/OpenCAD/pull/58) : K3-1 `occt-kernel` + dialecte `opencad.expr.v0` (issue [#57](https://github.com/naanouff/OpenCAD/issues/57)). #55 / #53 / #57 fermés.
+
+## 2026-10-11 — O2 / K3-2
+
+Paquet `@opencad/kernel` + CI dans OpenCAD (issue [#59](https://github.com/naanouff/OpenCAD/issues/59)).
 
