@@ -113,6 +113,42 @@ enleve 2
     expect(fondPoche).toBe(true)
   }, 120_000)
 
+  it('O2-12: barrettes plan.12h via kernel (quatre trous)', async () => {
+    const occt = await chargerKernel()
+    const session = new Session({ geometrie: false })
+    session.executer(`
+piece plaque
+param diametre_boite 40
+param longueur_corne 4.2
+param hauteur_carrure 8
+param entrecorne 20
+param largeur_racine 6
+esquisse plan.dessus
+rectangle
+cote largeur 50
+cote longueur 50
+cote ecart 0
+extrude 8
+esquisse plan.12h
+cercle
+cote diametre 1.1
+enleve travers 6
+`)
+    const plein = new Session({ geometrie: false })
+    plein.executer(`
+piece plaque
+esquisse plan.dessus
+rectangle
+cote largeur 50
+cote longueur 50
+cote ecart 0
+extrude 8
+`)
+    const a = maillagePipelineOcct(occt, plein)
+    const b = maillagePipelineOcct(occt, session)
+    expect(b.indices.length).toBeGreaterThan(a.indices.length)
+  }, 120_000)
+
   it('O2-11: tube plan.3h via kernel (axe X, mi-hauteur)', async () => {
     const occt = await chargerKernel()
     const session = new Session({ geometrie: false })
