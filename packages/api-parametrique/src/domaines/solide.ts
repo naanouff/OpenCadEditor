@@ -90,10 +90,30 @@ function exigerEsquisse(contexte: Contexte) {
   }
 }
 
+function lireFillet(reste: string): Operation {
+  const parts = reste.trim().split(/\s+/).filter(Boolean)
+  if (parts.length < 1) throw new ErreurApi('fillet sans rayon')
+  const [expression, ...aretes] = parts
+  for (const a of aretes) {
+    if (a !== 'arete.haut' && a !== 'arete.bas' && a !== 'arete.vertical') {
+      throw new ErreurApi(`sélecteur d'arête inconnu: ${a}`)
+    }
+  }
+  return {
+    type: 'fillet',
+    arguments: {
+      expression: expression!,
+      ...(aretes.length > 0 ? { aretes: aretes.join(' ') } : {}),
+    },
+    noms: [],
+  }
+}
+
 export const domaineSolide: Domaine = {
   id: 'solide',
   verbes: {
     extrude: (reste) => ({ type: 'extrude', arguments: { expression: reste }, noms: [] }),
+    fillet: (reste) => lireFillet(reste),
     'enleve travers': (reste) => ({
       type: 'enlever',
       arguments: { expression: reste, traverse: 'oui' },
@@ -117,6 +137,14 @@ export const domaineSolide: Domaine = {
         contexte.piece.esquisse = null
         if (support === 'plan.3h') contexte.noms.set('tube', 'tube')
         else if (!contexte.noms.has('anneau')) contexte.noms.set('anneau', 'axe')
+      },
+      defaire() {},
+    },
+    fillet: {
+      dansHistorique: true,
+      faire(contexte) {
+        if (!contexte.solide && !contexte.piece.volume) throw new ErreurApi('aucun solide')
+        // Géométrie portée par le pipeline OCCT (noyau provisoire : no-op).
       },
       defaire() {},
     },

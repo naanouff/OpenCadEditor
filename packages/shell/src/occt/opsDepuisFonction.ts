@@ -58,3 +58,17 @@ export function opsCouper(solidAs: string, outilAs: string, uid: string): { ops:
     solidAs: as,
   }
 }
+
+/** Congé sur arêtes (indices locaux, ou `null` = toutes). */
+export function opsFillet(
+  solidAs: string,
+  rayon: number,
+  indices: number[] | null,
+  uid: string,
+): { ops: KernelBatchOp[]; solidAs: string } {
+  const as = `fillet${uid}`
+  return {
+    ops: [{ op: 'fillet_edges', args: [{ handle: solidAs }, rayon, indices], as }],
+    solidAs: as,
+  }
+}

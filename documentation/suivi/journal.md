@@ -508,3 +508,11 @@ PR [#16](https://github.com/naanouff/OpenCadEditor/pull/16) mergée. Écart ombr
 
 Verbe `polygone <n>` (≥ 3) ; `hexagone` / `octogone` alias. GCS + pipeline.
 
+## 2026-10-11 — Sprint 41 terminé
+
+PR [#17](https://github.com/naanouff/OpenCadEditor/pull/17) mergée.
+
+## 2026-10-11 — Sprint 42 : feature/fillet-occt
+
+Verbe `fillet` + sélecteurs `arete.*` via `list_edges` / `fillet_edges`.
+
