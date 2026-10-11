@@ -584,3 +584,7 @@ Submodule `vendor/opencad` ; shell réexporte `ops*` depuis `@opencad/kernel`.
 
 Kernel : résolution cercle + densification polylines ; bump `vendor/opencad`.
 
+## 2026-10-11 — O2-7 GCS polygone
+
+Kernel : polygone régulier (entreplat) ; bump `vendor/opencad`.
+
