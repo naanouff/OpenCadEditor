@@ -1,12 +1,15 @@
-import type { CadomDocument } from '@opencad/cadom'
+import { planLateLoad, type CadomDocument, type LateLoadPlan } from '@opencad/cadom'
 import type { LigneDocument } from './documentAffichage.ts'
 
 function idCourt(id: string) {
   return id.length > 8 ? id.slice(0, 8) : id
 }
 
-/** Lignes Document pour un graphe `.cadom` (profondeur via préfixe). */
-export function lignesAssemblage(doc: CadomDocument): LigneDocument[] {
+/** Lignes Document pour un graphe `.cadom` (nœuds + plan late-load). */
+export function lignesAssemblage(
+  doc: CadomDocument,
+  plan: LateLoadPlan = planLateLoad(doc),
+): LigneDocument[] {
   const lignes: LigneDocument[] = [
     {
       id: 'cadom-meta',
@@ -26,5 +29,20 @@ export function lignesAssemblage(doc: CadomDocument): LigneDocument[] {
     for (const enfant of doc.getChildren(id)) visiter(enfant, profondeur + 1)
   }
   for (const root of doc.rootIds) visiter(root, 0)
+
+  if (plan.assets.length > 0) {
+    lignes.push({
+      id: 'cadom-assets',
+      libelle: 'Assets',
+      valeur: `${plan.assets.length} · late-load`,
+    })
+    for (const asset of plan.assets) {
+      lignes.push({
+        id: `asset-${asset.assetId}`,
+        libelle: `· ${asset.role}`,
+        valeur: asset.uri,
+      })
+    }
+  }
   return lignes
 }

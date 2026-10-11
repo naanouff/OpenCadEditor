@@ -1,5 +1,5 @@
 import type { MaillageOmbre } from '@opencad/api-parametrique'
-import { CadomDocument, decode } from '@opencad/cadom'
+import { CadomDocument, decode, planLateLoad, type LateLoadPlan } from '@opencad/cadom'
 import { ecrire, lire } from '@opencad/format-opencad'
 import { selecteurCourant } from './fichierShell.ts'
 import { Hote } from './hote.ts'
@@ -83,6 +83,8 @@ export const storeShell = {
   utiliseMoteur: () => moteur !== null,
   maillageAffiche: () => maillageAffiche,
   assemblage: () => assemblage,
+  /** Graph-first asset fetch plan ; null when no assembly is loaded. */
+  planChargement: (): LateLoadPlan | null => (assemblage ? planLateLoad(assemblage) : null),
   souscrire(ecouteur: Ecouteur) {
     ecouteurs.add(ecouteur)
     return () => {

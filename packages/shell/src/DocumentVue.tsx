@@ -11,7 +11,8 @@ export function DocumentVue(): ReactElement {
 
   const lignes = useMemo(() => {
     const doc = storeShell.assemblage()
-    return doc ? lignesAssemblage(doc) : lignesDocument(storeShell.hote().session.document())
+    if (!doc) return lignesDocument(storeShell.hote().session.document())
+    return lignesAssemblage(doc, storeShell.planChargement() ?? undefined)
   }, [revision])
 
   const ouvrir = () => {
