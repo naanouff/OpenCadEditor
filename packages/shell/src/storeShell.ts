@@ -7,6 +7,7 @@ import {
   type LateLoadPlan,
 } from '@opencad/cadom'
 import { ecrire, lire } from '@opencad/format-opencad'
+import { chargeurCourant } from './chargeurAsset.ts'
 import { selecteurCourant } from './fichierShell.ts'
 import { Hote } from './hote.ts'
 import { reponseUtile } from './moteur/moteur.ts'
@@ -35,6 +36,15 @@ let attendue = 0
 let construction = false
 let maillageAffiche: MaillageOmbre | null = null
 let assemblage: CadomDocument | null = null
+
+export type EtatAsset = 'en_attente' | 'ok' | 'erreur'
+export type StatutAsset = {
+  etat: EtatAsset
+  octets?: Uint8Array
+  message?: string
+}
+
+let statutsAssets = new Map<string, StatutAsset>()
 
 const moteur = navigateur
   ? moteurWorker((maillage, sequence) => {
@@ -67,6 +77,10 @@ function publier(mutation: MutationPont) {
   auditeurPont?.(mutation)
 }
 
+function reinitialiserStatuts(plan: LateLoadPlan) {
+  statutsAssets = new Map(plan.assets.map((a) => [a.assetId, { etat: 'en_attente' as const }]))
+}
+
 function chargerAssemblage(octets: Uint8Array) {
   const logical = decode(octets)
   if (
@@ -78,6 +92,7 @@ function chargerAssemblage(octets: Uint8Array) {
     throw new Error('cadom illisible')
   }
   assemblage = CadomDocument.fromLogical(logical)
+  reinitialiserStatuts(planLateLoad(assemblage))
   revision += 1
   prevenir()
 }
@@ -91,6 +106,8 @@ export const storeShell = {
   assemblage: () => assemblage,
   /** Graph-first asset fetch plan ; null when no assembly is loaded. */
   planChargement: (): LateLoadPlan | null => (assemblage ? planLateLoad(assemblage) : null),
+  statutAsset: (assetId: string) => statutsAssets.get(assetId) ?? null,
+  statutsAssets: () => new Map(statutsAssets),
   souscrire(ecouteur: Ecouteur) {
     ecouteurs.add(ecouteur)
     return () => {
@@ -205,6 +222,7 @@ export const storeShell = {
       vueEsquisse = null
       maillageAffiche = null
       assemblage = null
+      statutsAssets = new Map()
       hote = suivant
       envoyer((sequence) => moteur?.ouvrir(lecture.script, lecture.eteins, sequence))
       revision += 1
@@ -216,6 +234,24 @@ export const storeShell = {
         throw piece
       }
     }
+  },
+  async chargerAssets() {
+    const plan = this.planChargement()
+    if (!plan) throw new Error('aucun assemblage')
+    const chargeur = chargeurCourant()
+    for (const asset of plan.assets) {
+      try {
+        const octets = await chargeur.charger(asset.uri)
+        statutsAssets.set(asset.assetId, { etat: 'ok', octets })
+      } catch (erreur) {
+        statutsAssets.set(asset.assetId, {
+          etat: 'erreur',
+          message: erreur instanceof Error ? erreur.message : String(erreur),
+        })
+      }
+    }
+    revision += 1
+    prevenir()
   },
   async demanderOuverture() {
     const octets = await selecteurCourant().ouvrir()

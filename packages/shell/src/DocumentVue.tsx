@@ -9,10 +9,15 @@ export function DocumentVue(): ReactElement {
   const [message, setMessage] = useState<string | null>(null)
   useEffect(() => storeShell.souscrire(() => setRevision(storeShell.revision())), [])
 
+  const assemblage = storeShell.assemblage()
   const lignes = useMemo(() => {
     const doc = storeShell.assemblage()
     if (!doc) return lignesDocument(storeShell.hote().session.document())
-    return lignesAssemblage(doc, storeShell.planChargement() ?? undefined)
+    return lignesAssemblage(
+      doc,
+      storeShell.planChargement() ?? undefined,
+      storeShell.statutsAssets(),
+    )
   }, [revision])
 
   const ouvrir = () => {
@@ -29,10 +34,17 @@ export function DocumentVue(): ReactElement {
     })
   }
 
+  const charger = () => {
+    setMessage(null)
+    void storeShell.chargerAssets().catch((erreur: unknown) => {
+      setMessage(erreur instanceof Error ? erreur.message : String(erreur))
+    })
+  }
+
   return (
     <aside className="h-full overflow-auto bg-[var(--color-surface-panel)] p-3 font-ui text-[13px] text-foreground">
       <Panel title="Document" collapsible={false}>
-        <div className="mb-3 flex gap-2">
+        <div className="mb-3 flex flex-wrap gap-2">
           <button
             type="button"
             className="rounded border border-[var(--color-border-default)] bg-[var(--color-surface-input)] px-3 py-1.5 text-[var(--color-text-primary)] hover:bg-[var(--color-surface-hover)]"
@@ -47,6 +59,15 @@ export function DocumentVue(): ReactElement {
           >
             Enregistrer
           </button>
+          {assemblage ? (
+            <button
+              type="button"
+              className="rounded border border-[var(--color-border-default)] bg-[var(--color-surface-input)] px-3 py-1.5 text-[var(--color-text-primary)] hover:bg-[var(--color-surface-hover)]"
+              onClick={charger}
+            >
+              Charger assets
+            </button>
+          ) : null}
         </div>
         {message ? <p className="mb-3 text-[var(--color-text-secondary)]">{message}</p> : null}
         <ul className="m-0 list-none p-0">
