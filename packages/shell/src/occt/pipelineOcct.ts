@@ -172,26 +172,23 @@ function compiler(historique: Operation[], pointe: number | null = null): Compil
   // O2-9 : préfixe simple → `@opencad/kernel/compiler` (mm) ; sinon chemin local.
   const viaKernel = compilerViaKernel(historique, pointe)
   if (viaKernel?.solidAs && viaKernel.ops.length > 0) {
-    let yMax = 0
-    let yMin = 0
-    for (const op of viaKernel.ops) {
-      if (op.op === 'extrude' && Array.isArray(op.args) && op.args.length >= 4) {
-        const dy = Number(op.args[2])
-        if (Number.isFinite(dy)) {
-          yMax = Math.max(yMax, dy)
-          yMin = Math.min(yMin, 0)
-        }
-      }
-    }
+    const entitesPas =
+      viaKernel.entitesPas?.map((s) => ({
+        id: s.id,
+        sorte: 'segment' as const,
+        degres: 0,
+        rayon: s.rayon,
+        hauteur: s.hauteur,
+      })) ?? null
     return {
       ops: viaKernel.ops,
       solidAs: viaKernel.solidAs,
-      pas: false,
+      pas: viaKernel.pas,
       parametres: viaKernel.parametres,
-      entitesPas: null,
+      entitesPas,
       fillets: [],
-      yMin,
-      yMax,
+      yMin: viaKernel.yMin,
+      yMax: viaKernel.yMax,
     }
   }
 

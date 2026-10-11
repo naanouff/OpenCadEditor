@@ -2,7 +2,7 @@
  * Pont historique Session → `@opencad/kernel/compiler` (O2-9+).
  * Motifs supportés : plan.dessus / plan.12h / plan.3h, face.dessus/dessous,
  * rectangle/cercle/polygone/segment/arc, concentrique, symétrie, extrude / revolution /
- * enlever / fillet (corne + élévation inclus). Hors scope : pas hybride.
+ * enlever / fillet / pas (corne + élévation inclus).
  */
 import {
   compilerHistorique,
@@ -34,6 +34,7 @@ const TYPES = new Set([
   'symetrie',
   'extrude',
   'revolution',
+  'pas',
   'enlever',
   'fillet',
 ])
@@ -56,9 +57,6 @@ export function historiqueVersKernel(
 ): OperationKernel[] | null {
   const ops = rejouables(historique, pointe)
   if (ops.length === 0) return null
-  if (ops.some((o) => o.type === 'pas')) {
-    return null
-  }
   const out: OperationKernel[] = []
   for (const op of ops) {
     if (!TYPES.has(op.type)) return null
@@ -138,6 +136,10 @@ export function historiqueVersKernel(
     }
     if (op.type === 'revolution') {
       out.push({ type: 'revolution' })
+      continue
+    }
+    if (op.type === 'pas') {
+      out.push({ type: 'pas' })
       continue
     }
     if (op.type === 'enlever') {

@@ -113,6 +113,23 @@ enleve 2
     expect(fondPoche).toBe(true)
   }, 120_000)
 
+  it('O2-15: vis hybride pas via kernel (tête + filet hôte)', async () => {
+    const occt = await chargerKernel()
+    const session = new Session({ geometrie: false })
+    session.executer(SCRIPT_VIS)
+    const maille = maillagePipelineOcct(occt, session)
+    const { yMax, rayonMax } = stats(maille)
+    expect(yMax).toBeCloseTo(30, 0)
+    expect(rayonMax).toBeCloseTo(6, 0)
+    let crete = false
+    for (let i = 0; i < maille.positions.length; i += 3) {
+      const y = maille.positions[i + 1]!
+      const r = Math.hypot(maille.positions[i]!, maille.positions[i + 2]!)
+      if (y > 14 && y < 24 && Math.abs(r - 3) < 0.15) crete = true
+    }
+    expect(crete).toBe(true)
+  }, 180_000)
+
   it('O2-14: cornes prismatiques via kernel (après anneau)', async () => {
     const occt = await chargerKernel()
     const session = new Session({ geometrie: false })
