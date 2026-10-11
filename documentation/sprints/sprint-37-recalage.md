@@ -35,4 +35,4 @@ Hors sprint : P1, O1, required reviews, réparation `tsc` globale.
 
 ## État
 
-Codé sur `feature/recalage` : `tube-bout` → fixture `SCRIPT_CARRURE` ; `ci.yml` (job `tests`) ; rulesets JSON avec required check `tests` (à sync API post-merge) ; `pnpm-workspace.yaml` parasites retirés ; branches locales mergées supprimées ; doc alignée. `tsc` hors CI (écart).
+Codé sur `feature/recalage` : `tube-bout` → fixture `SCRIPT_CARRURE` ; `ci.yml` (job `tests`) ; rulesets JSON avec required check `tests` (à sync API post-merge) ; `pnpm-workspace.yaml` parasites retirés ; branches locales mergées supprimées ; doc alignée. `tsc` hors CI (écart). `vendor/w3dts` privé : secret repo `SUBMODULES_PAT` pour lancer les tests shell en Actions ; sinon api / format / mcp seulement.

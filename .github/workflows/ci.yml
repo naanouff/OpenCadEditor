@@ -1,5 +1,6 @@
 # Vitest sur les quatre paquets. Voir documentation/sprints/sprint-37-recalage.md.
 # tsc --noEmit hors périmètre : imports `.ts` et typages cassés sous tsc pur (écart noté sprint 37).
+# vendor/w3dts est privé : secret optionnel SUBMODULES_PAT (repo scope) pour les tests shell.
 name: ci
 
 on:
@@ -18,7 +19,24 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          submodules: recursive
+          submodules: false
+
+      - name: occt-wasm (public)
+        run: git submodule update --init vendor/occt-wasm
+
+      - name: w3dts (privé, optionnel)
+        id: w3dts
+        env:
+          TOKEN: ${{ secrets.SUBMODULES_PAT }}
+        run: |
+          if [ -z "$TOKEN" ]; then
+            echo "present=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::Secret SUBMODULES_PAT absent — tests shell ignorés (w3dts privé)."
+            exit 0
+          fi
+          git config --global url."https://x-access-token:${TOKEN}@github.com/".insteadOf "https://github.com/"
+          git submodule update --init vendor/w3dts
+          echo "present=true" >> "$GITHUB_OUTPUT"
 
       - name: Node.js
         uses: actions/setup-node@v4
@@ -50,6 +68,7 @@ jobs:
           pnpm test
 
       - name: shell
+        if: steps.w3dts.outputs.present == 'true'
         working-directory: packages/shell
         run: |
           pnpm install --frozen-lockfile

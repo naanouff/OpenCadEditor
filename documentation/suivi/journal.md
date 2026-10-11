@@ -472,3 +472,7 @@ Arbitrages : (1) OpenCAD Kernel = occt-kernel en bootstrap, pipeline à extraire
 
 Branche `feature/recalage` depuis `develop`. `tube-bout.test.ts` importe `SCRIPT_CARRURE` depuis `tests/fixtures/scriptCarrure.ts` (suite api 97/97). Workflow [ci.yml](../../.github/workflows/ci.yml) : job `tests`, vitest sur les quatre paquets ; `tsc` hors CI (imports `.ts` + typages cassés). Rulesets JSON : required check `tests` (sync API après merge + run verte). Stubs `packages/*/pnpm-workspace.yaml` ignorés (`.gitignore`) + `pnpm.onlyBuiltDependencies` dans chaque `package.json`. Branches locales déjà dans `develop` supprimées (`chore/feuille-route-31`, `feature/boulon-hexagonal`, `carrure-pipeline`, `datums-origine`, `fichier-cadompart`, `gcs-enrichi`, `initial`, `mcp-geometrie`, `pas-cadompart`, `pointe-arbre`, `topo-faces`).
 
+## 2026-10-11 — CI : w3dts privé
+
+Première run Actions : clone `vendor/w3dts` en échec (`repository not found`). Workflow ajusté : sous-module `occt-wasm` seul par défaut ; tests shell si secret `SUBMODULES_PAT` présent.
+
