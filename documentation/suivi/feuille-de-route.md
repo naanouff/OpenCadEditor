@@ -58,9 +58,9 @@ flowchart LR
 | **P1** Sortie du provisoire | OpenCadEditor | 38–43 | fait (reste delete BSP / W1 helix) | Barrette/tube OCCT, fillet, découplage affichage, `polygone n` |
 | **O1** Doctrine + dialecte | OpenCAD | — | fait ([PR #58](https://github.com/naanouff/OpenCAD/pull/58)) | K3-1, cadompart v0.3, #55/#53/#57 fermés |
 | **W1** Kernel WASM | occt-wasm | — | à venir | Arcs/cercles natifs, helix ou sweep (sinon filet cosmétique) |
-| **O2** Paquet kernel | OpenCAD | — | en cours (O2-1…10 : face.* ; reste carrure/plan.3h) | `@opencad/kernel` ; extract éditeur |
+| **O2** Paquet kernel | OpenCAD | O2-1…15 | fait | `@opencad/kernel` ; extract éditeur (carrure / tube / pas) |
 | **O3** Writers | OpenCAD | — | fait (K3-7/8) | `.cadomesh` / `.cadombrep` |
-| **O4** SDK `.cadom` | OpenCAD | — | à venir | MVP A : decode/encode, DAG, overrides |
+| **O4** SDK `.cadom` | OpenCAD | O4-1… | en cours (O4-1 decode/encode) | MVP A : DAG, overrides, pass-through |
 | **P3** Assemblage | OpenCadEditor | 44–47 | à venir | Lunette/fond/verre/couronne + `.cadom` + Complete |
 | **P4** Ergonomie | OpenCadEditor | 45–48 | à venir | Souris, sélection faces, ruban |
 
@@ -79,9 +79,9 @@ Veille : [recalage-cap.md](../veille/recalage-cap.md). Sprint : [sprint-37-recal
 ### Piste OpenCAD (parallèle dès P0)
 
 - **O1** — Doctrine K3-1 ; cadompart v0.3 (dialecte d’expressions ; filet `thread` ou `helix` Required) ; fermer #55.
-- **O2** — Paquet `kernel` : extraire `esquissePolylines`, `opsDepuisFonction`, `pipelineOcct`, GCS ; corpus boîte / vis / carrure / boulon ; éditeur consomme le paquet.
+- **O2** — Paquet `kernel` : extrait (O2-1…15) ; éditeur consomme via `vendor/opencad` + ponts `historiqueKernel` / `gcsKernel`.
 - **O3** — Writers `.cadomesh` et `.cadombrep` ; badges Required v0 puis Complete export v0.
-- **O4** — SDK `.cadom` (prérequis P3).
+- **O4** — SDK `.cadom` (prérequis P3) — O4-1 en cours sur OpenCAD.
 
 ### P3 — Boîte en assemblage (sprints 44–47)
 
