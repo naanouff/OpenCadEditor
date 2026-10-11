@@ -596,3 +596,7 @@ Kernel : polygone régulier (entreplat) ; bump `vendor/opencad`.
 
 `pipelineOcct.compiler` : historique simple → `compilerHistorique({ unite: 'mm' })`.
 
+## 2026-10-11 — O2-10 face.*
+
+Kernel + pont shell : extrude / enlever sur `face.dessus` / `face.dessous`.
+

@@ -10,7 +10,7 @@ import {
 } from '@opencad/kernel/compiler'
 import { rejouables, type Operation } from '@opencad/api-parametrique'
 
-const SUPPORTS = new Set(['plan.dessus', 'plan.12h'])
+const SUPPORTS = new Set(['plan.dessus', 'plan.12h', 'face.dessus', 'face.dessous'])
 
 const TYPES = new Set([
   'param',
