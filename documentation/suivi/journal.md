@@ -556,3 +556,7 @@ Ids topo `face:{i}` / `edge:{i}` (issue [#67](https://github.com/naanouff/OpenCA
 
 Writer `.cadomesh` depuis tessellate (issue [#69](https://github.com/naanouff/OpenCAD/issues/69)).
 
+## 2026-10-11 — O2 / K3-8
+
+Writer `.cadombrep` OCCT_BREP + topo (issue [#71](https://github.com/naanouff/OpenCAD/issues/71)).
+
