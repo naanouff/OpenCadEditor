@@ -16,4 +16,4 @@ Hors sprint : suppression `noyau.ts` / BSP, helix `pas` OCCT (W1), chamfer.
 
 ## État
 
-Codé sur `feature/retrait-provisoire`.
+Fait (PR [#19](https://github.com/naanouff/OpenCadEditor/pull/19) mergée). Fil tessellé (aretesBrep) accepté en attendant wireframe kernel.
