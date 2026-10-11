@@ -524,3 +524,11 @@ PR [#18](https://github.com/naanouff/OpenCadEditor/pull/18) mergée.
 
 Wireframe viewport via `aretesBrep` (volume OCCT) ; `decrire` n’est plus la source d’affichage.
 
+## 2026-10-11 — Sprint 43 terminé
+
+PR [#19](https://github.com/naanouff/OpenCadEditor/pull/19) mergée. P1 éditeur clos pour l’incrément ; reste delete BSP + W1.
+
+## 2026-10-11 — O1 OpenCAD
+
+[PR OpenCAD #58](https://github.com/naanouff/OpenCAD/pull/58) : K3-1 `occt-kernel` + dialecte `opencad.expr.v0` (issue [#57](https://github.com/naanouff/OpenCAD/issues/57)). #55 / #53 fermés.
+
