@@ -61,7 +61,8 @@ flowchart LR
 | **O2** Paquet kernel | OpenCAD | O2-1…15 | fait | `@opencad/kernel` ; extract éditeur (carrure / tube / pas) |
 | **O3** Writers | OpenCAD | — | fait (K3-7/8) | `.cadomesh` / `.cadombrep` |
 | **O4** SDK `.cadom` | OpenCAD | O4-1…3 | fait | MVP A : DAG, overrides, late-load, lint |
-| **P3** Assemblage | OpenCadEditor | 44–47 | fait (graphe) | open/save/plan/fetch `.cadom` ; suite pièces Milgauss / Complete |
+| **P3** Assemblage | OpenCadEditor | 44–47 | fait (graphe) | open/save/plan/fetch `.cadom` |
+| **P3b** Pièces boîte | OpenCadEditor | 48… | en cours (48) | Lunette puis fond/verre/couronne ; assemblage Complete |
 | **P4** Ergonomie | OpenCadEditor | 45–48 | à venir | Souris, sélection faces, ruban |
 
 ### P0 — Recalage (sprint 37)
@@ -85,7 +86,11 @@ Veille : [recalage-cap.md](../veille/recalage-cap.md). Sprint : [sprint-37-recal
 
 ### P3 — Boîte en assemblage (sprints 44–47)
 
-Sprint 44–47 : ouvrir / plan / enregistrer / fetch injectable ([fichier-cadom.md](../veille/fichier-cadom.md), [cadom-fetch-assets.md](../veille/cadom-fetch-assets.md)). Suite : pièces lunette/fond/verre/couronne ; decode mesh viewport ; export Complete.
+Sprint 44–47 : ouvrir / plan / enregistrer / fetch injectable ([fichier-cadom.md](../veille/fichier-cadom.md), [cadom-fetch-assets.md](../veille/cadom-fetch-assets.md)).
+
+### P3b — Pièces de la boîte (dès sprint 48)
+
+Sprint 48 : lunette anneau ([piece-lunette.md](../veille/piece-lunette.md)). Ensuite : fond, verre, couronne ; `.cadom` multi-pièces ; export Complete.
 
 ### P4 — Ergonomie (sprints 45–48)
 
