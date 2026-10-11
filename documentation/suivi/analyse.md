@@ -48,7 +48,7 @@ Domaines : `parametres`, `esquisse` (dont polygones, GCS), `solide`, `revolution
 
 ## Interface
 
-[App.tsx](../../packages/shell/src/App.tsx) : viewport, Construction (arbre + pointe), Paramètres, Document (ouvrir `.cadompart` / `.cadom`, enregistrer selon le mode), Terminal Monaco, Debug (Build carrure / lunette / vis / boîte). MCP peut piloter la session et, si le shell est ouvert, le viewport.
+[App.tsx](../../packages/shell/src/App.tsx) : viewport, Construction (arbre + pointe), Paramètres, Document (ouvrir `.cadompart` / `.cadom`, enregistrer selon le mode), Terminal Monaco, Debug (Build carrure / lunette / fond / vis / boîte). MCP peut piloter la session et, si le shell est ouvert, le viewport.
 
 TDD : [developpement.md](../developpement.md). Veille avant chaque sprint.
 
