@@ -1,8 +1,8 @@
 /**
  * Pont historique Session → `@opencad/kernel/compiler` (O2-9+).
  * Motifs supportés : plan.dessus / plan.12h / plan.3h, face.dessus/dessous,
- * rectangle/cercle/polygone/segment, extrude / revolution / enlever / fillet.
- * Hors scope : pas, corne, concentrique…
+ * rectangle/cercle/polygone/segment, concentrique, extrude / revolution / enlever / fillet.
+ * Hors scope : pas, corne, symétrie…
  */
 import {
   compilerHistorique,
@@ -29,6 +29,7 @@ const TYPES = new Set([
   'octogone',
   'segment',
   'cote',
+  'concentrique',
   'extrude',
   'revolution',
   'enlever',
@@ -44,7 +45,7 @@ export function historiqueVersKernel(
 ): OperationKernel[] | null {
   const ops = rejouables(historique, pointe)
   if (ops.length === 0) return null
-  if (ops.some((o) => o.type === 'pas' || o.type === 'concentrique' || o.type === 'symetrie')) {
+  if (ops.some((o) => o.type === 'pas' || o.type === 'symetrie')) {
     return null
   }
   const out: OperationKernel[] = []
@@ -101,6 +102,11 @@ export function historiqueVersKernel(
           | 'entreplat',
         expression: a.expression!,
       })
+      continue
+    }
+    if (op.type === 'concentrique') {
+      if (!a.cible) return null
+      out.push({ type: 'concentrique', cible: a.cible })
       continue
     }
     if (op.type === 'extrude') {

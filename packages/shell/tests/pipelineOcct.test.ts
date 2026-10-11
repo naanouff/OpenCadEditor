@@ -113,6 +113,27 @@ enleve 2
     expect(fondPoche).toBe(true)
   }, 120_000)
 
+  it('O2-13: anneau concentrique via kernel', async () => {
+    const occt = await chargerKernel()
+    const session = new Session({ geometrie: false })
+    session.executer(`
+piece anneau
+esquisse plan.dessus
+cercle
+cote diametre 40
+cercle
+concentrique cercle.exterieur
+cote diametre 35
+extrude 8
+`)
+    const maille = maillagePipelineOcct(occt, session)
+    expect(maille.indices.length).toBeGreaterThan(0)
+    const { yMax } = stats(maille)
+    expect(yMax).toBeGreaterThan(7.5)
+    expect(yMax).toBeLessThan(8.5)
+    expect(stats(maille).rayonMax).toBeCloseTo(20, 0)
+  }, 120_000)
+
   it('O2-12: barrettes plan.12h via kernel (quatre trous)', async () => {
     const occt = await chargerKernel()
     const session = new Session({ geometrie: false })
