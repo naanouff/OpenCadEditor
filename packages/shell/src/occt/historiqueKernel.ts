@@ -1,7 +1,8 @@
 /**
- * Pont historique Session → `@opencad/kernel/compiler` (O2-9).
- * Motifs supportés : plan.dessus / plan.12h, rectangle/cercle/polygone/segment,
- * extrude / revolution / enlever / fillet. Hors scope : face.*, plan.3h, pas, corne…
+ * Pont historique Session → `@opencad/kernel/compiler` (O2-9+).
+ * Motifs supportés : plan.dessus / plan.12h / plan.3h, face.dessus/dessous,
+ * rectangle/cercle/polygone/segment, extrude / revolution / enlever / fillet.
+ * Hors scope : pas, corne, concentrique, barrettes plan.12h…
  */
 import {
   compilerHistorique,
@@ -10,7 +11,13 @@ import {
 } from '@opencad/kernel/compiler'
 import { rejouables, type Operation } from '@opencad/api-parametrique'
 
-const SUPPORTS = new Set(['plan.dessus', 'plan.12h', 'face.dessus', 'face.dessous'])
+const SUPPORTS = new Set([
+  'plan.dessus',
+  'plan.12h',
+  'plan.3h',
+  'face.dessus',
+  'face.dessous',
+])
 
 const TYPES = new Set([
   'param',
@@ -105,7 +112,11 @@ export function historiqueVersKernel(
       continue
     }
     if (op.type === 'enlever') {
-      out.push({ type: 'enlever', profondeur: a.expression! })
+      out.push({
+        type: 'enlever',
+        profondeur: a.expression!,
+        traverse: a.traverse === 'oui',
+      })
       continue
     }
     if (op.type === 'fillet') {

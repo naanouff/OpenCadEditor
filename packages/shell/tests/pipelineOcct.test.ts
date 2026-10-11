@@ -113,6 +113,35 @@ enleve 2
     expect(fondPoche).toBe(true)
   }, 120_000)
 
+  it('O2-11: tube plan.3h via kernel (axe X, mi-hauteur)', async () => {
+    const occt = await chargerKernel()
+    const session = new Session({ geometrie: false })
+    session.executer(`
+piece tube
+param diametre_boite 40
+param hauteur_carrure 20
+esquisse plan.3h
+cercle
+cote diametre 8
+extrude 15
+`)
+    const maille = maillagePipelineOcct(occt, session)
+    expect(maille.indices.length).toBeGreaterThan(0)
+    let xMin = Infinity
+    let xMax = -Infinity
+    let yMin = Infinity
+    let yMax = -Infinity
+    for (let i = 0; i < maille.positions.length; i += 3) {
+      xMin = Math.min(xMin, maille.positions[i]!)
+      xMax = Math.max(xMax, maille.positions[i]!)
+      yMin = Math.min(yMin, maille.positions[i + 1]!)
+      yMax = Math.max(yMax, maille.positions[i + 1]!)
+    }
+    expect(xMin).toBeCloseTo(19.7, 0)
+    expect(xMax).toBeCloseTo(35, 0)
+    expect((yMin + yMax) / 2).toBeCloseTo(10, 0)
+  }, 120_000)
+
   it('extrude un contour de corne résolu par le GCS', async () => {
     const occt = await chargerKernel()
     const session = new Session({ geometrie: false })
