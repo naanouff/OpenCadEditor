@@ -58,8 +58,8 @@ flowchart LR
 | **P1** Sortie du provisoire | OpenCadEditor | 38–43 | fait (reste delete BSP / W1 helix) | Barrette/tube OCCT, fillet, découplage affichage, `polygone n` |
 | **O1** Doctrine + dialecte | OpenCAD | — | fait ([PR #58](https://github.com/naanouff/OpenCAD/pull/58)) | K3-1, cadompart v0.3, #55/#53/#57 fermés |
 | **W1** Kernel WASM | occt-wasm | — | à venir | Arcs/cercles natifs, helix ou sweep (sinon filet cosmétique) |
-| **O2** Paquet kernel | OpenCAD | — | en cours (K3 badge writers faits ; reste extract pipeline) | `@opencad/kernel` Required+Complete export ; extract éditeur |
-| **O3** Writers | OpenCAD | — | à venir | `.cadomesh` (K3-7), `.cadombrep` (K3-8) |
+| **O2** Paquet kernel | OpenCAD | — | en cours (K3 writers + O2-1 wire/extrude ; reste pipeline complet) | `@opencad/kernel` ; extract éditeur |
+| **O3** Writers | OpenCAD | — | fait (K3-7/8) | `.cadomesh` / `.cadombrep` |
 | **O4** SDK `.cadom` | OpenCAD | — | à venir | MVP A : decode/encode, DAG, overrides |
 | **P3** Assemblage | OpenCadEditor | 44–47 | à venir | Lunette/fond/verre/couronne + `.cadom` + Complete |
 | **P4** Ergonomie | OpenCadEditor | 45–48 | à venir | Souris, sélection faces, ruban |
