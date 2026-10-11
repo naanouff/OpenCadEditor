@@ -24,4 +24,4 @@ Hors sprint : filet ISO cosmétique, hélice kernel, couronne plane en bout, oct
 
 ## État
 
-Branche `feature/boulon-hexagonal` depuis `feature/mcp-geometrie`. Préparé : `octogone` + tests ; tests rouges `hexagone` / pipeline boulon ; script MCP `packages/mcp/scripts/boulon.opencad` (M8, `angle_pointe 175`). Implémentation : verbe + solveur + rejeu OCCT.
+Codé sur `feature/boulon-hexagonal` : `hexagone` + solveur, rejeu OCCT (`entreplat`, faces après `revolution`/`pas`, extrude depuis `face.dessus`), script MCP M8, tests verts.

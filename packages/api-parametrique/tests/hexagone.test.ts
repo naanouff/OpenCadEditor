@@ -16,8 +16,9 @@ describe('hexagone', () => {
     expect(out.points).toHaveLength(6)
     const us = out.points.map((p) => p.u)
     const vs = out.points.map((p) => p.v)
+    // Flat-top : entreplat en largeur ; pointe à pointe en hauteur = entreplat / cos(π/6)
     expect(Math.max(...us) - Math.min(...us)).toBeCloseTo(13, 5)
-    expect(Math.max(...vs) - Math.min(...vs)).toBeCloseTo(13, 5)
+    expect(Math.max(...vs) - Math.min(...vs)).toBeCloseTo(13 / Math.cos(Math.PI / 6), 5)
   })
 
   it('extrude une tête hexagonale puis une tige', () => {

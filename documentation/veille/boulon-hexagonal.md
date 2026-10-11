@@ -72,7 +72,7 @@ Aujourd’hui le compilateur ne rejoue que `cercle`, `rectangle`, `segment`, `ar
 
 ## État
 
-Branche `feature/boulon-hexagonal` ouverte. Tests rouges et script MCP prêts ; reste le verbe `hexagone`, le rejeu OCCT des polygones / `entreplat`, et les faces après `revolution`+`pas`.
+Palier codé sur `feature/boulon-hexagonal` : verbe `hexagone`, pipeline polygones / faces / extrude sur `face.dessus`, script MCP M8 hybride (`pas` + tête OCCT).
 
 ## Hors de ce palier
 

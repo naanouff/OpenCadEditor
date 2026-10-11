@@ -72,7 +72,7 @@ La règle de développement est le TDD ([developpement.md](../developpement.md))
 - Import / export `.cadompart` : branché ([sprint 32](../sprints/sprint-32-fichier-cadompart.md)), filet `pas` compris ([sprint 33](../sprints/sprint-33-pas-cadompart.md)). `.cadom`, `.cadomesh`, `.cadombrep` après. STEP hors modèle de vérité.
 - Sprint 25–31 : pipeline OCCT, GCS, pointe, faces, carrure, datums (**faits**).
 - MCP de géométrie : codé sur `feature/mcp-geometrie` ([sprint 34](../sprints/sprint-34-mcp-geometrie.md)). Le viewport vivant reste à confirmer.
-- Boulon hexagonal fileté : branche `feature/boulon-hexagonal`, tests rouges et script MCP prêts ([sprint 35](../sprints/sprint-35-boulon-hexagonal.md)).
+- Boulon hexagonal fileté : codé sur `feature/boulon-hexagonal` ([sprint 35](../sprints/sprint-35-boulon-hexagonal.md)).
 - Ruban, souris sur l’esquisse, Electron, assemblage multi-pièces.
 - Un seul tesselleur (carrure encore faces exactes + `noyauProvisoire` jusqu’au sprint 30).
 

@@ -75,4 +75,19 @@ describe('boulon pipeline OCCT', () => {
     expect(session.historique().some((o) => o.type === 'pas')).toBe(true)
     expect(session.historique().filter((o) => o.type === 'extrude')).toHaveLength(1)
   })
+
+  it('maille le boulon M8 hybride (filet hôte + tête OCCT)', async () => {
+    const occt = await chargerKernel()
+    const session = new Session({ geometrie: false })
+    session.executer(SCRIPT_BOULON_M8)
+    const maille = maillagePipelineOcct(occt, session)
+    expect(maille.indices.length).toBeGreaterThan(100)
+    let yMax = -Infinity
+    for (let i = 1; i < maille.positions.length; i += 3) {
+      yMax = Math.max(yMax, maille.positions[i]!)
+    }
+    // Fût 30 + tête 5.5
+    expect(yMax).toBeGreaterThan(34)
+    expect(yMax).toBeLessThan(37)
+  }, 180_000)
 })

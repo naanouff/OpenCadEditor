@@ -418,6 +418,14 @@ export const domaineRevolution: Domaine = {
         contexte.piece.demiProfil = profil
         contexte.esquisse = null
         contexte.piece.esquisse = null
+        // Faces nommées pour une tête sur face.dessus (boulon), même si le corps est en `pas` hôte.
+        const faces = new Set(contexte.solide?.faces ?? [])
+        faces.add('face.dessus')
+        faces.add('face.dessous')
+        contexte.solide = contexte.solide
+          ? { ...contexte.solide, faces }
+          : { faces, extrusions: 0, enlevementsBorgnes: 0, enlevements: [], ajouts: [] }
+        contexte.piece.solide = contexte.solide
         if (contexte.geometrie === false) return
         let ajoute = normalesLisses(versExterieur(tourner(profil)))
         const deja = contexte.piece.volume

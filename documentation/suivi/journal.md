@@ -446,3 +446,7 @@ Branche depuis `develop`. `Session.reinitialiser` vide pièces, document et pile
 
 Branche depuis `feature/mcp-geometrie`. `octogone` + `entreplat` déjà dans l’API (tests verts). Tests rouges : `hexagone.test.ts`, `boulonPipeline.test.ts`. Script MCP `boulon.opencad` aligné sur la veille (âme dès h=0, `angle_pointe 175`, tête hex sur `face.dessus`). Suite : brancher `hexagone` (miroir octogone), rejouer polygones dans `pipelineOcct`, faces après révolution/`pas`.
 
+## 2026-10-11 — Sprint 35 : hexagone et boulon M8
+
+Verbe `hexagone` (GCS, `R = entreplat / (2·cos(π/6))`). Pipeline : rejeu `hexagone`/`octogone`/`entreplat` ; `face.dessus`/`dessous` après `revolution` (y compris avec `pas`) ; extrude sur face à la bonne altitude. `revolution` Session enregistre aussi les faces. Script MCP + maillage hybride filet hôte + tête OCCT validés en tests.
+

@@ -27,6 +27,7 @@ export const domaineEsquisse: Domaine = {
     segment: () => ({ type: 'segment', arguments: {}, noms: [] }),
     arc: () => ({ type: 'arc', arguments: {}, noms: [] }),
     octogone: () => ({ type: 'octogone', arguments: {}, noms: [] }),
+    hexagone: () => ({ type: 'hexagone', arguments: {}, noms: [] }),
     concentrique: (reste) => ({ type: 'concentrique', arguments: { cible: reste }, noms: [] }),
     cote: (reste) => {
       const espace = reste.indexOf(' ')
@@ -106,6 +107,18 @@ export const domaineEsquisse: Domaine = {
         contexte.esquisse!.entites.push({
           id: `octogone.${contexte.piece.compteur++}`,
           sorte: 'octogone',
+          degres: 1,
+        })
+      },
+      defaire() {},
+    },
+    hexagone: {
+      dansHistorique: true,
+      faire(contexte) {
+        rouvrirSiBesoin(contexte)
+        contexte.esquisse!.entites.push({
+          id: `hexagone.${contexte.piece.compteur++}`,
+          sorte: 'hexagone',
           degres: 1,
         })
       },

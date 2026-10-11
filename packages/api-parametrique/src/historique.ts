@@ -6,6 +6,7 @@ export const SOUS_ESQUISSE = new Set([
   'segment',
   'arc',
   'octogone',
+  'hexagone',
   'concentrique',
   'cote',
   'symetrie',

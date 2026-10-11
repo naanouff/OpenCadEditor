@@ -17,8 +17,11 @@ import {
   directionCoupe,
   faceDepuisBornesY,
   yPlanCoupe,
+  yPlanFace,
   type RegistreFaces,
 } from './registreFaces.ts'
+
+const ENTITES_ESQUISSE = new Set(['cercle', 'rectangle', 'segment', 'arc', 'octogone', 'hexagone'])
 
 type EtatEsquisse = {
   support: string
@@ -34,6 +37,7 @@ function appliquerCote(entite: EntiteEsquisse, cible: string, expression: string
   if (cible === 'rayon') entite.rayon = expression
   if (cible === 'hauteur') entite.hauteur = expression
   if (cible === 'longueur') entite.longueur = expression
+  if (cible === 'entreplat') entite.entreplat = expression
 }
 
 /** Rayon max d’une polyline XZ (pour classer anneau extérieur / intérieur). */
@@ -208,9 +212,13 @@ function compiler(historique: Operation[], pointe: number | null = null): Compil
       dernierSupport = operation.arguments.support
       continue
     }
-    if (operation.type === 'cercle' || operation.type === 'rectangle' || operation.type === 'segment' || operation.type === 'arc') {
+    if (ENTITES_ESQUISSE.has(operation.type)) {
       assurerEsquisse()
-      esquisse!.entites.push({ id: `${operation.type}.${uid++}`, sorte: operation.type, degres: 0 })
+      esquisse!.entites.push({
+        id: `${operation.type}.${uid++}`,
+        sorte: operation.type as EntiteEsquisse['sorte'],
+        degres: 0,
+      })
       continue
     }
     if (operation.type === 'cote') {
@@ -259,6 +267,9 @@ function compiler(historique: Operation[], pointe: number | null = null): Compil
         ops.push(...acc.ops)
         solidAs = acc.solidAs
       }
+      // Même avec `pas` (corps hôte), les faces existent pour une tête sur face.dessus.
+      yMin = Math.min(yMin, 0)
+      faces = faceDepuisBornesY(yMin, yMax)
       esquisse = null
       continue
     }
@@ -270,15 +281,23 @@ function compiler(historique: Operation[], pointe: number | null = null): Compil
         esquisse = null
         continue
       }
+      const face = faces.get(sketch.support)
+      const yPlan = face ? yPlanFace(face) : 0
+      const dir = face
+        ? ([
+            face.normal[0] * profondeur,
+            face.normal[1] * profondeur,
+            face.normal[2] * profondeur,
+          ] as const)
+        : ([0, profondeur, 0] as const)
       let polys
       try {
-        polys = polylinesDepuisEsquisse(sketch, parametres, { yPlan: 0 })
+        polys = polylinesDepuisEsquisse(sketch, parametres, { yPlan })
       } catch {
         // Esquisse non encore supportée (ex. cercle sur plan.12h) : saute la feature.
         esquisse = null
         continue
       }
-      const dir = ([0, profondeur, 0] as const)
       const cercles = sketch.entites.filter((e) => e.sorte === 'cercle')
       // Anneau : deux cercles concentriques → extrude l’extérieur, coupe l’intérieur.
       if (cercles.length >= 2 && polys.length >= 2 && sketch.support !== 'plan.3h') {
@@ -295,7 +314,11 @@ function compiler(historique: Operation[], pointe: number | null = null): Compil
         ops.push(...acc.ops)
         solidAs = acc.solidAs
         for (const interieur of classes.slice(1)) {
-          const outil = opsExtrude(interieur.poly, [0, profondeur + 0.4, 0], String(uid++))
+          const outil = opsExtrude(
+            interieur.poly,
+            [dir[0], dir[1] + Math.sign(dir[1] || 1) * 0.4, dir[2]],
+            String(uid++),
+          )
           ops.push(...outil.ops)
           const cut = opsCouper(solidAs, outil.as, String(uid++))
           ops.push(...cut.ops)
@@ -317,8 +340,14 @@ function compiler(historique: Operation[], pointe: number | null = null): Compil
         }
       }
       if (sketch.support !== 'plan.3h') {
-        yMax = Math.max(yMax, profondeur)
-        yMin = Math.min(yMin, 0)
+        if (face) {
+          const yFin = face.origin[1] + face.normal[1] * profondeur
+          yMax = Math.max(yMax, yFin, face.origin[1])
+          yMin = Math.min(yMin, yFin, face.origin[1])
+        } else {
+          yMax = Math.max(yMax, profondeur)
+          yMin = Math.min(yMin, 0)
+        }
         faces = faceDepuisBornesY(yMin, yMax)
       }
       esquisse = null
