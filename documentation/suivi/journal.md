@@ -544,3 +544,7 @@ Golden extrude plaque via `occt-kernel` (issue [#61](https://github.com/naanouff
 
 Goldens revolve + plaque trouée (issue [#63](https://github.com/naanouff/OpenCAD/issues/63)).
 
+## 2026-10-11 — O2 / K3-5
+
+Solveur rectangle H/V/distance + extrude gated (issue [#65](https://github.com/naanouff/OpenCAD/issues/65)).
+
