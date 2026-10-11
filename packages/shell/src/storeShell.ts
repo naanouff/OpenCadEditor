@@ -1,4 +1,5 @@
 import type { MaillageOmbre } from '@opencad/api-parametrique'
+import { CadomDocument, decode } from '@opencad/cadom'
 import { ecrire, lire } from '@opencad/format-opencad'
 import { selecteurCourant } from './fichierShell.ts'
 import { Hote } from './hote.ts'
@@ -27,6 +28,7 @@ let vueEsquisse: number | null = null
 let attendue = 0
 let construction = false
 let maillageAffiche: MaillageOmbre | null = null
+let assemblage: CadomDocument | null = null
 
 const moteur = navigateur
   ? moteurWorker((maillage, sequence) => {
@@ -59,12 +61,28 @@ function publier(mutation: MutationPont) {
   auditeurPont?.(mutation)
 }
 
+function chargerAssemblage(octets: Uint8Array) {
+  const logical = decode(octets)
+  if (
+    logical.versionMajor !== 0 ||
+    logical.rootIds.length === 0 ||
+    logical.nodes.length === 0 ||
+    logical.nodes.some((n) => !n.id)
+  ) {
+    throw new Error('cadom illisible')
+  }
+  assemblage = CadomDocument.fromLogical(logical)
+  revision += 1
+  prevenir()
+}
+
 export const storeShell = {
   hote: () => hote,
   revision: () => revision,
   construction: () => construction,
   utiliseMoteur: () => moteur !== null,
   maillageAffiche: () => maillageAffiche,
+  assemblage: () => assemblage,
   souscrire(ecouteur: Ecouteur) {
     ecouteurs.add(ecouteur)
     return () => {
@@ -170,16 +188,25 @@ export const storeShell = {
     return ecrire(hote.session)
   },
   ouvrir(octets: Uint8Array) {
-    const lecture = lire(octets)
-    const suivant = new Hote(navigateur ? { geometrie: false } : undefined)
-    suivant.executer(lecture.script)
-    for (const index of lecture.eteins) suivant.session.activer(index, false)
-    vueEsquisse = null
-    maillageAffiche = null
-    hote = suivant
-    envoyer((sequence) => moteur?.ouvrir(lecture.script, lecture.eteins, sequence))
-    revision += 1
-    prevenir()
+    try {
+      const lecture = lire(octets)
+      const suivant = new Hote(navigateur ? { geometrie: false } : undefined)
+      suivant.executer(lecture.script)
+      for (const index of lecture.eteins) suivant.session.activer(index, false)
+      vueEsquisse = null
+      maillageAffiche = null
+      assemblage = null
+      hote = suivant
+      envoyer((sequence) => moteur?.ouvrir(lecture.script, lecture.eteins, sequence))
+      revision += 1
+      prevenir()
+    } catch (piece) {
+      try {
+        chargerAssemblage(octets)
+      } catch {
+        throw piece
+      }
+    }
   },
   async demanderOuverture() {
     const octets = await selecteurCourant().ouvrir()

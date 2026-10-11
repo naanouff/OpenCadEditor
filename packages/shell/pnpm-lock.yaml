@@ -11,6 +11,9 @@ importers:
       '@opencad/api-parametrique':
         specifier: file:../api-parametrique
         version: file:../api-parametrique
+      '@opencad/cadom':
+        specifier: file:../../vendor/opencad/packages/cadom
+        version: file:../../vendor/opencad/packages/cadom
       '@opencad/format-opencad':
         specifier: file:../format-opencad
         version: file:../format-opencad
@@ -328,6 +331,9 @@ packages:
 
   '@opencad/api-parametrique@file:../api-parametrique':
     resolution: {directory: ../api-parametrique, type: directory}
+
+  '@opencad/cadom@file:../../vendor/opencad/packages/cadom':
+    resolution: {directory: ../../vendor/opencad/packages/cadom, type: directory}
 
   '@opencad/format-opencad@file:../format-opencad':
     resolution: {directory: ../format-opencad, type: directory}
@@ -1352,6 +1358,10 @@ snapshots:
       fastq: 1.20.3
 
   '@opencad/api-parametrique@file:../api-parametrique': {}
+
+  '@opencad/cadom@file:../../vendor/opencad/packages/cadom':
+    dependencies:
+      protobufjs: 8.8.0
 
   '@opencad/format-opencad@file:../format-opencad':
     dependencies:

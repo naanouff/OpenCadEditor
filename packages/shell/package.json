@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "@opencad/api-parametrique": "file:../api-parametrique",
+    "@opencad/cadom": "file:../../vendor/opencad/packages/cadom",
     "@opencad/format-opencad": "file:../format-opencad",
     "@opencad/kernel": "file:../../vendor/opencad/packages/kernel",
     "dockview": "^5.1.0",

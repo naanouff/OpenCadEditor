@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, type ReactElement } from 'react'
 import { Panel } from '@naanouff/w3dts-editor-ui'
+import { lignesAssemblage } from './assemblageAffichage.ts'
 import { lignesDocument } from './documentAffichage.ts'
 import { storeShell } from './storeShell.ts'
 
@@ -8,7 +9,10 @@ export function DocumentVue(): ReactElement {
   const [message, setMessage] = useState<string | null>(null)
   useEffect(() => storeShell.souscrire(() => setRevision(storeShell.revision())), [])
 
-  const lignes = useMemo(() => lignesDocument(storeShell.hote().session.document()), [revision])
+  const lignes = useMemo(() => {
+    const doc = storeShell.assemblage()
+    return doc ? lignesAssemblage(doc) : lignesDocument(storeShell.hote().session.document())
+  }, [revision])
 
   const ouvrir = () => {
     setMessage(null)

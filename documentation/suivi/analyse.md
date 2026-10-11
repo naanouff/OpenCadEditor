@@ -36,7 +36,7 @@ Pas de `package.json` racine : chaque paquet a son propre lockfile.
 
 Domaines : `parametres`, `esquisse` (dont polygones, GCS), `solide`, `revolution` (+ `pas` filet).
 
-`.cadompart` : aller-retour via `format-opencad` (sprints 32–33), expressions et `pas`/`helix` compris. `.cadom` non lu. Écart connu : la spec OpenCAD v0.2.1 interdit d’écrire `expression` tant qu’aucun dialecte n’existe — dialecte prévu cadompart v0.3 (phase O1).
+`.cadompart` : aller-retour via `format-opencad` (sprints 32–33), expressions et `pas`/`helix` compris. `.cadom` : ouverture graphe via `@opencad/cadom` (sprint 44) ; pas encore de late-load mesh ni d’enregistrement. Dialecte expressions : cadompart v0.3 (O1).
 
 ## Géométrie
 
@@ -48,7 +48,7 @@ Domaines : `parametres`, `esquisse` (dont polygones, GCS), `solide`, `revolution
 
 ## Interface
 
-[App.tsx](../../packages/shell/src/App.tsx) : viewport, Construction (arbre + pointe), Paramètres, Document (ouvrir / enregistrer `.cadompart`), Terminal Monaco, Debug (Build carrure / vis / boîte). MCP peut piloter la session et, si le shell est ouvert, le viewport.
+[App.tsx](../../packages/shell/src/App.tsx) : viewport, Construction (arbre + pointe), Paramètres, Document (ouvrir `.cadompart` / `.cadom`, enregistrer `.cadompart`), Terminal Monaco, Debug (Build carrure / vis / boîte). MCP peut piloter la session et, si le shell est ouvert, le viewport.
 
 TDD : [developpement.md](../developpement.md). Veille avant chaque sprint.
 
