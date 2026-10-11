@@ -450,3 +450,11 @@ Branche depuis `feature/mcp-geometrie`. `octogone` + `entreplat` déjà dans l�
 
 Verbe `hexagone` (GCS, `R = entreplat / (2·cos(π/6))`). Pipeline : rejeu `hexagone`/`octogone`/`entreplat` ; `face.dessus`/`dessous` après `revolution` (y compris avec `pas`) ; extrude sur face à la bonne altitude. `revolution` Session enregistre aussi les faces. Script MCP + maillage hybride filet hôte + tête OCCT validés en tests.
 
+## 2026-10-11 — Gitflow finalisation consignés, sprint 36 prêt
+
+[gitflow-protection.md](../veille/gitflow-protection.md) et [sprint-36-gitflow.md](../sprints/sprint-36-gitflow.md). Les rulesets `gitflow-protect-main` / `gitflow-protect-develop` sont déjà actifs. Écarts : `delete_branch_on_merge` encore false, pas de `branch-policy.yml`, branches `feature/*` déjà dans `develop` encore sur origin. Plan : activer la suppression auto post-merge, ajouter la CI qui refuse `feature/*` → `main`, documenter dans [gitflow.md](../gitflow.md), nettoyer les refs contenues. Pas encore d’exécution ; branche prévue `chore/gitflow` depuis `develop`.
+
+## 2026-10-11 — Sprint 36 commencé : feature/gitflow
+
+Branche `feature/gitflow` depuis `develop`. `delete_branch_on_merge` activé sur le dépôt. Workflow [branch-policy.yml](../../.github/workflows/branch-policy.yml) : vers `main` seule `develop` ; vers `develop` `feature/*` | `fix/*` | `chore/*`. Doc [gitflow.md](../gitflow.md) et veille alignées. Nettoyage one-shot sur origin : `feature/pas-cadompart`, `mcp-geometrie`, `boulon-hexagonal`, `datums-origine`, `carrure-pipeline`, `pointe-arbre`, `gcs-esquisse`, `pipeline-occt`, `noyau-occt`, `initial`, `chore/feuille-route-31`.
+

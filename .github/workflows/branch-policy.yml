@@ -1,0 +1,40 @@
+# Refuse les PR hors gitflow : feature/fix/chore → develop ; develop → main.
+name: branch-policy
+
+on:
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  policy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Vérifier la base et la tête
+        env:
+          BASE: ${{ github.base_ref }}
+          HEAD: ${{ github.head_ref }}
+        run: |
+          set -euo pipefail
+          echo "PR $HEAD → $BASE"
+          if [ "$BASE" = "main" ]; then
+            if [ "$HEAD" != "develop" ]; then
+              echo "::error::Vers main, seule develop est autorisée (reçu: $HEAD). Voir documentation/gitflow.md."
+              exit 1
+            fi
+            echo "OK: develop → main"
+            exit 0
+          fi
+          if [ "$BASE" = "develop" ]; then
+            case "$HEAD" in
+              feature/*|fix/*|chore/*)
+                echo "OK: $HEAD → develop"
+                exit 0
+                ;;
+              *)
+                echo "::error::Vers develop, head doit être feature/*, fix/* ou chore/* (reçu: $HEAD)."
+                exit 1
+                ;;
+            esac
+          fi
+          echo "::error::Base inattendue: $BASE"
+          exit 1

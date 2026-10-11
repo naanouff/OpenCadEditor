@@ -14,6 +14,8 @@ flowchart LR
   main --> release["tag v*"]
 ```
 
+Sprint de finalisation : [sprint-36-gitflow.md](sprints/sprint-36-gitflow.md). Plan détaillé : [veille/gitflow-protection.md](veille/gitflow-protection.md).
+
 ## Branches long-lived
 
 | Branche | Rôle |
@@ -34,9 +36,37 @@ Pas de commits directs sur `develop` ni `main` (PR obligatoires via rulesets). L
 
 Definitions versionnées : [`.github/rulesets/`](../.github/rulesets/).
 
+## Protections GitHub (rulesets)
+
+Rulesets actifs sur le dépôt `naanouff/OpenCadEditor` :
+
+| Ruleset | Cible | Règles |
+|---------|-------|--------|
+| `gitflow-protect-main` | `refs/heads/main` | PR obligatoire, pas de suppression, pas de force-push |
+| `gitflow-protect-develop` | `refs/heads/develop` | idem |
+
+Bypass : rôle Repository admin. Sources versionnées dans [`.github/rulesets/`](../.github/rulesets/).
+
+## Suppression après merge
+
+Après merge d’une PR, la branche source (`feature/*`, `fix/*`, …) est **supprimée automatiquement** (`Settings → General → Automatically delete head branches`, API `delete_branch_on_merge`).
+
+`main` et `develop` restent non supprimables grâce aux rulesets. Les trois méthodes de merge (`merge` / `squash` / `rebase`) déclenchent toutes cette suppression.
+
+## Politique de PR (CI)
+
+Le workflow [`.github/workflows/branch-policy.yml`](../.github/workflows/branch-policy.yml) refuse les PR hors-flux :
+
+| Base | Head autorisée |
+|------|----------------|
+| `develop` | `feature/*`, `fix/*`, `chore/*` |
+| `main` | `develop` uniquement |
+
+Pas de PR `feature/*` / `fix/*` → `main`. La CI échoue sur ces PR ; les rulesets n’imposent pas encore ce check comme statut requis (solo-dev).
+
 ## Promotion et release
 
-1. Intégrer les PR `feature/*` / `fix/*` dans `develop`.
+1. Intégrer les PR `feature/*` / `fix/*` dans `develop` (branche source effacée au merge).
 2. Quand `develop` est prêt : PR `develop` → `main`.
 3. Sur `main`, créer le tag semver : `git tag v0.1.0 && git push origin v0.1.0`.
 

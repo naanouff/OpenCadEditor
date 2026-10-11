@@ -4,7 +4,7 @@ Suivi du projet et notes de travail. Ce dossier n’appartient pas au moteur : l
 
 | Dossier | Rôle |
 |---------|------|
-| [gitflow.md](gitflow.md) | Branches : feature/fix → develop → main → tag |
+| [gitflow.md](gitflow.md) | Branches : feature/fix → develop → main → tag ; suppression auto post-merge |
 | [suivi/analyse.md](suivi/analyse.md) | État du dépôt : couches, langage, géométrie, manques |
 | [suivi/occt-kernel.md](suivi/occt-kernel.md) | Vérification : occt-wasm v0.2.0 et kernel B-Rep |
 | [veille/noyau-occt.md](veille/noyau-occt.md) | Décision : occt-kernel remplace le noyau OpenCAD |
@@ -85,5 +85,7 @@ Suivi du projet et notes de travail. Ce dossier n’appartient pas au moteur : l
 | [sprints/sprint-34-mcp-geometrie.md](sprints/sprint-34-mcp-geometrie.md) | Sprint du serveur stdio et du pont local |
 | [veille/boulon-hexagonal.md](veille/boulon-hexagonal.md) | Boulon M8 : tête hexagone, fût fileté, bout plat |
 | [sprints/sprint-35-boulon-hexagonal.md](sprints/sprint-35-boulon-hexagonal.md) | Sprint du verbe `hexagone` et du script MCP |
+| [veille/gitflow-protection.md](veille/gitflow-protection.md) | Gitflow : suppression auto, CI politique, nettoyage |
+| [sprints/sprint-36-gitflow.md](sprints/sprint-36-gitflow.md) | Sprint de finalisation des protections GitHub |
 
 La veille précède chaque sprint. Le prototype (API, shell, carrure, vis) est dans `packages/`. OpenCadEditor est l’éditeur. CADOM (`.cadom`) est le format d’assemblage OpenCAD, pas un logiciel. L’intention est dans `.cadompart`. L’état consolidé est dans [suivi/analyse.md](suivi/analyse.md) ; le détail daté reste dans le journal.
