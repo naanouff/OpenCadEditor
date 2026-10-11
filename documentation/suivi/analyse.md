@@ -72,6 +72,7 @@ La règle de développement est le TDD ([developpement.md](../developpement.md))
 - Import / export `.cadompart` : branché ([sprint 32](../sprints/sprint-32-fichier-cadompart.md)), filet `pas` compris ([sprint 33](../sprints/sprint-33-pas-cadompart.md)). `.cadom`, `.cadomesh`, `.cadombrep` après. STEP hors modèle de vérité.
 - Sprint 25–31 : pipeline OCCT, GCS, pointe, faces, carrure, datums (**faits**).
 - MCP de géométrie : codé sur `feature/mcp-geometrie` ([sprint 34](../sprints/sprint-34-mcp-geometrie.md)). Le viewport vivant reste à confirmer.
+- Boulon hexagonal fileté : branche `feature/boulon-hexagonal`, tests rouges et script MCP prêts ([sprint 35](../sprints/sprint-35-boulon-hexagonal.md)).
 - Ruban, souris sur l’esquisse, Electron, assemblage multi-pièces.
 - Un seul tesselleur (carrure encore faces exactes + `noyauProvisoire` jusqu’au sprint 30).
 
@@ -90,4 +91,5 @@ La règle de développement est le TDD ([developpement.md](../developpement.md))
 - [fichier-cadompart.md](../veille/fichier-cadompart.md) — lecture et écriture `.cadompart` (sprint 32)
 - [pas-cadompart.md](../veille/pas-cadompart.md) — filet `pas` dans le fichier (sprint 33)
 - [mcp-geometrie.md](../veille/mcp-geometrie.md) — agent sur le langage de commandes (sprint 34, codé)
+- [boulon-hexagonal.md](../veille/boulon-hexagonal.md) — boulon M8 tête hex + filet plat (sprint 35)
 - [shell/plan.md](../shell/plan.md) — hôte, panneaux, viewport

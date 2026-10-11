@@ -153,6 +153,39 @@ function resoudreCercle(entite: EntiteEsquisse, parametres: Map<string, string>)
   }
 }
 
+/** Octogone régulier à pans horizontaux/verticaux ; `entreplat` = distance entre pans opposés. */
+function resoudreOctogone(entite: EntiteEsquisse, parametres: Map<string, string>): EsquisseResolue {
+  if (!entite.entreplat) {
+    return {
+      points: [],
+      polylines: [],
+      degres: 1,
+      ferme: true,
+      statut: 'sous-contraint',
+      contraintes: [],
+    }
+  }
+  const entreplat = evaluer(entite.entreplat, parametres)
+  const rayon = entreplat / (2 * Math.cos(Math.PI / 8))
+  const points: PointResolu[] = []
+  const ids: string[] = []
+  for (let i = 0; i < 8; i++) {
+    const angle = Math.PI / 8 + (i * Math.PI) / 4
+    const id = `${entite.id}.${i}`
+    points.push({ id, u: rayon * Math.cos(angle), v: rayon * Math.sin(angle) })
+    ids.push(id)
+  }
+  if (ids[0]) ids.push(ids[0])
+  return {
+    points,
+    polylines: [{ points: ids }],
+    degres: 0,
+    ferme: true,
+    statut: 'contraint',
+    contraintes: [],
+  }
+}
+
 /** Arc du plus court chemin de angle0 → angle1 (Δ dans (−π, π]). */
 function densifierArcCourt(
   cx: number,
@@ -330,6 +363,11 @@ function resoudre(
   const rectangles = entites.filter((e) => e.sorte === 'rectangle')
   const cercles = entites.filter((e) => e.sorte === 'cercle')
   const segments = entites.filter((e) => e.sorte === 'segment')
+  const octogones = entites.filter((e) => e.sorte === 'octogone')
+
+  if (octogones.length === 1 && entites.length === 1) {
+    return resoudreOctogone(octogones[0]!, parametres)
+  }
 
   if (rectangles.length === 1 && cercles.length === 0 && entites.length === 1) {
     const r = rectangles[0]!

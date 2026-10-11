@@ -438,3 +438,11 @@ Branche depuis `feature/fichier-cadompart`. `pas` est une feature `helix` nommé
 
 Branche depuis `develop`. `Session.reinitialiser` vide pièces, document et piles. Le paquet `packages/mcp` expose `commande`, `executer`, `etat`, `annuler`, `refaire`, `pointe`, `activer`, `aligner` sur stdio, et un WebSocket `127.0.0.1:47321`. Au `bonjour`, deux scripts différents posent un conflit sans écraser. Le shell dev s’y connecte ; une ligne reçue n’est pas renvoyée. Le worker reçoit `refaire` et `remplacer` sur la même session. Le viewport ouvert reste à confirmer.
 
+## 2026-10-11 — Boulon hexagonal consigné, sprint 35 prêt
+
+[boulon-hexagonal.md](../veille/boulon-hexagonal.md) et [sprint-35-boulon-hexagonal.md](../sprints/sprint-35-boulon-hexagonal.md). Un essai MCP a produit une vis à bois (tête ronde, pointe 30°, filet qui s’amincit). Le palier vise un M8 : verbe `hexagone` + `entreplat`, pipeline OCCT qui rejoue les polygones et pose la tête sur `face.dessus`, script `revolution` + `pas` avec `angle_pointe 175` puis extrude hexagonale. `octogone` reste pour huit pans. Pas encore de code ; branche prévue `feature/boulon-hexagonal` depuis `feature/mcp-geometrie`.
+
+## 2026-10-11 — Sprint 35 préparé : feature/boulon-hexagonal
+
+Branche depuis `feature/mcp-geometrie`. `octogone` + `entreplat` déjà dans l’API (tests verts). Tests rouges : `hexagone.test.ts`, `boulonPipeline.test.ts`. Script MCP `boulon.opencad` aligné sur la veille (âme dès h=0, `angle_pointe 175`, tête hex sur `face.dessus`). Suite : brancher `hexagone` (miroir octogone), rejouer polygones dans `pipelineOcct`, faces après révolution/`pas`.
+

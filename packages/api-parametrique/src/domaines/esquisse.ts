@@ -26,6 +26,7 @@ export const domaineEsquisse: Domaine = {
     rectangle: () => ({ type: 'rectangle', arguments: {}, noms: [] }),
     segment: () => ({ type: 'segment', arguments: {}, noms: [] }),
     arc: () => ({ type: 'arc', arguments: {}, noms: [] }),
+    octogone: () => ({ type: 'octogone', arguments: {}, noms: [] }),
     concentrique: (reste) => ({ type: 'concentrique', arguments: { cible: reste }, noms: [] }),
     cote: (reste) => {
       const espace = reste.indexOf(' ')
@@ -98,6 +99,18 @@ export const domaineEsquisse: Domaine = {
       },
       defaire() {},
     },
+    octogone: {
+      dansHistorique: true,
+      faire(contexte) {
+        rouvrirSiBesoin(contexte)
+        contexte.esquisse!.entites.push({
+          id: `octogone.${contexte.piece.compteur++}`,
+          sorte: 'octogone',
+          degres: 1,
+        })
+      },
+      defaire() {},
+    },
     concentrique: {
       dansHistorique: true,
       faire(contexte, operation) {
@@ -124,6 +137,7 @@ export const domaineEsquisse: Domaine = {
         if (cible === 'rayon') entite.rayon = operation.arguments.expression
         if (cible === 'hauteur') entite.hauteur = operation.arguments.expression
         if (cible === 'longueur') entite.longueur = operation.arguments.expression
+        if (cible === 'entreplat') entite.entreplat = operation.arguments.expression
       },
       defaire() {},
     },
