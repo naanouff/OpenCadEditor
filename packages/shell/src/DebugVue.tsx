@@ -4,6 +4,7 @@ import { SCRIPT_BOITE } from './scriptBoite.ts'
 import { SCRIPT_CARRURE } from './scriptCarrure.ts'
 import { SCRIPT_FOND } from './scriptFond.ts'
 import { SCRIPT_LUNETTE } from './scriptLunette.ts'
+import { SCRIPT_VERRE } from './scriptVerre.ts'
 import { SCRIPT_VIS } from './scriptVis.ts'
 import { storeShell } from './storeShell.ts'
 
@@ -50,6 +51,13 @@ export function DebugVue(): ReactElement {
             onClick={() => construire(SCRIPT_FOND, 'Fond construit')}
           >
             Build fond
+          </button>
+          <button
+            type="button"
+            className="rounded border border-[var(--color-border-default)] bg-[var(--color-surface-input)] px-3 py-1.5 text-left text-[var(--color-text-primary)] hover:bg-[var(--color-surface-hover)]"
+            onClick={() => construire(SCRIPT_VERRE, 'Verre construit')}
+          >
+            Build verre
           </button>
           <button
             type="button"
