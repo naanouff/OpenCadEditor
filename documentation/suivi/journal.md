@@ -476,3 +476,7 @@ Branche `feature/recalage` depuis `develop`. `tube-bout.test.ts` importe `SCRIPT
 
 Première run Actions : clone `vendor/w3dts` en échec (`repository not found`). Workflow ajusté : sous-module `occt-wasm` seul par défaut ; tests shell si secret `SUBMODULES_PAT` présent.
 
+## 2026-10-11 — Sprint 37 terminé
+
+PR [#12](https://github.com/naanouff/OpenCadEditor/pull/12) mergée. Rulesets `gitflow-protect-develop` / `main` : status check `tests` (integration_id 15368) appliqué via API. Schéma JSON corrigé (`required_status_checks` + `strict_required_status_checks_policy`). Phase P0 marquée faite dans [feuille-de-route.md](feuille-de-route.md).
+
