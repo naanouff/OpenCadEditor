@@ -564,3 +564,7 @@ Writer `.cadombrep` OCCT_BREP + topo (issue [#71](https://github.com/naanouff/Op
 
 Extract `opsExtrude` + polylines UV→XYZ (issue [#73](https://github.com/naanouff/OpenCAD/issues/73)).
 
+## 2026-10-11 — O2-2 boolean ops
+
+Extract `opsCouper` / `accrocherSolide` (issue [#75](https://github.com/naanouff/OpenCAD/issues/75)).
+
