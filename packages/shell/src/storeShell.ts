@@ -1,5 +1,11 @@
 import type { MaillageOmbre } from '@opencad/api-parametrique'
-import { CadomDocument, decode, planLateLoad, type LateLoadPlan } from '@opencad/cadom'
+import {
+  CadomDocument,
+  decode,
+  encode,
+  planLateLoad,
+  type LateLoadPlan,
+} from '@opencad/cadom'
 import { ecrire, lire } from '@opencad/format-opencad'
 import { selecteurCourant } from './fichierShell.ts'
 import { Hote } from './hote.ts'
@@ -187,6 +193,7 @@ export const storeShell = {
     publier({ type: 'pointe', cible })
   },
   enregistrer() {
+    if (assemblage) return encode(assemblage.toLogical())
     return ecrire(hote.session)
   },
   ouvrir(octets: Uint8Array) {
@@ -216,6 +223,12 @@ export const storeShell = {
     this.ouvrir(octets)
   },
   async demanderEnregistrement() {
+    if (assemblage) {
+      const root = assemblage.nodes.get(assemblage.rootIds[0] ?? '')
+      const base = (root?.name || 'assemblage').replace(/[^\w.-]+/g, '_')
+      await selecteurCourant().enregistrer(encode(assemblage.toLogical()), `${base}.cadom`)
+      return
+    }
     const octets = ecrire(hote.session)
     const nom = `${hote.session.pieceCourante() ?? 'piece'}.cadompart`
     await selecteurCourant().enregistrer(octets, nom)
