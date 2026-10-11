@@ -580,3 +580,7 @@ Compiler : `revolution`, `cercle` / `enlever` (cut).
 
 Submodule `vendor/opencad` ; shell réexporte `ops*` depuis `@opencad/kernel`.
 
+## 2026-10-11 — O2-6 GCS cercle
+
+Kernel : résolution cercle + densification polylines ; bump `vendor/opencad`.
+
