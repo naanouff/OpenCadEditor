@@ -81,6 +81,13 @@ export default defineConfig({
         ),
       },
       {
+        find: '@opencad/kernel/elevation',
+        replacement: path.resolve(
+          ici,
+          '../../vendor/opencad/packages/kernel/src/elevationCornes.ts',
+        ),
+      },
+      {
         find: '@opencad/kernel/sketch',
         replacement: path.resolve(
           ici,
