@@ -60,6 +60,17 @@ export default defineConfig({
         replacement: path.resolve(ici, '../format-opencad/src/index.ts'),
       },
       {
+        find: '@opencad/kernel/ops',
+        replacement: path.resolve(
+          ici,
+          '../../vendor/opencad/packages/kernel/src/opsDepuisFonction.ts',
+        ),
+      },
+      {
+        find: '@opencad/kernel',
+        replacement: path.resolve(ici, '../../vendor/opencad/packages/kernel/src/index.ts'),
+      },
+      {
         find: '@naanouff/occt-wasm/kernel/batch',
         replacement: path.resolve(occtWasm, 'js/kernel-batch.mjs'),
       },
@@ -107,6 +118,7 @@ export default defineConfig({
     exclude: [
       '@opencad/api-parametrique',
       '@opencad/format-opencad',
+      '@opencad/kernel',
       '@naanouff/w3dts-editor-ui',
       '@naanouff/occt-wasm/kernel',
     ],

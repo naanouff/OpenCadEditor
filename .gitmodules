@@ -5,3 +5,7 @@
 [submodule "vendor/occt-wasm"]
 	path = vendor/occt-wasm
 	url = https://github.com/naanouff/occt-wasm.git
+[submodule "vendor/opencad"]
+	path = vendor/opencad
+	url = https://github.com/naanouff/OpenCAD.git
+	branch = develop

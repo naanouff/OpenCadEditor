@@ -24,6 +24,9 @@ jobs:
       - name: occt-wasm (public)
         run: git submodule update --init vendor/occt-wasm
 
+      - name: opencad (public)
+        run: git submodule update --init vendor/opencad
+
       - name: w3dts (privé, optionnel)
         id: w3dts
         env:
