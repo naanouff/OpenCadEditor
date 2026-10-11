@@ -137,6 +137,28 @@ describe('carrure pipeline OCCT', () => {
     expect(rayonMax(maille)).toBeGreaterThan(18)
   }, 180_000)
 
+  it('fuse le tube de couronne et ouvre le trou de tige', async () => {
+    const occt = await chargerKernel()
+    const session = new Session({ geometrie: false })
+    session.executer(SCRIPT_CARRURE)
+    const maille = maillagePipelineOcct(occt, session)
+    const peau = 18 // diametre_boite 36
+    const tip = peau + 2 // longueur_tube
+    let bossage = false
+    let dansTrou = false
+    for (let i = 0; i < maille.positions.length; i += 3) {
+      const x = maille.positions[i]!
+      const y = maille.positions[i + 1]!
+      const z = maille.positions[i + 2]!
+      const rYZ = Math.hypot(y - 4, z)
+      if (x > peau + 0.5 && x < tip + 0.2 && rYZ < 2.2) bossage = true
+      if (x > peau + 0.2 && x < tip - 0.2 && rYZ < 0.9) dansTrou = true
+    }
+    expect(bossage).toBe(true)
+    // Trou de tige Ø3 : pas de sommet dans le canal central du bossage
+    expect(dansTrou).toBe(false)
+  }, 180_000)
+
   it('rouvre le .cadompart de la carrure avec le même maillage OCCT', async () => {
     const occt = await chargerKernel()
     const depart = new Session({ geometrie: false })
