@@ -159,6 +159,28 @@ describe('carrure pipeline OCCT', () => {
     expect(dansTrou).toBe(false)
   }, 180_000)
 
+  it('perce les quatre trous de barrette', async () => {
+    const occt = await chargerKernel()
+    const session = new Session({ geometrie: false })
+    session.executer(SCRIPT_CARRURE)
+    const maille = maillagePipelineOcct(occt, session)
+    // bout − recul = 18 + 4.5 − 1.2 = 21.3 ; y ≈ plongee + ep/2 = 1.2 + 1 = 2.2
+    const zB = 21.3
+    const yB = 2.2
+    let bordTrou = false
+    let dansAxe = false
+    for (let i = 0; i < maille.positions.length; i += 3) {
+      const x = Math.abs(maille.positions[i]!)
+      const y = maille.positions[i + 1]!
+      const z = Math.abs(maille.positions[i + 2]!)
+      const r = Math.hypot(y - yB, z - zB)
+      if (x > 11 && x < 15 && r > 0.35 && r < 0.55) bordTrou = true
+      if (x > 11 && x < 15 && r < 0.2) dansAxe = true
+    }
+    expect(bordTrou).toBe(true)
+    expect(dansAxe).toBe(false)
+  }, 180_000)
+
   it('rouvre le .cadompart de la carrure avec le même maillage OCCT', async () => {
     const occt = await chargerKernel()
     const depart = new Session({ geometrie: false })

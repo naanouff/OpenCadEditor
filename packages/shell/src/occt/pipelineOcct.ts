@@ -73,6 +73,60 @@ function decalageTube(
   return [0, 0, 0]
 }
 
+/** Cercle dans un plan YZ (trou d’axe X), centre (x0, y, z). */
+function cerclePlanYZ(rayon: number, x0: number, y: number, z: number, segments = 32): Polyline3 {
+  const xyz: number[] = []
+  for (let i = 0; i < segments; i++) {
+    const a = (i / segments) * Math.PI * 2
+    xyz.push(x0, y + Math.cos(a) * rayon, z + Math.sin(a) * rayon)
+  }
+  xyz.push(xyz[0]!, xyz[1]!, xyz[2]!)
+  return xyz
+}
+
+/**
+ * Quatre trous de barrette (placement pédagogique, mêmes params que `decrire`).
+ * Tant que le GCS n’a pas de cote de position sur le cercle `plan.12h`.
+ */
+function opsBarrettesPedagogiques(
+  solidAs: string,
+  rayon: number,
+  parametres: Map<string, string>,
+  evaluer: (e: string) => number,
+  uid: () => string,
+): { ops: KernelBatchOp[]; solidAs: string } {
+  if (!parametres.has('diametre_boite') || !parametres.has('longueur_corne')) {
+    return { ops: [], solidAs }
+  }
+  const rayonExt = evaluer('diametre_boite') / 2
+  const debord = evaluer('longueur_corne')
+  const bout = rayonExt + debord
+  const recul = parametres.has('recul_barrette') ? evaluer('recul_barrette') : debord / 2
+  const zBarrette = bout - recul
+  const interieur = parametres.has('entrecorne') ? evaluer('entrecorne') / 2 : 10
+  const largeurRacine = parametres.has('largeur_racine') ? evaluer('largeur_racine') : 6
+  const exterieur = interieur + largeurRacine
+  let yBarrette = parametres.has('hauteur_carrure') ? evaluer('hauteur_carrure') / 2 : 4
+  if (parametres.has('plongee_bout') && parametres.has('epaisseur_bout')) {
+    yBarrette = evaluer('plongee_bout') + evaluer('epaisseur_bout') / 2
+  }
+  const marge = 0.4
+  const longueur = exterieur - interieur + marge * 2
+  const dir: readonly [number, number, number] = [longueur, 0, 0]
+  const ops: KernelBatchOp[] = []
+  let courant = solidAs
+  for (const z of [zBarrette, -zBarrette] as const) {
+    for (const x0 of [interieur - marge, -exterieur - marge] as const) {
+      const feat = opsExtrude(cerclePlanYZ(rayon, x0, yBarrette, z), dir, uid())
+      ops.push(...feat.ops)
+      const cut = opsCouper(courant, feat.as, uid())
+      ops.push(...cut.ops)
+      courant = cut.solidAs
+    }
+  }
+  return { ops, solidAs: courant }
+}
+
 const ENTITES_ESQUISSE = new Set(['cercle', 'rectangle', 'segment', 'arc', 'octogone', 'hexagone'])
 
 type EtatEsquisse = {
@@ -417,7 +471,12 @@ function compiler(historique: Operation[], pointe: number | null = null): Compil
       const face = faces.get(sketch.support)
       try {
         if (traverse && sketch.support === 'plan.12h') {
-          // Barrette : sprint 39 — placement pédagogique hors GCS.
+          const cercle = [...sketch.entites].reverse().find((e) => e.sorte === 'cercle' && e.diametre)
+          if (!cercle?.diametre) throw new Error('barrette sans diamètre')
+          const rayon = evaluer(cercle.diametre) / 2
+          const bars = opsBarrettesPedagogiques(solidAs, rayon, parametres, evaluer, () => String(uid++))
+          ops.push(...bars.ops)
+          solidAs = bars.solidAs
           esquisse = null
           continue
         }

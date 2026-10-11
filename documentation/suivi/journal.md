@@ -484,3 +484,11 @@ PR [#12](https://github.com/naanouff/OpenCadEditor/pull/12) mergée. Rulesets `g
 
 P1 : [barrette-tube-occt.md](../veille/barrette-tube-occt.md), [sprint-38-tube-occt.md](../sprints/sprint-38-tube-occt.md). Tube `plan.3h` via pipeline OCCT (altitude peau, fuse, tige traversante). Barrettes toujours ignorées (placement hors GCS → sprint 39). Test carrure pipeline : bossage + canal tige vide.
 
+## 2026-10-11 — Sprint 38 terminé
+
+PR [#14](https://github.com/naanouff/OpenCadEditor/pull/14) mergée. Suite P1 : barrettes OCCT (sprint 39), puis affichage carrure via pipeline (sortir de `historiqueCornesSession`).
+
+## 2026-10-11 — Sprint 39 : feature/barrette-occt
+
+Quatre trous de barrette en OCCT (`opsBarrettesPedagogiques`, params alignés sur `decrire`). Test carrure pipeline vert. Affichage viewport toujours via Session tant que `historiqueCornesSession` (sprint 40).
+
