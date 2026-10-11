@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest'
+import { CadomDocument } from '@opencad/cadom'
+import { assemblageBoiteComplete } from '../src/assemblageBoite.ts'
 import {
+  maillageDepuisCadomesh,
   octetsCadomeshBoite,
   octetsDepuisMaillage,
   lireCadomesh,
@@ -44,5 +47,28 @@ describe('assemblage cadomesh octets', () => {
       expect(file.indices.length).toBeGreaterThan(0)
       expect(file.indices.length % 3).toBe(0)
     }
+  }, 120_000)
+
+  it('affiche le viewport depuis .cadomesh sans second rebuild', async () => {
+    const all = await octetsCadomeshBoite()
+    const subset = new Map(
+      [...all].filter(([uri]) => uri === './lunette.cadomesh' || uri === './fond.cadomesh'),
+    )
+    const logical = assemblageBoiteComplete()
+    logical.nodes = logical.nodes.filter(
+      (n) =>
+        n.id === logical.rootIds[0] ||
+        n.name === 'Lunette' ||
+        n.name === 'Fond',
+    )
+    const doc = CadomDocument.fromLogical(logical)
+    const maille = maillageDepuisCadomesh(doc, subset)
+    expect(maille).not.toBeNull()
+    expect(maille!.indices.length).toBeGreaterThan(0)
+    let yMax = -Infinity
+    for (let i = 0; i < maille!.positions.length; i += 3) {
+      yMax = Math.max(yMax, maille!.positions[i + 1]!)
+    }
+    expect(yMax).toBeGreaterThan(8)
   }, 120_000)
 })

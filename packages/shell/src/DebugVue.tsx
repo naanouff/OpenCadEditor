@@ -26,21 +26,29 @@ export function DebugVue(): ReactElement {
   }
 
   const chargerAssemblage = () => {
-    try {
-      storeShell.ouvrir(encode(assemblageBoiteComplete()))
-      setMessage('Boîte Complete .cadom — reconstruction 3D…')
-      const wait = () => {
-        if (storeShell.construction()) {
-          requestAnimationFrame(wait)
-          return
+    void (async () => {
+      try {
+        setMessage('Boîte Complete — écriture .cadomesh…')
+        const meshes = await octetsCadomeshBoite()
+        storeShell.ouvrirAssemblageAvecCadomesh(encode(assemblageBoiteComplete()), meshes)
+        setMessage('Boîte Complete — affichage depuis .cadomesh…')
+        const wait = () => {
+          if (storeShell.construction()) {
+            requestAnimationFrame(wait)
+            return
+          }
+          const n = storeShell.maillageAffiche()?.indices.length ?? 0
+          setMessage(
+            n > 0
+              ? `Boîte Complete affichée (${meshes.size} .cadomesh)`
+              : 'Boîte Complete : graphe seul (pas de maillage)',
+          )
         }
-        const n = storeShell.maillageAffiche()?.indices.length ?? 0
-        setMessage(n > 0 ? 'Boîte Complete affichée' : 'Boîte Complete : graphe seul (pas de maillage)')
+        requestAnimationFrame(wait)
+      } catch (erreur) {
+        setMessage(erreur instanceof Error ? erreur.message : String(erreur))
       }
-      requestAnimationFrame(wait)
-    } catch (erreur) {
-      setMessage(erreur instanceof Error ? erreur.message : String(erreur))
-    }
+    })()
   }
 
   const exporterCadomesh = () => {

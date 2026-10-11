@@ -7,6 +7,10 @@ import {
   type LateLoadPlan,
 } from '@opencad/cadom'
 import { ecrire, lire } from '@opencad/format-opencad'
+import {
+  maillageDepuisCadomesh,
+  octetsMeshDepuisStatuts,
+} from './assemblageCadomesh.ts'
 import { maillageDepuisAssemblage } from './assemblageMaillage.ts'
 import { chargeurCourant } from './chargeurAsset.ts'
 import { selecteurCourant } from './fichierShell.ts'
@@ -92,7 +96,16 @@ async function reconstruireMaillageAssemblage() {
   revision += 1
   prevenir()
   try {
-    const maille = await maillageDepuisAssemblage(doc)
+    let maille: MaillageOmbre | null = null
+    const meshOctets = octetsMeshDepuisStatuts(doc, statutsAssets)
+    if (meshOctets.size > 0) {
+      try {
+        maille = maillageDepuisCadomesh(doc, meshOctets)
+      } catch {
+        maille = null
+      }
+    }
+    maille ??= await maillageDepuisAssemblage(doc)
     if (generation !== generationAssemblage || assemblage !== doc) return
     maillageAffiche = maille
   } catch (erreur) {
@@ -108,7 +121,7 @@ async function reconstruireMaillageAssemblage() {
   }
 }
 
-function chargerAssemblage(octets: Uint8Array) {
+function chargerAssemblage(octets: Uint8Array, reconstruire = true) {
   const logical = decode(octets)
   if (
     logical.versionMajor !== 0 ||
@@ -124,7 +137,7 @@ function chargerAssemblage(octets: Uint8Array) {
   vueEsquisse = null
   revision += 1
   prevenir()
-  void reconstruireMaillageAssemblage()
+  if (reconstruire) void reconstruireMaillageAssemblage()
 }
 
 export const storeShell = {
@@ -265,6 +278,25 @@ export const storeShell = {
       }
     }
   },
+  /**
+   * Open `.cadom` then display from in-memory `.cadomesh` (no OCCT rebuild for viewport).
+   * Mesh map keys are asset URIs (e.g. `./lunette.cadomesh`).
+   */
+  ouvrirAssemblageAvecCadomesh(
+    octetsCadom: Uint8Array,
+    octetsParUri: ReadonlyMap<string, Uint8Array>,
+  ) {
+    chargerAssemblage(octetsCadom, false)
+    if (!assemblage) return
+    for (const [assetId, asset] of assemblage.assets) {
+      const octets = octetsParUri.get(asset.uri)
+      if (!octets) continue
+      statutsAssets.set(assetId, { etat: 'ok', octets })
+    }
+    revision += 1
+    prevenir()
+    void reconstruireMaillageAssemblage()
+  },
   async chargerAssets() {
     const plan = this.planChargement()
     if (!plan) throw new Error('aucun assemblage')
@@ -282,6 +314,7 @@ export const storeShell = {
     }
     revision += 1
     prevenir()
+    void reconstruireMaillageAssemblage()
   },
   async demanderOuverture() {
     const octets = await selecteurCourant().ouvrir()
