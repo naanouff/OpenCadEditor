@@ -568,3 +568,7 @@ Extract `opsExtrude` + polylines UV→XYZ (issue [#73](https://github.com/naanou
 
 Extract `opsCouper` / `accrocherSolide` (issue [#75](https://github.com/naanouff/OpenCAD/issues/75)).
 
+## 2026-10-11 — O2-3 history compiler
+
+`compilerHistorique` Session-free (param / rectangle / extrude / fillet) + `opsFillet`.
+
