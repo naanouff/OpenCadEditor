@@ -560,30 +560,3 @@ export function historiqueCompatibleOcct(historique: Operation[], pointe: number
     return false
   }
 }
-
-/**
- * Cornes profilées (ecart / debord / largeurs) : le BREP Session (`decrire` / fil de fer)
- * porte déjà joue + élévation. Le solide OCCT (extrude prismatique) diverge — le worker
- * affiche alors le maillage Session pour coller au BREP.
- */
-export function historiqueCornesSession(historique: Operation[], pointe: number | null = null): boolean {
-  const ops = rejouables(historique, pointe)
-  let ecart = false
-  let debord = false
-  let largeurs = 0
-  for (const op of ops) {
-    if (op.type === 'ouvrir') {
-      ecart = false
-      debord = false
-      largeurs = 0
-      continue
-    }
-    if (op.type === 'cote') {
-      if (op.arguments.cible === 'ecart') ecart = true
-      if (op.arguments.cible === 'debord') debord = true
-      if (op.arguments.cible === 'largeur') largeurs += 1
-    }
-    if (op.type === 'extrude' && ecart && debord && largeurs >= 2) return true
-  }
-  return false
-}

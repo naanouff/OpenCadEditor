@@ -2,11 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { Session } from '@opencad/api-parametrique'
 import { ecrire, lire } from '@opencad/format-opencad'
 import { chargerKernel } from '../src/occt/chargerKernel.ts'
-import {
-  historiqueCompatibleOcct,
-  historiqueCornesSession,
-  maillagePipelineOcct,
-} from '../src/occt/pipelineOcct.ts'
+import { historiqueCompatibleOcct, maillagePipelineOcct } from '../src/occt/pipelineOcct.ts'
 import { SCRIPT_CARRURE } from '../src/scriptCarrure.ts'
 
 /** Préfixe anneau + lunette + fond + cornes (sans barrette / tube). */
@@ -88,8 +84,12 @@ describe('carrure pipeline OCCT', () => {
     const session = new Session({ geometrie: false })
     session.executer(SCRIPT_CARRURE_NOYAU)
     expect(historiqueCompatibleOcct(session.historique(), session.pointeCourante())).toBe(true)
-    // Affichage : maillage Session (= BREP), pas le prisme OCCT.
-    expect(historiqueCornesSession(session.historique(), session.pointeCourante())).toBe(true)
+  })
+
+  it('compile le script carrure complet pour l’affichage OCCT', () => {
+    const session = new Session({ geometrie: false })
+    session.executer(SCRIPT_CARRURE)
+    expect(historiqueCompatibleOcct(session.historique(), session.pointeCourante())).toBe(true)
   })
 
   it('produit un anneau (pas un disque plein) puis des cornes', async () => {

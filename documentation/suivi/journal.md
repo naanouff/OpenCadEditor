@@ -492,3 +492,11 @@ PR [#14](https://github.com/naanouff/OpenCadEditor/pull/14) mergée. Suite P1 : 
 
 Quatre trous de barrette en OCCT (`opsBarrettesPedagogiques`, params alignés sur `decrire`). Test carrure pipeline vert. Affichage viewport toujours via Session tant que `historiqueCornesSession` (sprint 40).
 
+## 2026-10-11 — Sprint 39 terminé
+
+PR [#15](https://github.com/naanouff/OpenCadEditor/pull/15) mergée.
+
+## 2026-10-11 — Sprint 40 : feature/carrure-occt-affichage
+
+Retrait de `historiqueCornesSession` : le worker sert `maillagePipelineOcct` pour la carrure. Veille [carrure-occt-affichage.md](../veille/carrure-occt-affichage.md).
+
