@@ -5,8 +5,8 @@ export type SelecteurFichier = {
 
 const TYPES = [
   {
-    description: 'Pièce OpenCAD',
-    accept: { 'application/octet-stream': ['.cadompart'] },
+    description: 'OpenCAD',
+    accept: { 'application/octet-stream': ['.cadompart', '.cadom'] },
   },
 ]
 
@@ -34,7 +34,7 @@ function choisirViaChamp(): Promise<Uint8Array | null> {
   return new Promise((resolve) => {
     const champ = document.createElement('input')
     champ.type = 'file'
-    champ.accept = '.cadompart'
+    champ.accept = '.cadompart,.cadom'
     champ.onchange = () => {
       const fichier = champ.files?.[0]
       if (!fichier) {

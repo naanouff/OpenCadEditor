@@ -60,6 +60,10 @@ export default defineConfig({
         replacement: path.resolve(ici, '../format-opencad/src/index.ts'),
       },
       {
+        find: '@opencad/cadom',
+        replacement: path.resolve(ici, '../../vendor/opencad/packages/cadom/src/index.ts'),
+      },
+      {
         find: '@opencad/kernel/ops',
         replacement: path.resolve(
           ici,
@@ -152,6 +156,7 @@ export default defineConfig({
   optimizeDeps: {
     exclude: [
       '@opencad/api-parametrique',
+      '@opencad/cadom',
       '@opencad/format-opencad',
       '@opencad/kernel',
       '@naanouff/w3dts-editor-ui',

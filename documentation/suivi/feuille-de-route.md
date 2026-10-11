@@ -60,8 +60,8 @@ flowchart LR
 | **W1** Kernel WASM | occt-wasm | — | à venir | Arcs/cercles natifs, helix ou sweep (sinon filet cosmétique) |
 | **O2** Paquet kernel | OpenCAD | O2-1…15 | fait | `@opencad/kernel` ; extract éditeur (carrure / tube / pas) |
 | **O3** Writers | OpenCAD | — | fait (K3-7/8) | `.cadomesh` / `.cadombrep` |
-| **O4** SDK `.cadom` | OpenCAD | O4-1…3 | en cours (late-load + lint) | MVP A : DAG, overrides, pass-through |
-| **P3** Assemblage | OpenCadEditor | 44–47 | à venir | Lunette/fond/verre/couronne + `.cadom` + Complete |
+| **O4** SDK `.cadom` | OpenCAD | O4-1…3 | fait | MVP A : DAG, overrides, late-load, lint |
+| **P3** Assemblage | OpenCadEditor | 44–47 | en cours (44) | Ouvrir `.cadom` + arbre Document ; suite pièces / late-load |
 | **P4** Ergonomie | OpenCadEditor | 45–48 | à venir | Souris, sélection faces, ruban |
 
 ### P0 — Recalage (sprint 37)
@@ -81,11 +81,11 @@ Veille : [recalage-cap.md](../veille/recalage-cap.md). Sprint : [sprint-37-recal
 - **O1** — Doctrine K3-1 ; cadompart v0.3 (dialecte d’expressions ; filet `thread` ou `helix` Required) ; fermer #55.
 - **O2** — Paquet `kernel` : extrait (O2-1…15) ; éditeur consomme via `vendor/opencad` + ponts `historiqueKernel` / `gcsKernel`.
 - **O3** — Writers `.cadomesh` et `.cadombrep` ; badges Required v0 puis Complete export v0.
-- **O4** — SDK `.cadom` (prérequis P3) — O4-1…3 sur OpenCAD (`@opencad/cadom` + late-load / lint).
+- **O4** — SDK `.cadom` (prérequis P3) — fait (O4-1…3).
 
 ### P3 — Boîte en assemblage (sprints 44–47)
 
-Pièces `.cadompart` génériques ; `.cadom` + meshes late-load ; export Complete.
+Sprint 44 : ouvrir `.cadom` + arbre Document ([fichier-cadom.md](../veille/fichier-cadom.md)). Ensuite : pièces `.cadompart` génériques ; meshes late-load ; export Complete.
 
 ### P4 — Ergonomie (sprints 45–48)
 
