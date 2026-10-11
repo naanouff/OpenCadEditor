@@ -576,3 +576,7 @@ Extract `opsCouper` / `accrocherSolide` (issue [#75](https://github.com/naanouff
 
 Compiler : `revolution`, `cercle` / `enlever` (cut).
 
+## 2026-10-11 — O2-5 consomme kernel
+
+Submodule `vendor/opencad` ; shell réexporte `ops*` depuis `@opencad/kernel`.
+
