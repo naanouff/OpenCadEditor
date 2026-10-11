@@ -540,3 +540,7 @@ Paquet `@opencad/kernel` + CI dans OpenCAD (issue [#59](https://github.com/naano
 
 Golden extrude plaque via `occt-kernel` (issue [#61](https://github.com/naanouff/OpenCAD/issues/61)).
 
+## 2026-10-11 — O2 / K3-4
+
+Goldens revolve + plaque trouée (issue [#63](https://github.com/naanouff/OpenCAD/issues/63)).
+
