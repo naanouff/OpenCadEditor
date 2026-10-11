@@ -548,3 +548,7 @@ Goldens revolve + plaque trouée (issue [#63](https://github.com/naanouff/OpenCA
 
 Solveur rectangle H/V/distance + extrude gated (issue [#65](https://github.com/naanouff/OpenCAD/issues/65)).
 
+## 2026-10-11 — O2 / K3-6
+
+Ids topo `face:{i}` / `edge:{i}` (issue [#67](https://github.com/naanouff/OpenCAD/issues/67)).
+
