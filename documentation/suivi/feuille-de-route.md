@@ -62,8 +62,8 @@ flowchart LR
 | **O3** Writers | OpenCAD | — | fait (K3-7/8) | `.cadomesh` / `.cadombrep` |
 | **O4** SDK `.cadom` | OpenCAD | O4-1…3 | fait | MVP A : DAG, overrides, late-load, lint |
 | **P3** Assemblage | OpenCadEditor | 44–47 | fait (graphe) | open/save/plan/fetch `.cadom` |
-| **P3b** Pièces boîte | OpenCadEditor | 48–55 | fait | Pièces + Complete + octets/viewport `.cadomesh` ; suite P4 / W1 |
-| **P4** Ergonomie | OpenCadEditor | 45–48 | à venir | Souris, sélection faces, ruban |
+| **P3b** Pièces boîte | OpenCadEditor | 48–55 | fait | Pièces + Complete + octets/viewport `.cadomesh` |
+| **P4** Ergonomie | OpenCadEditor | 56–… | en cours (56) | Sélection face ; suite dessin souris, ruban |
 
 ### P0 — Recalage (sprint 37)
 
@@ -90,11 +90,11 @@ Sprint 44–47 : ouvrir / plan / enregistrer / fetch injectable ([fichier-cadom.
 
 ### P3b — Pièces de la boîte (dès sprint 48)
 
-Sprint 48–55 : pièces + Design/Complete + octets/viewport `.cadomesh` ([assemblage-boite-cadom.md](../veille/assemblage-boite-cadom.md)). Suite : P4 ergonomie, W1 helix.
+Sprint 48–55 : pièces + Design/Complete + octets/viewport `.cadomesh` ([assemblage-boite-cadom.md](../veille/assemblage-boite-cadom.md)).
 
-### P4 — Ergonomie (sprints 45–48)
+### P4 — Ergonomie (dès sprint 56)
 
-Esquisse souris, sélection `face.*`, naming arêtes, ruban minimal. Hors moyen terme : maillons, Electron, mates.
+Sprint 56 : clic → `esquisse face.*` ([selection-face-souris.md](../veille/selection-face-souris.md)). Suite : dessin souris, naming arêtes, ruban. Hors moyen terme : maillons, Electron, mates. W1 helix en parallèle occt-wasm.
 
 ## Garde-fous
 
