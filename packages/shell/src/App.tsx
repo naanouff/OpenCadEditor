@@ -153,29 +153,33 @@ function ViewportVue(_props: IDockviewPanelProps) {
       ? (storeShell.maillageAffiche() ?? { positions: [], normales: [], indices: [] })
       : hote.session.maillage()
     try {
-      const esquisse = hote.session.esquisseCourante()
-      if (esquisse) {
-        let yMax = 0
-        for (let i = 1; i < maille.positions.length; i += 3) {
-          yMax = Math.max(yMax, maille.positions[i]!)
-        }
-        // Prefer posed circle altitude when present (matches overlay).
-        const altitude =
-          esquisse.cercles[0]?.y ?? altitudeSupport(esquisse.support, yMax)
-        const hit = pointSurPlan(rayonVersMm(rayonM), esquisse.support, altitude)
-        if (!hit) return
-        const { u, v } = uvDepuisMonde(hit, esquisse.support, altitude)
-        if (outilEsquissePointeur(esquisse) === 'rectangle') {
-          const { longueur, largeur } = dimensionsRectangleDepuisUv(u, v)
-          storeShell.poserRectangle(longueur, largeur)
-        } else {
-          storeShell.poserCercleDiametre(diametreDepuisUv(u, v))
-        }
-        return
+      let yMax = 0
+      for (let i = 1; i < maille.positions.length; i += 3) {
+        yMax = Math.max(yMax, maille.positions[i]!)
       }
-      const face = faceSousPointeur(facesVersMetres(facesDepuisMaillage(maille.positions)), rayonM)
-      if (!face) return
-      storeShell.ouvrirEsquisseSurFace(face)
+      let esquisse = hote.session.esquisseCourante()
+      if (!esquisse) {
+        const face = faceSousPointeur(
+          facesVersMetres(facesDepuisMaillage(maille.positions)),
+          rayonM,
+        )
+        // Hit a solid face → sketch on it ; otherwise start on plan.dessus.
+        const support = face ?? 'plan.dessus'
+        if (!storeShell.ouvrirEsquisseSurSupport(support)) return
+        esquisse = hote.session.esquisseCourante()
+        if (!esquisse) return
+      }
+      const altitude =
+        esquisse.cercles[0]?.y ?? esquisse.yPlan ?? altitudeSupport(esquisse.support, yMax)
+      const hit = pointSurPlan(rayonVersMm(rayonM), esquisse.support, altitude)
+      if (!hit) return
+      const { u, v } = uvDepuisMonde(hit, esquisse.support, altitude)
+      if (outilEsquissePointeur(esquisse) === 'rectangle') {
+        const { longueur, largeur } = dimensionsRectangleDepuisUv(u, v)
+        storeShell.poserRectangle(longueur, largeur)
+      } else {
+        storeShell.poserCercleDiametre(diametreDepuisUv(u, v))
+      }
     } catch (erreur) {
       console.error(erreur instanceof Error ? erreur.message : String(erreur))
     }

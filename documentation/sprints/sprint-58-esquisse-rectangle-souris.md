@@ -4,7 +4,8 @@ Suite sprint 57. Branche : `feature/esquisse-rectangle-souris`.
 
 ## But
 
-Esquisse sur `plan.*` : clic court → `rectangle` + `cote largeur` / `cote longueur` (2|v| / 2|u|, accrochés). `face.*` garde le cercle (57).
+- Sans esquisse : clic sur une face → `esquisse face.*` + cercle ; sinon → `esquisse plan.dessus` + rectangle (même geste).
+- Esquisse déjà ouverte : clic met à jour cercle ou rectangle selon le support / entités.
 
 ## Hors scope
 

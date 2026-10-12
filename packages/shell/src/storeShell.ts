@@ -174,12 +174,16 @@ export const storeShell = {
     prevenir()
     if (texte.trim()) publier({ type: 'ligne', texte })
   },
-  /** Open sketch on a named face (`face.dessus` / `face.dessous`). No-op if already sketching. */
-  ouvrirEsquisseSurFace(faceId: string) {
+  /** Open sketch on a support (`face.*` or `plan.*`). No-op if already sketching. */
+  ouvrirEsquisseSurSupport(support: string) {
     if (hote.session.esquisseCourante()) return false
     if (assemblage) return false
-    this.ligne(`esquisse ${faceId}`)
-    return hote.session.esquisseCourante() !== null
+    this.ligne(`esquisse ${support}`)
+    return hote.session.esquisseCourante()?.support === support
+  },
+  /** @deprecated use ouvrirEsquisseSurSupport */
+  ouvrirEsquisseSurFace(faceId: string) {
+    return this.ouvrirEsquisseSurSupport(faceId)
   },
   /**
    * Place or update a circle at sketch origin with the given diameter (mm).
