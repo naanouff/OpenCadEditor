@@ -1,7 +1,6 @@
 import { useState, type ReactElement } from 'react'
 import { Panel } from '@naanouff/w3dts-editor-ui'
 import { encode } from '@opencad/cadom'
-import { octetsCadomeshBoite } from './assemblageCadomesh.ts'
 import { assemblageBoiteComplete } from './assemblageBoite.ts'
 import { selecteurNavigateur } from './fichierShell.ts'
 import { SCRIPT_BOITE } from './scriptBoite.ts'
@@ -29,6 +28,7 @@ export function DebugVue(): ReactElement {
     void (async () => {
       try {
         setMessage('Boîte Complete — écriture .cadomesh…')
+        const { octetsCadomeshBoite } = await import('./assemblageCadomesh.ts')
         const meshes = await octetsCadomeshBoite()
         storeShell.ouvrirAssemblageAvecCadomesh(encode(assemblageBoiteComplete()), meshes)
         setMessage('Boîte Complete — affichage depuis .cadomesh…')
@@ -55,6 +55,7 @@ export function DebugVue(): ReactElement {
     void (async () => {
       try {
         setMessage('Export .cadomesh…')
+        const { octetsCadomeshBoite } = await import('./assemblageCadomesh.ts')
         const map = await octetsCadomeshBoite()
         for (const [uri, octets] of map) {
           const nom = uri.replace(/^\.\//, '')

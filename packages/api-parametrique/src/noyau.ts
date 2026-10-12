@@ -11,6 +11,7 @@ function avecFaces(solide: Solide | null): Solide {
         enlevementsBorgnes: solide.enlevementsBorgnes,
         enlevements: [...solide.enlevements],
         ajouts: [...solide.ajouts],
+        hauteurDessus: solide.hauteurDessus,
       }
     : { faces: new Set(), extrusions: 0, enlevementsBorgnes: 0, enlevements: [], ajouts: [] }
   suivant.faces.add('face.dessus')
@@ -20,10 +21,16 @@ function avecFaces(solide: Solide | null): Solide {
 
 /** Poses des faces nommées, sans solide exact. */
 export const noyauProvisoire: NoyauGeometrique = {
-  extruder(solide, ajout) {
+  extruder(solide, ajout, hauteurDessus) {
     const suivant = avecFaces(solide)
     suivant.extrusions += 1
     if (ajout) suivant.ajouts.push(ajout)
+    const h =
+      hauteurDessus ??
+      (ajout && 'hauteur' in ajout && typeof ajout.hauteur === 'number' ? ajout.hauteur : undefined)
+    if (h !== undefined) {
+      suivant.hauteurDessus = Math.max(suivant.hauteurDessus ?? 0, h)
+    }
     return suivant
   },
   enlever(solide, coupe) {
@@ -79,13 +86,14 @@ export const noyauProvisoire: NoyauGeometrique = {
   },
   poser(esquisse, solide, parametres) {
     const evaluer = (expression: string) => evaluateurProvisoire.evaluer(expression, parametres)
+    const yPlan = hauteurDuPlan(esquisse.support, solide, parametres)
     const cercles = esquisse.entites
       .filter((entite) => entite.sorte === 'cercle' && entite.diametre)
       .map((entite) => {
         const valeur = evaluer(entite.diametre as string)
         return {
           rayon: valeur / 2,
-          y: hauteurDuPlan(esquisse.support, solide, parametres),
+          y: yPlan,
           valeur,
         }
       })
@@ -123,7 +131,7 @@ export const noyauProvisoire: NoyauGeometrique = {
       )
       rangRectangle += 1
     }
-    return { support: esquisse.support, cercles, traits, cotesLineaires }
+    return { support: esquisse.support, cercles, traits, cotesLineaires, yPlan }
   },
 }
 
@@ -347,5 +355,20 @@ function figures(
 /** Les plans d'origine sont au niveau zéro. Les faces d'un solide sont à ses bornes. */
 function hauteurDuPlan(support: string, solide: Solide | null, parametres: Map<string, string>) {
   if (!solide || support !== 'face.dessus') return 0
-  return evaluateurProvisoire.evaluer('hauteur_carrure', parametres)
+  for (const nom of ['hauteur_carrure', 'hauteur'] as const) {
+    if (!parametres.has(nom)) continue
+    try {
+      return evaluateurProvisoire.evaluer(nom, parametres)
+    } catch {
+      /* try next */
+    }
+  }
+  if (solide.hauteurDessus !== undefined) return solide.hauteurDessus
+  let depuisAjouts = 0
+  for (const ajout of solide.ajouts) {
+    if ('hauteur' in ajout && typeof ajout.hauteur === 'number') {
+      depuisAjouts = Math.max(depuisAjouts, ajout.hauteur)
+    }
+  }
+  return depuisAjouts
 }

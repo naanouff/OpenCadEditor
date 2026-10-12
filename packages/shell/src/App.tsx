@@ -12,6 +12,14 @@ import { DebugVue } from './DebugVue.tsx'
 import { DocumentVue } from './DocumentVue.tsx'
 import { PreferencesVue } from './PreferencesVue.tsx'
 import {
+  altitudeSupport,
+  diametreDepuisUv,
+  facesVersMetres,
+  pointSurPlan,
+  rayonVersMm,
+  uvDepuisMonde,
+} from './esquissePointeur.ts'
+import {
   faceSousPointeur,
   facesDepuisMaillage,
   rayonOrthoDepuisNdc,
@@ -122,7 +130,7 @@ function ViewportVue(_props: IDockviewPanelProps) {
     pointe.current = null
     if (e.button !== 0 || !debut) return
     if (Math.hypot(e.clientX - debut.x, e.clientY - debut.y) > 4) return
-    if (hote.session.esquisseCourante() || storeShell.assemblage()) return
+    if (storeShell.assemblage()) return
     const canevas = ref.current
     const cadre = cadreCameraPick()
     if (!canevas || !cadre) return
@@ -130,7 +138,7 @@ function ViewportVue(_props: IDockviewPanelProps) {
     if (rect.width < 1 || rect.height < 1) return
     const ndcX = ((e.clientX - rect.left) / rect.width) * 2 - 1
     const ndcY = 1 - ((e.clientY - rect.top) / rect.height) * 2
-    const rayon = rayonOrthoDepuisNdc(
+    const rayonM = rayonOrthoDepuisNdc(
       ndcX,
       ndcY,
       cadre.eye,
@@ -142,9 +150,24 @@ function ViewportVue(_props: IDockviewPanelProps) {
     const maille = storeShell.utiliseMoteur()
       ? (storeShell.maillageAffiche() ?? { positions: [], normales: [], indices: [] })
       : hote.session.maillage()
-    const face = faceSousPointeur(facesDepuisMaillage(maille.positions), rayon)
-    if (!face) return
     try {
+      const esquisse = hote.session.esquisseCourante()
+      if (esquisse) {
+        let yMax = 0
+        for (let i = 1; i < maille.positions.length; i += 3) {
+          yMax = Math.max(yMax, maille.positions[i]!)
+        }
+        // Prefer posed circle altitude when present (matches overlay).
+        const altitude =
+          esquisse.cercles[0]?.y ?? altitudeSupport(esquisse.support, yMax)
+        const hit = pointSurPlan(rayonVersMm(rayonM), esquisse.support, altitude)
+        if (!hit) return
+        const { u, v } = uvDepuisMonde(hit, esquisse.support, altitude)
+        storeShell.poserCercleDiametre(diametreDepuisUv(u, v))
+        return
+      }
+      const face = faceSousPointeur(facesVersMetres(facesDepuisMaillage(maille.positions)), rayonM)
+      if (!face) return
       storeShell.ouvrirEsquisseSurFace(face)
     } catch (erreur) {
       console.error(erreur instanceof Error ? erreur.message : String(erreur))
