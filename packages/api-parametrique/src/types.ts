@@ -233,6 +233,8 @@ export type CoteLineaire = {
 export type EsquissePosee = {
   support: string
   cercles: { rayon: number; y: number; valeur: number }[]
+  /** Altitude du plan (mm) le long de la normale — même sans cercle encore. */
+  yPlan?: number
   /** Segments du plan, en millimètres : u, v, u, v. */
   traits?: number[]
   cotesLineaires?: CoteLineaire[]

@@ -41,5 +41,7 @@ describe('esquisse pointeur (P4)', () => {
     expect(storeShell.poserCercleDiametre(8)).toBe(true)
     const posee = storeShell.hote().session.esquisseCourante()
     expect(posee?.cercles.some((c) => c.valeur === 8)).toBe(true)
+    // extrude 8 → face.dessus à y=8 (pas 0), sinon la grille « disparaît » hors vue
+    expect(posee?.cercles[0]?.y).toBeCloseTo(8)
   })
 })

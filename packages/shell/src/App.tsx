@@ -134,14 +134,16 @@ function ViewportVue(_props: IDockviewPanelProps) {
     const maille = storeShell.utiliseMoteur()
       ? (storeShell.maillageAffiche() ?? { positions: [], normales: [], indices: [] })
       : hote.session.maillage()
-    const esquisse = hote.session.esquisseCourante()
     try {
+      const esquisse = hote.session.esquisseCourante()
       if (esquisse) {
         let yMax = 0
         for (let i = 1; i < maille.positions.length; i += 3) {
           yMax = Math.max(yMax, maille.positions[i]!)
         }
-        const altitude = altitudeSupport(esquisse.support, yMax)
+        // Prefer posed circle altitude when present (matches overlay).
+        const altitude =
+          esquisse.cercles[0]?.y ?? altitudeSupport(esquisse.support, yMax)
         const hit = pointSurPlan(rayonVersMm(rayonM), esquisse.support, altitude)
         if (!hit) return
         const { u, v } = uvDepuisMonde(hit, esquisse.support, altitude)

@@ -23,7 +23,7 @@ export function documentCad(
   const grilleMm: number[] = []
   const cotesMm: number[] = []
   if (esquisse) {
-    const altitude = esquisse.cercles[0]?.y ?? 0
+    const altitude = esquisse.cercles[0]?.y ?? esquisse.yPlan ?? 0
     const etendue = 30
     grilleMm.push(...grille(esquisse.support, pasGrille(etendue * 2), etendue, altitude - RECUL_GRILLE))
     esquisse.cercles.forEach((cercle, index) => {
@@ -31,7 +31,7 @@ export function documentCad(
       cotesMm.push(...coteDiametre(esquisse.support, cercle.rayon, cercle.y, index).trait)
     })
     const { normale, axeU, axeV } = repere(esquisse.support)
-    const yPlan = esquisse.cercles[0]?.y ?? 0
+    const yPlan = altitude
     const poser = (u: number, v: number) => [
       normale[0] * yPlan + axeU[0] * u + axeV[0] * v,
       normale[1] * yPlan + axeU[1] * u + axeV[1] * v,
@@ -45,15 +45,24 @@ export function documentCad(
       cotesMm.push(...coteSegment(esquisse.support, cote.a, cote.b, cote.decalage, yPlan).trait)
     }
   }
-  const solide = !esquisse && volume && volume.indices.length > 0 ? volume : null
+  // Keep the solid visible under an open sketch (grid / profile overlay on top).
+  const volumeActif = volume && volume.indices.length > 0 ? volume : null
   return {
     brepWireframe: enMetres(
-      esquisse ? [] : solide ? aretesBrep(solide) : frontiere.faces.length > 0 ? filDeFer(frontiere).position.array : [],
+      volumeActif
+        ? aretesBrep(volumeActif)
+        : !esquisse && frontiere.faces.length > 0
+          ? filDeFer(frontiere).position.array
+          : [],
     ),
     grille: enMetres(grilleMm),
     esquisse: enMetres(esquisseMm),
     cotes: enMetres(cotesMm),
-    maillage: esquisse ? { positions: [], normales: [], indices: [] } : solide ? enMetresOmbre(solide) : maillage(frontiere),
+    maillage: volumeActif
+      ? enMetresOmbre(volumeActif)
+      : esquisse
+        ? { positions: [], normales: [], indices: [] }
+        : maillage(frontiere),
   }
 }
 

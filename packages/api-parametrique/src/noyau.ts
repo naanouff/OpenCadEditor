@@ -79,13 +79,14 @@ export const noyauProvisoire: NoyauGeometrique = {
   },
   poser(esquisse, solide, parametres) {
     const evaluer = (expression: string) => evaluateurProvisoire.evaluer(expression, parametres)
+    const yPlan = hauteurDuPlan(esquisse.support, solide, parametres)
     const cercles = esquisse.entites
       .filter((entite) => entite.sorte === 'cercle' && entite.diametre)
       .map((entite) => {
         const valeur = evaluer(entite.diametre as string)
         return {
           rayon: valeur / 2,
-          y: hauteurDuPlan(esquisse.support, solide, parametres),
+          y: yPlan,
           valeur,
         }
       })
@@ -123,7 +124,7 @@ export const noyauProvisoire: NoyauGeometrique = {
       )
       rangRectangle += 1
     }
-    return { support: esquisse.support, cercles, traits, cotesLineaires }
+    return { support: esquisse.support, cercles, traits, cotesLineaires, yPlan }
   },
 }
 
@@ -355,5 +356,11 @@ function hauteurDuPlan(support: string, solide: Solide | null, parametres: Map<s
       /* try next */
     }
   }
-  return 0
+  let depuisAjouts = 0
+  for (const ajout of solide.ajouts) {
+    if ('hauteur' in ajout && typeof ajout.hauteur === 'number') {
+      depuisAjouts = Math.max(depuisAjouts, ajout.hauteur)
+    }
+  }
+  return depuisAjouts
 }

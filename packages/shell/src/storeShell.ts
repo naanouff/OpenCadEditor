@@ -7,10 +7,6 @@ import {
   type LateLoadPlan,
 } from '@opencad/cadom'
 import { ecrire, lire } from '@opencad/format-opencad'
-import {
-  maillageDepuisCadomesh,
-  octetsMeshDepuisStatuts,
-} from './assemblageCadomesh.ts'
 import { maillageDepuisAssemblage } from './assemblageMaillage.ts'
 import { chargeurCourant } from './chargeurAsset.ts'
 import { selecteurCourant } from './fichierShell.ts'
@@ -97,6 +93,8 @@ async function reconstruireMaillageAssemblage() {
   prevenir()
   try {
     let maille: MaillageOmbre | null = null
+    // Dynamic import: keep protobuf / cadomesh writer out of the main browser graph.
+    const { maillageDepuisCadomesh, octetsMeshDepuisStatuts } = await import('./assemblageCadomesh.ts')
     const meshOctets = octetsMeshDepuisStatuts(doc, statutsAssets)
     if (meshOctets.size > 0) {
       try {
