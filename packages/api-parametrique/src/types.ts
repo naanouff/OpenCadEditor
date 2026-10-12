@@ -67,6 +67,8 @@ export type Solide = {
   enlevementsBorgnes: number
   enlevements: Enlevement[]
   ajouts: Ajout[]
+  /** Max +Y of extrudes (mm) for face.dessus posing when ajouts carry no height. */
+  hauteurDessus?: number
 }
 
 export type Vecteur = readonly [number, number, number]
@@ -233,13 +235,15 @@ export type CoteLineaire = {
 export type EsquissePosee = {
   support: string
   cercles: { rayon: number; y: number; valeur: number }[]
+  /** Altitude du plan (mm) le long de la normale — même sans cercle encore. */
+  yPlan?: number
   /** Segments du plan, en millimètres : u, v, u, v. */
   traits?: number[]
   cotesLineaires?: CoteLineaire[]
 }
 
 export type NoyauGeometrique = {
-  extruder(solide: Solide | null, ajout?: Ajout): Solide
+  extruder(solide: Solide | null, ajout?: Ajout, hauteurDessus?: number): Solide
   enlever(solide: Solide, coupe: Enlevement): Solide
   aFace(solide: Solide | null, face: string): boolean
   mailler(solide: Solide | null, parametres: Map<string, string>): MaillageOmbre

@@ -63,7 +63,7 @@ flowchart LR
 | **O4** SDK `.cadom` | OpenCAD | O4-1…3 | fait | MVP A : DAG, overrides, late-load, lint |
 | **P3** Assemblage | OpenCadEditor | 44–47 | fait (graphe) | open/save/plan/fetch `.cadom` |
 | **P3b** Pièces boîte | OpenCadEditor | 48–55 | fait | Pièces + Complete + octets/viewport `.cadomesh` |
-| **P4** Ergonomie | OpenCadEditor | 56–… | en cours (56) | Sélection face ; suite dessin souris, ruban |
+| **P4** Ergonomie | OpenCadEditor | 56–… | en cours (57) | Face + cercle souris ; suite rectangle / ruban |
 
 ### P0 — Recalage (sprint 37)
 
@@ -94,7 +94,7 @@ Sprint 48–55 : pièces + Design/Complete + octets/viewport `.cadomesh` ([assem
 
 ### P4 — Ergonomie (dès sprint 56)
 
-Sprint 56 : clic → `esquisse face.*` ([selection-face-souris.md](../veille/selection-face-souris.md)). Suite : dessin souris, naming arêtes, ruban. Hors moyen terme : maillons, Electron, mates. W1 helix en parallèle occt-wasm.
+Sprint 56–57 : clic → `esquisse face.*` puis cercle/diamètre ([selection-face-souris.md](../veille/selection-face-souris.md)). Suite : rectangle souris, naming arêtes, ruban. Hors moyen terme : maillons, Electron, mates. W1 helix en parallèle occt-wasm.
 
 ## Garde-fous
 

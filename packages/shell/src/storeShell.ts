@@ -7,10 +7,6 @@ import {
   type LateLoadPlan,
 } from '@opencad/cadom'
 import { ecrire, lire } from '@opencad/format-opencad'
-import {
-  maillageDepuisCadomesh,
-  octetsMeshDepuisStatuts,
-} from './assemblageCadomesh.ts'
 import { maillageDepuisAssemblage } from './assemblageMaillage.ts'
 import { chargeurCourant } from './chargeurAsset.ts'
 import { selecteurCourant } from './fichierShell.ts'
@@ -97,6 +93,8 @@ async function reconstruireMaillageAssemblage() {
   prevenir()
   try {
     let maille: MaillageOmbre | null = null
+    // Dynamic import: keep protobuf / cadomesh writer out of the main browser graph.
+    const { maillageDepuisCadomesh, octetsMeshDepuisStatuts } = await import('./assemblageCadomesh.ts')
     const meshOctets = octetsMeshDepuisStatuts(doc, statutsAssets)
     if (meshOctets.size > 0) {
       try {
@@ -182,6 +180,19 @@ export const storeShell = {
     if (assemblage) return false
     this.ligne(`esquisse ${faceId}`)
     return hote.session.esquisseCourante() !== null
+  },
+  /**
+   * Place or update a circle at sketch origin with the given diameter (mm).
+   * GCS v1 keeps the centre at (0,0) ; the click distance drives the diameter only.
+   */
+  poserCercleDiametre(diametreMm: number) {
+    const posee = hote.session.esquisseCourante()
+    if (!posee || assemblage) return false
+    if (!(diametreMm > 0) || !Number.isFinite(diametreMm)) return false
+    const d = Math.round(diametreMm * 1000) / 1000
+    if (posee.cercles.length === 0) this.ligne('cercle')
+    this.ligne(`cote diametre ${d}`)
+    return (hote.session.esquisseCourante()?.cercles.length ?? 0) > 0
   },
   executer(script: string) {
     vueEsquisse = null

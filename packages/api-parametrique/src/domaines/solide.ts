@@ -131,7 +131,9 @@ export const domaineSolide: Domaine = {
       faire(contexte, operation) {
         exigerEsquisse(contexte)
         const support = contexte.esquisse?.support
-        contexte.solide = contexte.noyau.extruder(contexte.solide, profil(contexte, operation))
+        const hauteur = contexte.evaluateur.evaluer(operation.arguments.expression, contexte.parametres)
+        // Pass height separately when profil is absent (GCS rectangle) — do not fake a corne ajout.
+        contexte.solide = contexte.noyau.extruder(contexte.solide, profil(contexte, operation), hauteur)
         contexte.piece.solide = contexte.solide
         contexte.esquisse = null
         contexte.piece.esquisse = null
