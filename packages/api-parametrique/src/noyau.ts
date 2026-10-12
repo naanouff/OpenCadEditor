@@ -347,5 +347,13 @@ function figures(
 /** Les plans d'origine sont au niveau zéro. Les faces d'un solide sont à ses bornes. */
 function hauteurDuPlan(support: string, solide: Solide | null, parametres: Map<string, string>) {
   if (!solide || support !== 'face.dessus') return 0
-  return evaluateurProvisoire.evaluer('hauteur_carrure', parametres)
+  for (const nom of ['hauteur_carrure', 'hauteur'] as const) {
+    if (!parametres.has(nom)) continue
+    try {
+      return evaluateurProvisoire.evaluer(nom, parametres)
+    } catch {
+      /* try next */
+    }
+  }
+  return 0
 }

@@ -183,6 +183,19 @@ export const storeShell = {
     this.ligne(`esquisse ${faceId}`)
     return hote.session.esquisseCourante() !== null
   },
+  /**
+   * Place or update a circle at sketch origin with the given diameter (mm).
+   * GCS v1 keeps the centre at (0,0) ; the click distance drives the diameter only.
+   */
+  poserCercleDiametre(diametreMm: number) {
+    const posee = hote.session.esquisseCourante()
+    if (!posee || assemblage) return false
+    if (!(diametreMm > 0) || !Number.isFinite(diametreMm)) return false
+    const d = Math.round(diametreMm * 1000) / 1000
+    if (posee.cercles.length === 0) this.ligne('cercle')
+    this.ligne(`cote diametre ${d}`)
+    return (hote.session.esquisseCourante()?.cercles.length ?? 0) > 0
+  },
   executer(script: string) {
     vueEsquisse = null
     hote.executer(script)
