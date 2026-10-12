@@ -10,6 +10,7 @@ import {
 import { ArbreConstructionVue } from './ArbreConstructionVue.tsx'
 import { DebugVue } from './DebugVue.tsx'
 import { DocumentVue } from './DocumentVue.tsx'
+import { PreferencesVue } from './PreferencesVue.tsx'
 import {
   faceSousPointeur,
   facesDepuisMaillage,
@@ -19,8 +20,16 @@ import { storeShell } from './storeShell.ts'
 import { TerminalMonaco } from './TerminalMonaco.tsx'
 import { afficher, cadreCameraPick } from './viewportW3dts.ts'
 
-const STORAGE_KEY = 'opencad.shell.dockview.layout.v4'
-const REQUIRED = ['viewport', 'terminal', 'parametres', 'historique', 'document', 'debug'] as const
+const STORAGE_KEY = 'opencad.shell.dockview.layout.v5'
+const REQUIRED = [
+  'viewport',
+  'terminal',
+  'parametres',
+  'historique',
+  'document',
+  'debug',
+  'preferences',
+] as const
 
 function useStoreShell() {
   const [revision, setRevision] = useState(() => storeShell.revision())
@@ -72,6 +81,13 @@ function buildDefaultLayout(api: DockviewApi): void {
     component: 'debug',
     title: 'Debug',
     position: { referencePanel: 'viewport', direction: 'right' },
+    params: { hideClose: true },
+  })
+  api.addPanel({
+    id: 'preferences',
+    component: 'preferences',
+    title: 'Préférences',
+    position: { referencePanel: 'debug', direction: 'below' },
     params: { hideClose: true },
   })
   viewport.api.setActive()
@@ -169,6 +185,10 @@ function DocumentPanel(_props: IDockviewPanelProps) {
   return <DocumentVue />
 }
 
+function PreferencesPanel(_props: IDockviewPanelProps) {
+  return <PreferencesVue />
+}
+
 function ParametresVue(_props: IDockviewPanelProps) {
   const { hote, revision } = useStoreShell()
   const liste = useMemo(() => [...hote.session.parametres()], [hote, revision])
@@ -216,6 +236,7 @@ export function App() {
       historique: HistoriqueVue,
       document: DocumentPanel,
       debug: DebugPanel,
+      preferences: PreferencesPanel,
     }),
     [],
   )

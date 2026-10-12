@@ -1,3 +1,4 @@
+import { preferences, souscrirePreferences } from './preferences.ts'
 import { storeShell } from './storeShell.ts'
 
 export type MessageEntrant = {
@@ -63,42 +64,131 @@ export async function recevoirMessage(message: MessageEntrant, accuser: (accuse:
   })
 }
 
-/** Connexion locale vers le serveur MCP, en dev seulement. */
-export function brancherPontMcp(url = `ws://127.0.0.1:${import.meta.env.VITE_OPENCAD_MCP_PORT ?? '47321'}`) {
-  let socket: WebSocket | null = null
-  let ferme = false
-  let attente: ReturnType<typeof setTimeout> | null = null
+export type EtatPontMcp = {
+  /** Preference: sockets allowed. */
+  autorise: boolean
+  /** Live WebSocket open. */
+  connecte: boolean
+}
 
-  function connecter() {
-    const ws = new WebSocket(url)
-    socket = ws
-    ws.onopen = () => {
-      const script = storeShell
-        .hote()
-        .journal.filter((entree) => entree.erreur === null)
-        .map((entree) => entree.ligne)
-        .join('\n')
-      ws.send(JSON.stringify({ type: 'bonjour', script }))
-    }
-    ws.onmessage = (event) => {
-      void recevoirMessage(JSON.parse(String(event.data)) as MessageEntrant, (accuse) => {
-        if (ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify(accuse))
-      })
-    }
-    ws.onclose = () => {
-      if (ferme || socket !== ws) return
-      attente = setTimeout(connecter, 1000)
-    }
+type EcouteurEtat = (etat: EtatPontMcp) => void
+
+const ecouteursEtat = new Set<EcouteurEtat>()
+
+let socket: WebSocket | null = null
+let fermeVolontaire = false
+let attente: ReturnType<typeof setTimeout> | null = null
+let urlCourante = `ws://127.0.0.1:${import.meta.env.VITE_OPENCAD_MCP_PORT ?? '47321'}`
+let pontPublie = false
+
+function etatCourant(): EtatPontMcp {
+  return {
+    autorise: preferences().mcpSockets,
+    connecte: socket?.readyState === WebSocket.OPEN,
   }
+}
 
+function prevenirEtat() {
+  const etat = etatCourant()
+  for (const ecouteur of ecouteursEtat) ecouteur(etat)
+}
+
+function couperSocket() {
+  fermeVolontaire = true
+  if (attente) {
+    clearTimeout(attente)
+    attente = null
+  }
+  const ws = socket
+  socket = null
+  if (ws && (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING)) {
+    ws.close()
+  }
+  prevenirEtat()
+}
+
+function connecter() {
+  if (!preferences().mcpSockets) return
+  fermeVolontaire = false
+  const ws = new WebSocket(urlCourante)
+  socket = ws
+  ws.onopen = () => {
+    if (socket !== ws) return
+    const script = storeShell
+      .hote()
+      .journal.filter((entree) => entree.erreur === null)
+      .map((entree) => entree.ligne)
+      .join('\n')
+    ws.send(JSON.stringify({ type: 'bonjour', script }))
+    prevenirEtat()
+  }
+  ws.onmessage = (event) => {
+    if (socket !== ws) return
+    void recevoirMessage(JSON.parse(String(event.data)) as MessageEntrant, (accuse) => {
+      if (ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify(accuse))
+    })
+  }
+  ws.onclose = () => {
+    if (socket === ws) socket = null
+    prevenirEtat()
+    if (fermeVolontaire || !preferences().mcpSockets) return
+    attente = setTimeout(connecter, 1000)
+  }
+  ws.onerror = () => {
+    /* onclose handles retry */
+  }
+}
+
+function assurerPontPublication() {
+  if (pontPublie) return
+  pontPublie = true
   storeShell.brancherPont((mutation) => {
-    if (socket?.readyState === WebSocket.OPEN) socket.send(JSON.stringify({ ...mutation, origine: 'shell' }))
+    if (!preferences().mcpSockets) return
+    if (socket?.readyState === WebSocket.OPEN) {
+      socket.send(JSON.stringify({ ...mutation, origine: 'shell' }))
+    }
   })
-  connecter()
+}
+
+/** Apply preference: connect or tear down the MCP WebSocket. */
+export function synchroniserPontMcp() {
+  assurerPontPublication()
+  if (preferences().mcpSockets) {
+    if (socket?.readyState === WebSocket.OPEN || socket?.readyState === WebSocket.CONNECTING) {
+      prevenirEtat()
+      return
+    }
+    connecter()
+  } else {
+    couperSocket()
+  }
+}
+
+export function etatPontMcp() {
+  return etatCourant()
+}
+
+export function souscrireEtatPontMcp(ecouteur: EcouteurEtat) {
+  ecouteursEtat.add(ecouteur)
+  ecouteur(etatCourant())
   return () => {
-    ferme = true
-    if (attente) clearTimeout(attente)
-    socket?.close()
+    ecouteursEtat.delete(ecouteur)
+  }
+}
+
+/**
+ * Connexion locale vers le serveur MCP (dev). Honors preferences.mcpSockets
+ * and reconnects/disconnects when the preference changes.
+ */
+export function brancherPontMcp(url = `ws://127.0.0.1:${import.meta.env.VITE_OPENCAD_MCP_PORT ?? '47321'}`) {
+  urlCourante = url
+  assurerPontPublication()
+  const arretPrefs = souscrirePreferences(() => synchroniserPontMcp())
+  synchroniserPontMcp()
+  return () => {
+    arretPrefs()
+    couperSocket()
     storeShell.brancherPont(null)
+    pontPublie = false
   }
 }
