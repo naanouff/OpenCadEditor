@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import {
   diametreDepuisUv,
+  dimensionsRectangleDepuisUv,
+  outilEsquissePointeur,
   pointSurPlan,
   rayonVersMm,
   uvDepuisMonde,
@@ -43,5 +45,21 @@ describe('esquisse pointeur (P4)', () => {
     expect(posee?.cercles.some((c) => c.valeur === 8)).toBe(true)
     // extrude 8 → face.dessus à y=8 (pas 0), sinon la grille « disparaît » hors vue
     expect(posee?.cercles[0]?.y).toBeCloseTo(8)
+  })
+
+  it('dimensions rectangle depuis UV', () => {
+    expect(dimensionsRectangleDepuisUv(10, 5)).toEqual({ longueur: 20, largeur: 10 })
+    expect(outilEsquissePointeur({ support: 'plan.dessus', cercles: [] })).toBe('rectangle')
+    expect(outilEsquissePointeur({ support: 'face.dessus', cercles: [] })).toBe('cercle')
+  })
+
+  it('pose rectangle + cotes sur plan.dessus', () => {
+    storeShell.executer(`piece rect-souris
+esquisse plan.dessus
+`)
+    expect(storeShell.poserRectangle(20, 10)).toBe(true)
+    const posee = storeShell.hote().session.esquisseCourante()
+    expect(posee?.traits?.length).toBeGreaterThanOrEqual(8)
+    expect(outilEsquissePointeur(posee!)).toBe('rectangle')
   })
 })

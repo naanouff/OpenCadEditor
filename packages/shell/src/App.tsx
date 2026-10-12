@@ -14,7 +14,9 @@ import { PreferencesVue } from './PreferencesVue.tsx'
 import {
   altitudeSupport,
   diametreDepuisUv,
+  dimensionsRectangleDepuisUv,
   facesVersMetres,
+  outilEsquissePointeur,
   pointSurPlan,
   rayonVersMm,
   uvDepuisMonde,
@@ -163,7 +165,12 @@ function ViewportVue(_props: IDockviewPanelProps) {
         const hit = pointSurPlan(rayonVersMm(rayonM), esquisse.support, altitude)
         if (!hit) return
         const { u, v } = uvDepuisMonde(hit, esquisse.support, altitude)
-        storeShell.poserCercleDiametre(diametreDepuisUv(u, v))
+        if (outilEsquissePointeur(esquisse) === 'rectangle') {
+          const { longueur, largeur } = dimensionsRectangleDepuisUv(u, v)
+          storeShell.poserRectangle(longueur, largeur)
+        } else {
+          storeShell.poserCercleDiametre(diametreDepuisUv(u, v))
+        }
         return
       }
       const face = faceSousPointeur(facesVersMetres(facesDepuisMaillage(maille.positions)), rayonM)

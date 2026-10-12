@@ -1,7 +1,8 @@
 /**
- * P4 / sprint 57 — clic en esquisse → cercle centré (GCS v1) + diamètre.
- * Le centre reste (0,0) ; le diamètre est 2·distance(clic, origine) accrochée.
+ * P4 — clic en esquisse : cercle (57) ou rectangle (58), centre GCS v1 = origine.
+ * face.* → cercle (diamètre = 2·‖UV‖) ; plan.* → rectangle (L×l = 2|u| × 2|v|).
  */
+import type { EsquissePosee } from '@opencad/api-parametrique'
 import { repere } from './dessin.ts'
 import type { FaceSupport } from './occt/registreFaces.ts'
 import { rayonCoupePlan, type Rayon3 } from './selectionFace.ts'
@@ -77,6 +78,24 @@ export function diametreDepuisUv(u: number, v: number, pasMm = 1): number {
   const brut = 2 * Math.hypot(u, v)
   if (!Number.isFinite(brut) || brut < pasMm) return pasMm
   return Math.max(pasMm, Math.round(brut / pasMm) * pasMm)
+}
+
+/** Longueur (U) × largeur (V) en mm — rectangle centré, accroché au pas. */
+export function dimensionsRectangleDepuisUv(
+  u: number,
+  v: number,
+  pasMm = 1,
+): { longueur: number; largeur: number } {
+  const accrocher = (x: number) => Math.max(pasMm, Math.round((2 * Math.abs(x)) / pasMm) * pasMm)
+  return { longueur: accrocher(u), largeur: accrocher(v) }
+}
+
+/** Outil implicite : face.* → cercle ; sinon rectangle (sauf esquisse déjà typée). */
+export function outilEsquissePointeur(posee: EsquissePosee): 'cercle' | 'rectangle' {
+  if (posee.cercles.length > 0) return 'cercle'
+  if ((posee.traits?.length ?? 0) >= 8) return 'rectangle'
+  if (posee.support.startsWith('face.')) return 'cercle'
+  return 'rectangle'
 }
 
 /** Altitude Y du support face.* / plan.dessus (mm). */

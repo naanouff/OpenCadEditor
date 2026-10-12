@@ -194,6 +194,24 @@ export const storeShell = {
     this.ligne(`cote diametre ${d}`)
     return (hote.session.esquisseCourante()?.cercles.length ?? 0) > 0
   },
+  /**
+   * Place or update a centred rectangle (mm). GCS v1 origin = centre ;
+   * click UV drives longueur (2|u|) and largeur (2|v|).
+   */
+  poserRectangle(longueurMm: number, largeurMm: number) {
+    const posee = hote.session.esquisseCourante()
+    if (!posee || assemblage) return false
+    if (!(longueurMm > 0) || !(largeurMm > 0)) return false
+    if (!Number.isFinite(longueurMm) || !Number.isFinite(largeurMm)) return false
+    const L = Math.round(longueurMm * 1000) / 1000
+    const l = Math.round(largeurMm * 1000) / 1000
+    const deja = (posee.traits?.length ?? 0) >= 8
+    if (!deja) this.ligne('rectangle')
+    this.ligne(`cote largeur ${l}`)
+    this.ligne(`cote longueur ${L}`)
+    const apres = hote.session.esquisseCourante()
+    return (apres?.traits?.length ?? 0) >= 8
+  },
   executer(script: string) {
     vueEsquisse = null
     hote.executer(script)
