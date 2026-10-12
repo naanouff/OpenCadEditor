@@ -67,6 +67,8 @@ export type Solide = {
   enlevementsBorgnes: number
   enlevements: Enlevement[]
   ajouts: Ajout[]
+  /** Max +Y of extrudes (mm) for face.dessus posing when ajouts carry no height. */
+  hauteurDessus?: number
 }
 
 export type Vecteur = readonly [number, number, number]
@@ -241,7 +243,7 @@ export type EsquissePosee = {
 }
 
 export type NoyauGeometrique = {
-  extruder(solide: Solide | null, ajout?: Ajout): Solide
+  extruder(solide: Solide | null, ajout?: Ajout, hauteurDessus?: number): Solide
   enlever(solide: Solide, coupe: Enlevement): Solide
   aFace(solide: Solide | null, face: string): boolean
   mailler(solide: Solide | null, parametres: Map<string, string>): MaillageOmbre

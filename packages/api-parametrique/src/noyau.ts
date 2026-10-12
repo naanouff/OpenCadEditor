@@ -11,6 +11,7 @@ function avecFaces(solide: Solide | null): Solide {
         enlevementsBorgnes: solide.enlevementsBorgnes,
         enlevements: [...solide.enlevements],
         ajouts: [...solide.ajouts],
+        hauteurDessus: solide.hauteurDessus,
       }
     : { faces: new Set(), extrusions: 0, enlevementsBorgnes: 0, enlevements: [], ajouts: [] }
   suivant.faces.add('face.dessus')
@@ -20,10 +21,16 @@ function avecFaces(solide: Solide | null): Solide {
 
 /** Poses des faces nommées, sans solide exact. */
 export const noyauProvisoire: NoyauGeometrique = {
-  extruder(solide, ajout) {
+  extruder(solide, ajout, hauteurDessus) {
     const suivant = avecFaces(solide)
     suivant.extrusions += 1
     if (ajout) suivant.ajouts.push(ajout)
+    const h =
+      hauteurDessus ??
+      (ajout && 'hauteur' in ajout && typeof ajout.hauteur === 'number' ? ajout.hauteur : undefined)
+    if (h !== undefined) {
+      suivant.hauteurDessus = Math.max(suivant.hauteurDessus ?? 0, h)
+    }
     return suivant
   },
   enlever(solide, coupe) {
@@ -356,6 +363,7 @@ function hauteurDuPlan(support: string, solide: Solide | null, parametres: Map<s
       /* try next */
     }
   }
+  if (solide.hauteurDessus !== undefined) return solide.hauteurDessus
   let depuisAjouts = 0
   for (const ajout of solide.ajouts) {
     if ('hauteur' in ajout && typeof ajout.hauteur === 'number') {

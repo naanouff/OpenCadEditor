@@ -132,17 +132,8 @@ export const domaineSolide: Domaine = {
         exigerEsquisse(contexte)
         const support = contexte.esquisse?.support
         const hauteur = contexte.evaluateur.evaluer(operation.arguments.expression, contexte.parametres)
-        // GCS rectangle often yields no legacy profil — still record height for face.dessus posing.
-        const ajout =
-          profil(contexte, operation) ??
-          ({
-            sorte: 'rectangle' as const,
-            ecart: 0,
-            debord: 0,
-            largeur: 0,
-            hauteur,
-          } satisfies Ajout)
-        contexte.solide = contexte.noyau.extruder(contexte.solide, ajout)
+        // Pass height separately when profil is absent (GCS rectangle) — do not fake a corne ajout.
+        contexte.solide = contexte.noyau.extruder(contexte.solide, profil(contexte, operation), hauteur)
         contexte.piece.solide = contexte.solide
         contexte.esquisse = null
         contexte.piece.esquisse = null
