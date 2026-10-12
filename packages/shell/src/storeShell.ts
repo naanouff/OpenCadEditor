@@ -174,12 +174,16 @@ export const storeShell = {
     prevenir()
     if (texte.trim()) publier({ type: 'ligne', texte })
   },
-  /** Open sketch on a named face (`face.dessus` / `face.dessous`). No-op if already sketching. */
-  ouvrirEsquisseSurFace(faceId: string) {
+  /** Open sketch on a support (`face.*` or `plan.*`). No-op if already sketching. */
+  ouvrirEsquisseSurSupport(support: string) {
     if (hote.session.esquisseCourante()) return false
     if (assemblage) return false
-    this.ligne(`esquisse ${faceId}`)
-    return hote.session.esquisseCourante() !== null
+    this.ligne(`esquisse ${support}`)
+    return hote.session.esquisseCourante()?.support === support
+  },
+  /** @deprecated use ouvrirEsquisseSurSupport */
+  ouvrirEsquisseSurFace(faceId: string) {
+    return this.ouvrirEsquisseSurSupport(faceId)
   },
   /**
    * Place or update a circle at sketch origin with the given diameter (mm).
@@ -193,6 +197,24 @@ export const storeShell = {
     if (posee.cercles.length === 0) this.ligne('cercle')
     this.ligne(`cote diametre ${d}`)
     return (hote.session.esquisseCourante()?.cercles.length ?? 0) > 0
+  },
+  /**
+   * Place or update a centred rectangle (mm). GCS v1 origin = centre ;
+   * click UV drives longueur (2|u|) and largeur (2|v|).
+   */
+  poserRectangle(longueurMm: number, largeurMm: number) {
+    const posee = hote.session.esquisseCourante()
+    if (!posee || assemblage) return false
+    if (!(longueurMm > 0) || !(largeurMm > 0)) return false
+    if (!Number.isFinite(longueurMm) || !Number.isFinite(largeurMm)) return false
+    const L = Math.round(longueurMm * 1000) / 1000
+    const l = Math.round(largeurMm * 1000) / 1000
+    const deja = (posee.traits?.length ?? 0) >= 8
+    if (!deja) this.ligne('rectangle')
+    this.ligne(`cote largeur ${l}`)
+    this.ligne(`cote longueur ${L}`)
+    const apres = hote.session.esquisseCourante()
+    return (apres?.traits?.length ?? 0) >= 8
   },
   executer(script: string) {
     vueEsquisse = null
