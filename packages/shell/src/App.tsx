@@ -15,18 +15,22 @@ import {
   altitudeSupport,
   diametreDepuisUv,
   dimensionsRectangleDepuisUv,
-  facesVersMetres,
   outilEsquissePointeur,
   pointSurPlan,
   rayonVersMm,
   uvDepuisMonde,
 } from './esquissePointeur.ts'
-import { areteSousPointeur, SEUIL_ARETE_MM } from './selectionArete.ts'
+import type { Maillage } from '@opencad/api-parametrique'
+import type { CalqueTopo } from './apparenceCad.ts'
+import { carreauSousPointeur, nomCarreau } from './selectionCarreau.ts'
+import { rayonOrthoDepuisNdc } from './selectionFace.ts'
 import {
-  faceSousPointeur,
-  facesDepuisMaillage,
-  rayonOrthoDepuisNdc,
-} from './selectionFace.ts'
+  areteBrepSousPointeur,
+  classeKernelDe,
+  polyligneArete,
+  SEUIL_SEGMENT_MM,
+} from './selectionSegment.ts'
+import { topologieAffichee } from './topologieAffichee.ts'
 import { RubanVue } from './RubanVue.tsx'
 import { storeShell } from './storeShell.ts'
 import { TerminalMonaco } from './TerminalMonaco.tsx'
@@ -42,6 +46,40 @@ const REQUIRED = [
   'debug',
   'preferences',
 ] as const
+
+function nomArete(maille: Maillage, id: number) {
+  const arete = topologieAffichee(maille).aretes[id]
+  const classe = arete ? classeKernelDe(arete, storeShell.aretesNommees()) : null
+  return classe ? `${classe} (#${id})` : `arete #${id}`
+}
+
+function libelleTopo(maille: Maillage) {
+  const survol = storeShell.survol()
+  if (survol?.sorte === 'face') return survol.nom
+  if (survol?.sorte === 'arete') return nomArete(maille, survol.id)
+  const segment = storeShell.segmentChoisi()
+  if (segment !== null) return nomArete(maille, segment)
+  return storeShell.faceChoisie()?.nom ?? ''
+}
+
+function versMetres(mm: number[]) {
+  return mm.map((valeur) => valeur * 0.001)
+}
+
+function calqueAffiche(maille: Maillage): CalqueTopo {
+  const survol = storeShell.survol()
+  const { aretes } = topologieAffichee(maille)
+  const trait = (id: number | null) => {
+    const arete = id === null ? undefined : aretes[id]
+    return arete ? versMetres(polyligneArete(arete)) : []
+  }
+  return {
+    survolFace: survol?.sorte === 'face' ? survol.id : null,
+    selectionFace: storeShell.faceChoisie()?.id ?? null,
+    survolArete: survol?.sorte === 'arete' ? trait(survol.id) : [],
+    selectionArete: trait(storeShell.segmentChoisi()),
+  }
+}
 
 function useStoreShell() {
   const [revision, setRevision] = useState(() => storeShell.revision())
@@ -120,10 +158,63 @@ function ViewportVue(_props: IDockviewPanelProps) {
     // Volume moteur (OCCT) : fil via aretesBrep — pas besoin du motif decrire.
     const frontiere =
       !posee && maille.indices.length > 0 ? { faces: [] } : hote.session.frontiere()
-    void afficher(canevas, frontiere, posee, maille).catch((erreur: unknown) => {
-      console.error(erreur instanceof Error ? erreur.message : String(erreur))
-    })
+    void afficher(canevas, frontiere, posee, maille, calqueAffiche(maille)).catch(
+      (erreur: unknown) => {
+        console.error(erreur instanceof Error ? erreur.message : String(erreur))
+      },
+    )
   }, [hote, revision])
+
+  const mailleAffichee = () =>
+    storeShell.utiliseMoteur()
+      ? (storeShell.maillageAffiche() ?? { positions: [], normales: [], indices: [] })
+      : hote.session.maillage()
+
+  const rayonSousPointeur = (e: ReactPointerEvent) => {
+    const canevas = ref.current
+    const cadre = cadreCameraPick()
+    if (!canevas || !cadre) return null
+    const rect = canevas.getBoundingClientRect()
+    if (rect.width < 1 || rect.height < 1) return null
+    const ndcX = ((e.clientX - rect.left) / rect.width) * 2 - 1
+    const ndcY = 1 - ((e.clientY - rect.top) / rect.height) * 2
+    return rayonOrthoDepuisNdc(
+      ndcX,
+      ndcY,
+      cadre.eye,
+      cadre.target,
+      cadre.up,
+      cadre.demiHauteur,
+      rect.width / rect.height,
+    )
+  }
+
+  const onPointerMove = (e: ReactPointerEvent) => {
+    // Bouton enfoncé : la caméra tourne, pas de survol.
+    if (e.buttons !== 0) return
+    if (storeShell.assemblage() || hote.session.esquisseCourante()) {
+      storeShell.definirSurvol(null)
+      return
+    }
+    const rayonM = rayonSousPointeur(e)
+    if (!rayonM) return
+    const maille = mailleAffichee()
+    const topo = topologieAffichee(maille)
+    const rayon = rayonVersMm(rayonM)
+    const arete = areteBrepSousPointeur(topo.aretes, rayon, SEUIL_SEGMENT_MM)
+    if (arete) {
+      storeShell.definirSurvol({ sorte: 'arete', id: arete.id })
+      return
+    }
+    const hit = carreauSousPointeur(maille, rayon)
+    storeShell.definirSurvol(
+      hit ? { sorte: 'face', id: hit.faceId, nom: nomCarreau(hit.faceId, topo.noms) } : null,
+    )
+  }
+
+  const onPointerLeave = () => {
+    storeShell.definirSurvol(null)
+  }
 
   const onPointerDown = (e: ReactPointerEvent) => {
     if (e.button !== 0) return
@@ -135,25 +226,9 @@ function ViewportVue(_props: IDockviewPanelProps) {
     if (e.button !== 0 || !debut) return
     if (Math.hypot(e.clientX - debut.x, e.clientY - debut.y) > 4) return
     if (storeShell.assemblage()) return
-    const canevas = ref.current
-    const cadre = cadreCameraPick()
-    if (!canevas || !cadre) return
-    const rect = canevas.getBoundingClientRect()
-    if (rect.width < 1 || rect.height < 1) return
-    const ndcX = ((e.clientX - rect.left) / rect.width) * 2 - 1
-    const ndcY = 1 - ((e.clientY - rect.top) / rect.height) * 2
-    const rayonM = rayonOrthoDepuisNdc(
-      ndcX,
-      ndcY,
-      cadre.eye,
-      cadre.target,
-      cadre.up,
-      cadre.demiHauteur,
-      rect.width / rect.height,
-    )
-    const maille = storeShell.utiliseMoteur()
-      ? (storeShell.maillageAffiche() ?? { positions: [], normales: [], indices: [] })
-      : hote.session.maillage()
+    const rayonM = rayonSousPointeur(e)
+    if (!rayonM) return
+    const maille = mailleAffichee()
     try {
       let yMax = 0
       for (let i = 1; i < maille.positions.length; i += 3) {
@@ -161,24 +236,30 @@ function ViewportVue(_props: IDockviewPanelProps) {
       }
       let esquisse = hote.session.esquisseCourante()
       if (!esquisse) {
-        const arete = areteSousPointeur(
-          storeShell.aretesNommees(),
-          rayonVersMm(rayonM),
-          SEUIL_ARETE_MM,
-        )
+        const rayon = rayonVersMm(rayonM)
+        const topo = topologieAffichee(maille)
+        const arete = areteBrepSousPointeur(topo.aretes, rayon, SEUIL_SEGMENT_MM)
         if (arete) {
-          storeShell.choisirArete(arete)
+          storeShell.choisirAreteBrep(arete.id, classeKernelDe(arete, storeShell.aretesNommees()))
           return
         }
-        const face = faceSousPointeur(
-          facesVersMetres(facesDepuisMaillage(maille.positions)),
-          rayonM,
-        )
-        // Hit a solid face → sketch on it ; otherwise start on plan.dessus.
-        const support = face ?? 'plan.dessus'
-        if (!storeShell.ouvrirEsquisseSurSupport(support)) return
-        esquisse = hote.session.esquisseCourante()
-        if (!esquisse) return
+        const hit = carreauSousPointeur(maille, rayon)
+        if (hit) {
+          const nom = nomCarreau(hit.faceId, topo.noms)
+          const deja = storeShell.faceChoisie()
+          storeShell.choisirFace(hit.faceId, nom)
+          // Premier clic : sélection visible. Second clic sur dessus/dessous : esquisse.
+          const second =
+            deja?.id === hit.faceId && (nom === 'face.dessus' || nom === 'face.dessous')
+          if (!second) return
+          if (!storeShell.ouvrirEsquisseSurSupport(nom)) return
+          esquisse = hote.session.esquisseCourante()
+          if (!esquisse) return
+        } else {
+          if (!storeShell.ouvrirEsquisseSurSupport('plan.dessus')) return
+          esquisse = hote.session.esquisseCourante()
+          if (!esquisse) return
+        }
       }
       const altitude =
         esquisse.cercles[0]?.y ?? esquisse.yPlan ?? altitudeSupport(esquisse.support, yMax)
@@ -204,16 +285,18 @@ function ViewportVue(_props: IDockviewPanelProps) {
         style={{ background: 'var(--color-viewport-clear, #a8abad)' }}
         onPointerDown={onPointerDown}
         onPointerUp={onPointerUp}
+        onPointerMove={onPointerMove}
+        onPointerLeave={onPointerLeave}
       />
       {storeShell.construction() ? (
         <p className="pointer-events-none absolute left-3 top-3 m-0 font-ui text-[13px] text-[var(--color-text-primary)]">
           Construction…
         </p>
-      ) : storeShell.areteChoisie() ? (
+      ) : (
         <p className="pointer-events-none absolute left-3 top-3 m-0 font-ui text-[13px] text-[var(--color-text-primary)]">
-          {storeShell.areteChoisie()}
+          {libelleTopo(mailleAffichee())}
         </p>
-      ) : null}
+      )}
     </div>
   )
 }

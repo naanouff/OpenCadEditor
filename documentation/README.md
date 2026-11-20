@@ -4,7 +4,10 @@ Suivi du projet et notes de travail. Ce dossier n’appartient pas au moteur : l
 
 | Dossier | Rôle |
 |---------|------|
-| [suivi/feuille-de-route.md](suivi/feuille-de-route.md) | Cap, phases P0–P4 / O1–O4 / W1, garde-fous (2026-10-11) |
+| [suivi/feuille-de-route.md](suivi/feuille-de-route.md) | Cap, phases P0–P6 / O1–O4 / W1, garde-fous (2026-11-20) |
+| [veille/affichage-topologique.md](veille/affichage-topologique.md) | P5 : carreaux / arêtes / datums sélectionnables dans le viewport |
+| [sprints/sprint-62-carreaux-brep.md](sprints/sprint-62-carreaux-brep.md) | Sprint 62 : pick triangle + surbrillance `face.*` |
+| [veille/plateau-service-cadom.md](veille/plateau-service-cadom.md) | P6 : plateau alu + 2 poignées laiton + 4 vis (démo OpenCAD) |
 | [gitflow.md](gitflow.md) | Branches : feature/fix/chore → develop → main → tag ; suppression auto post-merge |
 | [suivi/analyse.md](suivi/analyse.md) | État du dépôt : couches, langage, géométrie, manques |
 | [suivi/occt-kernel.md](suivi/occt-kernel.md) | Vérification : occt-wasm v0.2.0 et kernel B-Rep |

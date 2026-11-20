@@ -72,6 +72,7 @@ function enMetresOmbre(volume: MaillageOmbre) {
     positions: volume.positions.map((valeur) => valeur * METRE),
     normales: volume.normales,
     indices: volume.indices,
+    faces: volume.faces,
   }
 }
 

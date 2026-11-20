@@ -616,3 +616,11 @@ Kernel + pont shell : extrude / enlever sur `face.dessus` / `face.dessous`.
 
 [pilotage-lignes.md](../veille/pilotage-lignes.md). La ligne de `Session` est l’interface par défaut. Le terminal et le MCP suffisent ; une UI future émet ou réécrit ces lignes, sur le modèle de l’éditeur Info de Blender. Whittle sert de référence fonctionnelle (geste légal dit, aperçu non écrit, expression, référence ambiguë signalée). La couche technique ne change pas : GCS maison, occt-kernel, formats OpenCAD, w3dts. Pas de phase nouvelle. P4 reste un client des lignes.
 
+## 2026-11-20 — P5 viewport topologique, P6 plateau de service
+
+Après P4 (56–61), deux phases : [affichage-topologique.md](../veille/affichage-topologique.md) (P5, sprints 62–64) pour un viewport CAO — carreaux tessellés sélectionnables, puis arêtes et datums 3D ; [plateau-service-cadom.md](../veille/plateau-service-cadom.md) (P6, 65–66) pour illustrer OpenCAD — plateau aluminium, 2 instances de poignée laiton, 4 vis, assets partagés et teinte `.cadomat`. Sprint immédiat : [sprint-62-carreaux-brep.md](../sprints/sprint-62-carreaux-brep.md).
+
+## 2026-11-20 — Sprint 62 en cours : carreaux BRep
+
+Pick triangle sur `Maillage.faces[]` (`selectionCarreau`) ; noms `face.<n>` + alias `dessus`/`dessous`. La surbrillance est un second maillage orange (le PBR ignore la couleur de sommet). Premier clic : sélection + HUD ; second clic sur `dessus`/`dessous` : esquisse.
+

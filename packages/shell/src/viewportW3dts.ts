@@ -1,4 +1,5 @@
 import type { EsquissePosee, Frontiere, MaillageOmbre } from '@opencad/api-parametrique'
+import { calqueVide, couleursTopo, epaisseurTopo, type CalqueTopo, type Rgba } from './apparenceCad.ts'
 import { documentCad } from './documentCad.ts'
 import { coteSegment, poseGlyphe, repere, repereSurface, vueDuPlan } from './dessin.ts'
 import { remplacementEsquisse } from './entree.ts'
@@ -152,7 +153,11 @@ class ProjetAnneau extends LitAbstractProject {
     return controleur.getPickFrame()
   }
 
-  montrer(document: ReturnType<typeof documentCad>, esquisse: EsquissePosee | null) {
+  montrer(
+    document: ReturnType<typeof documentCad>,
+    esquisse: EsquissePosee | null,
+    calque: CalqueTopo = calqueVide,
+  ) {
     const params = this.params
     if (!params) return
     const { scene, world, engine, cameraControllerManager, logger } = params
@@ -160,8 +165,10 @@ class ProjetAnneau extends LitAbstractProject {
     const racine = new SceneNode('anneau', world)
     scene.add(racine)
     this.racine = racine
-    poserMaillage(racine, world, engine, document)
-    poserFil(racine, world, engine, logger, document.brepWireframe.position.array, [0.12, 0.13, 0.14, 1], 'solide', 0.00008)
+    poserMaillage(racine, world, engine, document, calque)
+    poserFil(racine, world, engine, logger, document.brepWireframe.position.array, couleursTopo.fil, 'solide', epaisseurTopo.fil)
+    poserFil(racine, world, engine, logger, calque.survolArete, couleursTopo.survol, 'survol-arete', epaisseurTopo.survol)
+    poserFil(racine, world, engine, logger, calque.selectionArete, couleursTopo.selection, 'selection-arete', epaisseurTopo.selection)
     poserFil(racine, world, engine, logger, document.grille.position.array, [0.8, 0.81, 0.82, 1], 'grille')
     poserFil(racine, world, engine, logger, document.esquisse.position.array, [0.15, 0.45, 0.92, 1], 'esquisse')
     poserFil(racine, world, engine, logger, document.cotes.position.array, [0.92, 0.55, 0.12, 1], 'cotes')
@@ -213,45 +220,73 @@ class ProjetAnneau extends LitAbstractProject {
 
 }
 
+type GroupeSolide = 'solide' | 'survol' | 'selection'
+
+/**
+ * Le solide est réparti en groupes de triangles, un matériau par groupe :
+ * chaque triangle est tracé une fois, le carreau choisi prend la couleur de sélection.
+ */
 function poserMaillage(
   parent: SceneNode,
   world: ProjectLoadParams['world'],
   engine: Engine,
   document: ReturnType<typeof documentCad>,
+  calque: CalqueTopo,
 ) {
-  if (document.maillage.indices.length === 0) return
-  const sommets: number[] = []
-  const { positions } = document.maillage
-  for (let i = 0; i < positions.length; i += 3) {
-    const x = positions[i]
-    const y = positions[i + 1]
-    const z = positions[i + 2]
-    const nx = document.maillage.normales[i]
-    const ny = document.maillage.normales[i + 1]
-    const nz = document.maillage.normales[i + 2]
-    const { tangente, bitangente } = repereSurface([nx, ny, nz])
-    sommets.push(x, y, z, 0, 0, 0, 0, nx, ny, nz, ...tangente, ...bitangente, 0.78, 0.78, 0.78, 1)
+  const { positions, normales, indices, faces } = document.maillage
+  if (indices.length === 0) return
+  const groupeDe = (triangle: number): GroupeSolide => {
+    const face = faces?.[triangle]
+    if (face === undefined) return 'solide'
+    if (face === calque.selectionFace) return 'selection'
+    if (face === calque.survolFace) return 'survol'
+    return 'solide'
   }
-  const indices =
-    positions.length / 3 > 0xffff
-      ? new Uint32Array(document.maillage.indices)
-      : new Uint16Array(document.maillage.indices)
-  const mesh = new Mesh(new Float32Array(sommets), indices, 'anneau')
-  engine.resourceManager.uploadMesh(mesh)
-  const matiere = new Material({
-    name: 'anneau',
-    shadingModel: 'pbr',
-    shaderGraph: graphe ?? undefined,
-    properties: {
-      baseColor: [0.78, 0.78, 0.78],
-      roughness: 1,
-      metallic: 0,
-      normalTexture: null,
-      metallicRoughnessTexture: null,
-    },
-  })
-  engine.resourceManager.uploadMaterial(matiere)
-  parent.add(new SceneNode('solide', world, mesh, matiere))
+  const parGroupe = new Map<GroupeSolide, number[]>()
+  for (let t = 0; t < indices.length / 3; t++) {
+    const groupe = groupeDe(t)
+    const liste = parGroupe.get(groupe)
+    if (liste) liste.push(t)
+    else parGroupe.set(groupe, [t])
+  }
+  for (const [groupe, triangles] of parGroupe) {
+    const remap = new Map<number, number>()
+    const sommets: number[] = []
+    const locaux: number[] = []
+    for (const t of triangles) {
+      for (let k = 0; k < 3; k++) {
+        const s = indices[t * 3 + k]!
+        let local = remap.get(s)
+        if (local === undefined) {
+          local = remap.size
+          remap.set(s, local)
+          const i = s * 3
+          const n: [number, number, number] = [normales[i]!, normales[i + 1]!, normales[i + 2]!]
+          const { tangente, bitangente } = repereSurface(n)
+          sommets.push(positions[i]!, positions[i + 1]!, positions[i + 2]!, 0, 0, 0, 0, ...n, ...tangente, ...bitangente, 1, 1, 1, 1)
+        }
+        locaux.push(local)
+      }
+    }
+    const tampon = remap.size > 0xffff ? new Uint32Array(locaux) : new Uint16Array(locaux)
+    const mesh = new Mesh(new Float32Array(sommets), tampon, `solide-${groupe}`)
+    engine.resourceManager.uploadMesh(mesh)
+    const couleur = couleursTopo[groupe]
+    const matiere = new Material({
+      name: `solide-${groupe}`,
+      shadingModel: 'pbr',
+      shaderGraph: graphe ?? undefined,
+      properties: {
+        baseColor: [couleur[0], couleur[1], couleur[2]],
+        roughness: 1,
+        metallic: 0,
+        normalTexture: null,
+        metallicRoughnessTexture: null,
+      },
+    })
+    engine.resourceManager.uploadMaterial(matiere)
+    parent.add(new SceneNode(`solide-${groupe}`, world, mesh, matiere))
+  }
 }
 
 function poserGlyphes(
@@ -322,7 +357,7 @@ function poserFil(
   engine: Engine,
   logger: ProjectLoadParams['logger'],
   segments: number[],
-  rgba: [number, number, number, number],
+  rgba: Rgba,
   nom: string,
   /** Demi-largeur en mètres. Un ruban passe devant la surface ; un trait matériel s'y noie de profil. */
   demiLargeur?: number,
@@ -382,6 +417,7 @@ export function afficher(
   frontiere: Frontiere,
   esquisse: EsquissePosee | null = null,
   volume: MaillageOmbre | null = null,
+  calque: CalqueTopo = calqueVide,
 ) {
   const document = documentCad(frontiere, esquisse, volume)
   if (canevasMoteur !== canevas || !demarrage) {
@@ -389,7 +425,7 @@ export function afficher(
     projet = null
     demarrage = demarrer(canevas)
   }
-  return demarrage.then(() => projet?.montrer(document, esquisse))
+  return demarrage.then(() => projet?.montrer(document, esquisse, calque))
 }
 
 /** Caméra active pour un pick NDC (null si moteur pas prêt). */
