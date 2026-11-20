@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { indicesDepuisSelecteurs, type AreteKernel } from '../src/occt/aretesOcct.ts'
+import { indicesDepuisSelecteurs, nommerAretes, type AreteKernel } from '../src/occt/aretesOcct.ts'
 
 describe('aretesOcct', () => {
   const edges: AreteKernel[] = [
@@ -13,5 +13,18 @@ describe('aretesOcct', () => {
     expect(indicesDepuisSelecteurs(edges, ['arete.haut'], 0, 8)).toEqual([0, 1])
     expect(indicesDepuisSelecteurs(edges, ['arete.bas'], 0, 8)).toEqual([3])
     expect(indicesDepuisSelecteurs(edges, ['arete.vertical'], 0, 8)).toEqual([2])
+  })
+
+  it('nomme les mêmes classes, et les garde quand la hauteur change', () => {
+    const nommees = nommerAretes(edges, 0, 8)
+    expect(nommees.map((a) => a.id)).toEqual(['arete.haut', 'arete.bas', 'arete.vertical'])
+    expect(nommees.find((a) => a.id === 'arete.haut')?.indices).toEqual([0, 1])
+
+    const plusHaut: AreteKernel[] = edges.map((e) =>
+      e.midPoint[1] === 8 ? { ...e, midPoint: [e.midPoint[0], 12, e.midPoint[2]] } : e,
+    )
+    const apres = nommerAretes(plusHaut, 0, 12)
+    expect(apres.find((a) => a.id === 'arete.haut')?.indices).toEqual([0, 1])
+    expect(apres.find((a) => a.id === 'arete.bas')?.indices).toEqual([3])
   })
 })

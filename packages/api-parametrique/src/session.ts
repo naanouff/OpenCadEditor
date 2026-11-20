@@ -76,6 +76,7 @@ export class Session {
     this.geometrie = options?.geometrie !== false
     this.enregistrer(domainePiece(this))
     this.enregistrer(domainePointe(this))
+    this.enregistrer(domaineReglage(this))
     this.enregistrer(domaineParametres)
     this.enregistrer(domaineEsquisse)
     this.enregistrer(domaineSolide)
@@ -125,10 +126,16 @@ export class Session {
     const action = this.actionPour(operation)
     try {
       action.faire()
-    } finally {
-      this.futur.length = 0
-      this.passe.push(action)
+    } catch (erreur) {
+      try {
+        action.defaire()
+      } catch {
+        // L’état d’avant ne se reconstruit pas non plus : on garde l’erreur de la ligne.
+      }
+      throw erreur
     }
+    this.futur.length = 0
+    this.passe.push(action)
   }
 
   annuler() {
@@ -408,6 +415,30 @@ export class Session {
     this.passe.push(action)
   }
 
+  /**
+   * Remplace l’expression d’une fonction déjà dans l’historique, sans empiler d’annulation
+   * (verbe `regle` via `commande`). Rend l’expression d’avant.
+   */
+  appliquerExpression(index: number, expression: string) {
+    const operation = this.pieceActive().historique[index]
+    if (!operation || !TYPES_FONCTION.has(operation.type) || operation.arguments.expression === undefined) {
+      throw new ErreurApi('fonction sans expression')
+    }
+    const suivante = expression.trim()
+    if (!suivante) throw new ErreurApi('expression vide')
+    const avant = operation.arguments.expression
+    if (avant === suivante) return avant
+    operation.arguments.expression = suivante
+    try {
+      this.reconstruire()
+    } catch (erreur) {
+      operation.arguments.expression = avant
+      this.reconstruire()
+      throw erreur
+    }
+    return avant
+  }
+
   /** Applique la pointe sans empiler d’annulation (verbe `pointe` via `commande`). */
   appliquerPointe(cible: number | 'fin') {
     this.pieceActive().pointe = this.resoudrePointe(cible)
@@ -534,6 +565,40 @@ function domainePointe(session: Session): Domaine {
           const avant = operation.arguments.avant
           if (avant === 'fin' || avant === undefined) session.appliquerPointe('fin')
           else session.appliquerPointe(Number(avant))
+        },
+      },
+    },
+  }
+}
+
+/** `regle <rang> <expression>` : la fonction de ce rang prend l’expression, sans en ajouter une seconde. */
+function domaineReglage(session: Session): Domaine {
+  return {
+    id: 'reglage',
+    verbes: {
+      regle: (reste) => {
+        const [rang = '', ...expression] = reste.trim().split(/\s+/)
+        return { type: 'regle', arguments: { rang, expression: expression.join(' ') }, noms: [] }
+      },
+    },
+    operations: {
+      regle: {
+        dansHistorique: false,
+        faire(_contexte, operation) {
+          const { rang, expression } = operation.arguments
+          let index: number
+          try {
+            index = indexFonctionParRang(session.historique(), Number(rang))
+          } catch {
+            throw new ErreurApi(`rang de fonction invalide: ${rang}`)
+          }
+          operation.arguments.index = String(index)
+          operation.arguments.avant = session.appliquerExpression(index, expression ?? '')
+        },
+        defaire(_contexte, operation) {
+          const { index, avant } = operation.arguments
+          if (index === undefined || avant === undefined) return
+          session.appliquerExpression(Number(index), avant)
         },
       },
     },

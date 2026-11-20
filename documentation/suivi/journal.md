@@ -600,3 +600,19 @@ Kernel : polygone régulier (entreplat) ; bump `vendor/opencad`.
 
 Kernel + pont shell : extrude / enlever sur `face.dessus` / `face.dessous`.
 
+## 2026-11-20 — Sprint 59 : nommage des arêtes
+
+[naming-aretes.md](../veille/naming-aretes.md) et [sprint-59-naming-aretes.md](../sprints/sprint-59-naming-aretes.md). `nommerAretes` reprend les classes du `fillet`. `list_edges` suit le maillage OCCT. Un clic à moins de 3 mm d’un milieu choisit le nom et l’affiche ; le centre de la face ouvre toujours l’esquisse. Le filet `pas` ne porte pas ces noms. Suite P4 : ruban.
+
+## 2026-11-20 — Sprint 60 : ruban
+
+[ruban.md](../veille/ruban.md) et [sprint-60-ruban.md](../sprints/sprint-60-ruban.md). Deux onglets au-dessus du dock. Esquisse : plan dessus, rectangle 10×20 ou cercle Ø 10. Fonctions : extrude 8, enlève 2, congé 1 sur l’arête choisie. Rien sur un assemblage. L’onglet Assemblage, la révolution et le panneau de la fonction restent après.
+
+## 2026-11-20 — Sprint 61 : régler l’expression
+
+[regler-fonction.md](../veille/regler-fonction.md) et [sprint-61-regler-fonction.md](../sprints/sprint-61-regler-fonction.md). La ligne `regle <rang> <expression>` remplace l’expression d’une fonction déjà posée, sans en ajouter une seconde. Annuler rend la valeur précédente. L’onglet Fonctions montre ce champ ; Entrée émet la ligne, que le journal, le worker et le MCP reçoivent. Un premier jet appelait la session en direct : le MCP gardait l’ancienne valeur et l’annulation du terminal défaisait la mauvaise ligne.
+
+## 2026-11-20 — Pilotage par les lignes
+
+[pilotage-lignes.md](../veille/pilotage-lignes.md). La ligne de `Session` est l’interface par défaut. Le terminal et le MCP suffisent ; une UI future émet ou réécrit ces lignes, sur le modèle de l’éditeur Info de Blender. Whittle sert de référence fonctionnelle (geste légal dit, aperçu non écrit, expression, référence ambiguë signalée). La couche technique ne change pas : GCS maison, occt-kernel, formats OpenCAD, w3dts. Pas de phase nouvelle. P4 reste un client des lignes.
+

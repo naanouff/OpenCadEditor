@@ -1,6 +1,7 @@
 import { Session, type Maillage } from '@opencad/api-parametrique'
 import { chargerKernel, type OcctKernelModule } from '../occt/chargerKernel.ts'
 import { historiqueCompatibleOcct, maillagePipelineOcct } from '../occt/pipelineOcct.ts'
+import type { AreteKernel } from '../occt/aretesOcct.ts'
 import type { Demande, Reponse } from './protocole.ts'
 
 let session = new Session()
@@ -18,14 +19,21 @@ function assurerOcct() {
   return occtPret
 }
 
-function repondre(sequence: number, maille: Maillage) {
+function repondre(sequence: number, maille: Maillage & { aretes?: AreteKernel[] }) {
   const positions = new Float64Array(maille.positions)
   const normales = new Float64Array(maille.normales ?? [])
   const indices = new Uint32Array(maille.indices)
   const faces = maille.faces ? new Uint32Array(maille.faces) : null
   const transfert: Transferable[] = [positions.buffer, normales.buffer, indices.buffer]
   if (faces) transfert.push(faces.buffer)
-  const reponse: Reponse = { sequence, positions, normales, indices, faces }
+  const reponse: Reponse = {
+    sequence,
+    positions,
+    normales,
+    indices,
+    faces,
+    aretes: maille.aretes ?? [],
+  }
   postMessage(reponse, transfert)
 }
 

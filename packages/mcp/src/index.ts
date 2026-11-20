@@ -30,7 +30,7 @@ const serveur = new McpServer({ name: 'opencad', version: '0.0.1' })
 serveur.registerTool(
   'commande',
   {
-    description: 'Exécute une ligne du langage OpenCad (piece, esquisse, cote, extrude, enleve, revolution, pas, pointe).',
+    description: 'Exécute une ligne du langage OpenCad (piece, esquisse, cote, extrude, enleve, revolution, pas, pointe, regle).',
     inputSchema: { ligne: z.string() },
   },
   async ({ ligne }) => tenter(() => pont.commande(ligne)),

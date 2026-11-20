@@ -24,6 +24,7 @@ Prototype modeleur contraint (sprints 03–36) : langage texte, pipeline histori
 | [feuille-de-route.md](documentation/suivi/feuille-de-route.md) | Cap, phases P0–P4 / O1–O4, garde-fous |
 | [analyse.md](documentation/suivi/analyse.md) | État du dépôt, couches, limites |
 | [direction-modeleur.md](documentation/veille/direction-modeleur.md) | Pivot FreeCAD / Creo web |
+| [pilotage-lignes.md](documentation/veille/pilotage-lignes.md) | Ligne de commande par défaut, MCP, UI cliente ; Whittle pour les comportements |
 | [noyau-occt.md](documentation/veille/noyau-occt.md) | occt-kernel bootstrap du kernel OpenCAD |
 | [occt-kernel.md](documentation/suivi/occt-kernel.md) | Vérification v0.2.0 |
 | [swot.md](documentation/veille/swot.md) | SWOT d’OpenCadEditor |

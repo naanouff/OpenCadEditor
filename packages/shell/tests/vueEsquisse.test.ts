@@ -28,9 +28,9 @@ revolution
     expect(posee?.support).toBe('plan.12h')
     expect(posee?.traits).toEqual([0, 0, 2, 5, 2, 5, 0, 5])
     expect(posee?.cotesLineaires?.map((cote) => cote.texte).sort()).toEqual(['2', '5'])
-    const document = documentCad({ faces: [] }, posee, session.maillage())
-    expect(document.maillage.indices).toEqual([])
-    expect(document.brepWireframe.segmentCount).toBe(0)
+    const solide = session.maillage()
+    const document = documentCad({ faces: [] }, posee, solide)
+    expect(document.maillage.indices).toEqual(solide.indices)
     expect(document.cotes.segmentCount).toBeGreaterThan(0)
     const trait = document.esquisse.position.array
     expect(trait[0]).toBeCloseTo(0)
