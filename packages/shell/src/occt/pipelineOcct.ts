@@ -15,7 +15,15 @@ import { opsElevationCornes } from '@opencad/kernel/elevation'
 import { runBatch, type KernelBatchOp, type OcctKernelModule } from './chargerKernel.ts'
 import { polylinesDepuisEsquisse, type Polyline3 } from './esquissePolylines.ts'
 import { indicesDepuisSelecteurs, parseSelecteursAretes, type AreteKernel } from './aretesOcct.ts'
-import { accrocherSolide, opsCouper, opsExtrude, opsFillet, opsRevolution } from './opsDepuisFonction.ts'
+import {
+  accrocherSolide,
+  decalerPolyline,
+  opsCouper,
+  opsExtrude,
+  opsFillet,
+  opsProfil,
+  opsRevolution,
+} from './opsDepuisFonction.ts'
 import { compilerViaKernel } from './historiqueKernel.ts'
 import { maillageDepuisTessellate } from './maillageDepuisTessellate.ts'
 import {
@@ -42,13 +50,7 @@ function directionDatum(
 /** Décalage monde pour centrer le tube à mi-hauteur de carrure (GCS cercle à u=v=0). */
 function decalerPolylines(polys: Polyline3[], dx: number, dy: number, dz: number): Polyline3[] {
   if (dx === 0 && dy === 0 && dz === 0) return polys
-  return polys.map((poly) => {
-    const out: number[] = []
-    for (let i = 0; i < poly.length; i += 3) {
-      out.push(poly[i]! + dx, poly[i + 1]! + dy, poly[i + 2]! + dz)
-    }
-    return out
-  })
+  return polys.map((poly) => decalerPolyline(poly, dx, dy, dz))
 }
 
 /**
@@ -353,13 +355,13 @@ function compiler(historique: Operation[], pointe: number | null = null): Compil
           }))
           .sort((a, b) => b.r - a.r)
         const exterieur = classes[0]!
-        const feat = opsExtrude(exterieur.poly, dir, String(uid++))
+        const feat = opsProfil(exterieur.poly, dir, String(uid++))
         ops.push(...feat.ops)
         const acc = accrocherSolide(solidAs, feat.as, String(uid++))
         ops.push(...acc.ops)
         solidAs = acc.solidAs
         for (const interieur of classes.slice(1)) {
-          const outil = opsExtrude(
+          const outil = opsProfil(
             interieur.poly,
             [dir[0], dir[1] + Math.sign(dir[1] || 1) * 0.4, dir[2]],
             String(uid++),
@@ -371,7 +373,7 @@ function compiler(historique: Operation[], pointe: number | null = null): Compil
         }
       } else {
         for (const poly of polys) {
-          const feat = opsExtrude(poly, dir, String(uid++))
+          const feat = opsProfil(poly, dir, String(uid++))
           ops.push(...feat.ops)
           const acc = accrocherSolide(solidAs, feat.as, String(uid++))
           ops.push(...acc.ops)
@@ -439,7 +441,7 @@ function compiler(historique: Operation[], pointe: number | null = null): Compil
           polys = decalerPolylines(polys, dx, dy, dz)
         }
         for (const poly of polys) {
-          const feat = opsExtrude(poly, dir, String(uid++))
+          const feat = opsProfil(poly, dir, String(uid++))
           ops.push(...feat.ops)
           const cut = opsCouper(solidAs, feat.as, String(uid++))
           ops.push(...cut.ops)

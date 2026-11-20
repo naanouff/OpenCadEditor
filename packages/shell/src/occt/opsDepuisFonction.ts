@@ -4,6 +4,9 @@
  */
 export {
   opsExtrude,
+  opsProfil,
+  marquerCercle,
+  decalerPolyline,
   opsRevolution,
   opsCouper,
   opsFillet,
