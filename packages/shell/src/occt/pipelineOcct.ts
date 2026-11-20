@@ -113,16 +113,27 @@ function rayonPolyline(poly: number[]): number {
   return max
 }
 
-function tesselle(occt: OcctKernelModule, ops: KernelBatchOp[], solidAs: string): Maillage {
+function aretesDepuisAlias(payload: unknown): AreteKernel[] {
+  const body = payload as { ok?: boolean; edges?: AreteKernel[] } | undefined
+  if (!body || body.ok === false || !Array.isArray(body.edges)) return []
+  return body.edges
+}
+
+function tesselle(
+  occt: OcctKernelModule,
+  ops: KernelBatchOp[],
+  solidAs: string,
+): { maille: Maillage; aretes: AreteKernel[] } {
   const out = runBatch(occt, [
     { op: 'arena_clear' },
     ...ops,
     { op: 'tessellate', args: [{ handle: solidAs }, 'normal'], as: 'mesh' },
+    { op: 'list_edges', args: [{ handle: solidAs }], as: 'edges' },
   ])
   if (!out.ok) throw new Error(out.error ?? 'pipeline occt failed')
   const mesh = out.aliases?.mesh as { ok?: boolean; error?: string; meshes?: unknown[] }
   if (mesh && mesh.ok === false) throw new Error(mesh.error ?? 'tessellate failed')
-  return maillageDepuisTessellate(mesh)
+  return { maille: maillageDepuisTessellate(mesh), aretes: aretesDepuisAlias(out.aliases?.edges) }
 }
 
 function filetHote(parametres: Map<string, string>, profilScript: string): MaillageOmbre {
@@ -482,10 +493,12 @@ function appliquerFillets(
  * Historique Session → wires → runBatch OCCT → maillage.
  * `pas` : OCCT ne porte que tête + Pozi ; le filet hôte fournit le fût (pas d'hélice kernel v1).
  */
-export function maillagePipelineOcct(occt: OcctKernelModule, session: Session): MaillageOmbre {
+export type MaillagePipeline = MaillageOmbre & { aretes: AreteKernel[] }
+
+export function maillagePipelineOcct(occt: OcctKernelModule, session: Session): MaillagePipeline {
   const compilation = compiler(session.historique(), session.pointeCourante())
   const apresFillet = appliquerFillets(occt, compilation)
-  const occtPart = tesselle(occt, apresFillet.ops, apresFillet.solidAs)
+  const { maille: occtPart, aretes } = tesselle(occt, apresFillet.ops, apresFillet.solidAs)
   if (!compilation.pas) {
     if (!occtPart.normales) throw new Error('maillage sans normales')
     return {
@@ -493,6 +506,7 @@ export function maillagePipelineOcct(occt: OcctKernelModule, session: Session): 
       normales: occtPart.normales,
       indices: occtPart.indices,
       faces: occtPart.faces,
+      aretes,
     }
   }
   if (!compilation.entitesPas) throw new Error('pas sans profil de corps')
@@ -504,6 +518,7 @@ export function maillagePipelineOcct(occt: OcctKernelModule, session: Session): 
     normales: maille.normales,
     indices: maille.indices,
     faces: maille.faces,
+    aretes: [],
   }
 }
 

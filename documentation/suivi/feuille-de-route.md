@@ -63,7 +63,7 @@ flowchart LR
 | **O4** SDK `.cadom` | OpenCAD | O4-1…3 | fait | MVP A : DAG, overrides, late-load, lint |
 | **P3** Assemblage | OpenCadEditor | 44–47 | fait (graphe) | open/save/plan/fetch `.cadom` |
 | **P3b** Pièces boîte | OpenCadEditor | 48–55 | fait | Pièces + Complete + octets/viewport `.cadomesh` |
-| **P4** Ergonomie | OpenCadEditor | 56–… | en cours (58) | Face + cercle + rectangle souris ; suite naming / ruban |
+| **P4** Ergonomie | OpenCadEditor | 56–… | en cours (60) | Face, cercle, rectangle, naming ; ruban ; suite hors P4 |
 
 ### P0 — Recalage (sprint 37)
 
@@ -94,7 +94,7 @@ Sprint 48–55 : pièces + Design/Complete + octets/viewport `.cadomesh` ([assem
 
 ### P4 — Ergonomie (dès sprint 56)
 
-Sprint 56–58 : clic → `esquisse face.*` / cercle / rectangle ([selection-face-souris.md](../veille/selection-face-souris.md), [sprint-58](../sprints/sprint-58-esquisse-rectangle-souris.md)). Suite : naming arêtes, ruban. Hors moyen terme : maillons, Electron, mates. W1 helix en parallèle occt-wasm.
+Sprints 56–58 : clic → `esquisse face.*` / cercle / rectangle ([selection-face-souris.md](../veille/selection-face-souris.md), [sprint-58](../sprints/sprint-58-esquisse-rectangle-souris.md)). Sprint 59 : noms `arete.*` et clic sur un milieu ([naming-aretes.md](../veille/naming-aretes.md)). Sprint 60 : ruban Esquisse / Fonctions ([ruban.md](../veille/ruban.md)). Hors moyen terme : maillons, Electron, mates. W1 helix en parallèle occt-wasm.
 
 ## Garde-fous
 

@@ -21,11 +21,13 @@ import {
   rayonVersMm,
   uvDepuisMonde,
 } from './esquissePointeur.ts'
+import { areteSousPointeur, SEUIL_ARETE_MM } from './selectionArete.ts'
 import {
   faceSousPointeur,
   facesDepuisMaillage,
   rayonOrthoDepuisNdc,
 } from './selectionFace.ts'
+import { RubanVue } from './RubanVue.tsx'
 import { storeShell } from './storeShell.ts'
 import { TerminalMonaco } from './TerminalMonaco.tsx'
 import { afficher, cadreCameraPick } from './viewportW3dts.ts'
@@ -159,6 +161,15 @@ function ViewportVue(_props: IDockviewPanelProps) {
       }
       let esquisse = hote.session.esquisseCourante()
       if (!esquisse) {
+        const arete = areteSousPointeur(
+          storeShell.aretesNommees(),
+          rayonVersMm(rayonM),
+          SEUIL_ARETE_MM,
+        )
+        if (arete) {
+          storeShell.choisirArete(arete)
+          return
+        }
         const face = faceSousPointeur(
           facesVersMetres(facesDepuisMaillage(maille.positions)),
           rayonM,
@@ -197,6 +208,10 @@ function ViewportVue(_props: IDockviewPanelProps) {
       {storeShell.construction() ? (
         <p className="pointer-events-none absolute left-3 top-3 m-0 font-ui text-[13px] text-[var(--color-text-primary)]">
           Construction…
+        </p>
+      ) : storeShell.areteChoisie() ? (
+        <p className="pointer-events-none absolute left-3 top-3 m-0 font-ui text-[13px] text-[var(--color-text-primary)]">
+          {storeShell.areteChoisie()}
         </p>
       ) : null}
     </div>
@@ -277,6 +292,8 @@ export function App() {
 
   return (
     <div className="shell-root">
+      <RubanVue />
+      <div className="shell-dock">
       <EditorDock
         resolvedTheme={resolvedTheme}
         components={components}
@@ -284,6 +301,7 @@ export function App() {
         requiredPanelIds={REQUIRED}
         buildDefaultLayout={buildDefaultLayout}
       />
+      </div>
     </div>
   )
 }

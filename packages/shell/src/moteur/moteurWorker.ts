@@ -1,4 +1,5 @@
 import type { Maillage } from '@opencad/api-parametrique'
+import type { AreteKernel } from '../occt/aretesOcct.ts'
 import type { Moteur } from './moteur.ts'
 import type { Demande, Reponse } from './protocole.ts'
 
@@ -7,10 +8,11 @@ export function moteurWorker(recevoir: (maillage: Maillage, sequence: number) =>
   const worker = new Worker(new URL('./geometrieWorker.ts', import.meta.url), { type: 'module' })
   worker.onmessage = (event: MessageEvent<Reponse>) => {
     const { sequence, positions, normales, indices, faces } = event.data
-    const maille: Maillage = {
+    const maille: Maillage & { aretes?: AreteKernel[] } = {
       positions: Array.from(positions),
       normales: Array.from(normales),
       indices: Array.from(indices),
+      aretes: event.data.aretes ?? [],
     }
     if (faces) maille.faces = Array.from(faces)
     recevoir(maille, sequence)

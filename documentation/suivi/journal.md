@@ -600,3 +600,11 @@ Kernel : polygone régulier (entreplat) ; bump `vendor/opencad`.
 
 Kernel + pont shell : extrude / enlever sur `face.dessus` / `face.dessous`.
 
+## 2026-11-20 — Sprint 59 : nommage des arêtes
+
+[naming-aretes.md](../veille/naming-aretes.md) et [sprint-59-naming-aretes.md](../sprints/sprint-59-naming-aretes.md). `nommerAretes` reprend les classes du `fillet`. `list_edges` suit le maillage OCCT. Un clic à moins de 3 mm d’un milieu choisit le nom et l’affiche ; le centre de la face ouvre toujours l’esquisse. Le filet `pas` ne porte pas ces noms. Suite P4 : ruban.
+
+## 2026-11-20 — Sprint 60 : ruban
+
+[ruban.md](../veille/ruban.md) et [sprint-60-ruban.md](../sprints/sprint-60-ruban.md). Deux onglets au-dessus du dock. Esquisse : plan dessus, rectangle 10×20 ou cercle Ø 10. Fonctions : extrude 8, enlève 2, congé 1 sur l’arête choisie. Rien sur un assemblage. L’onglet Assemblage, la révolution et le panneau de la fonction restent après.
+

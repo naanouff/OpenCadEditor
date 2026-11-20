@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { Session } from '@opencad/api-parametrique'
 import { ecrire, lire } from '@opencad/format-opencad'
+import { nommerAretes, bornesYMilieux } from '../src/occt/aretesOcct.ts'
 import { chargerKernel } from '../src/occt/chargerKernel.ts'
 import { maillagePipelineOcct } from '../src/occt/pipelineOcct.ts'
 import { SCRIPT_VIS } from '../src/scriptVis.ts'
@@ -33,6 +34,9 @@ extrude 8
     const { yMax } = stats(maille)
     expect(yMax).toBeGreaterThan(7)
     expect(yMax).toBeLessThan(9)
+    const bornes = bornesYMilieux(maille.aretes)
+    expect(bornes).not.toBeNull()
+    expect(nommerAretes(maille.aretes, bornes!.yMin, bornes!.yMax).map((a) => a.id)).toContain('arete.haut')
   }, 120_000)
 
   it('reconstruit la vis via le pipeline (hybride pas)', async () => {

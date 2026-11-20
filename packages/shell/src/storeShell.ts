@@ -1,4 +1,5 @@
-import type { MaillageOmbre } from '@opencad/api-parametrique'
+import type { Maillage, MaillageOmbre } from '@opencad/api-parametrique'
+import { bornesYMilieux, nommerAretes, type AreteKernel, type AreteNommee } from './occt/aretesOcct.ts'
 import {
   CadomDocument,
   decode,
@@ -36,7 +37,20 @@ let vueEsquisse: number | null = null
 let attendue = 0
 let construction = false
 let maillageAffiche: MaillageOmbre | null = null
+let aretesNommees: AreteNommee[] = []
+let areteChoisie: string | null = null
 let assemblage: CadomDocument | null = null
+
+function retenirAretes(aretes: AreteKernel[] | undefined) {
+  const bornes = bornesYMilieux(aretes ?? [])
+  aretesNommees = bornes ? nommerAretes(aretes ?? [], bornes.yMin, bornes.yMax) : []
+  if (areteChoisie && !aretesNommees.some((a) => a.id === areteChoisie)) areteChoisie = null
+}
+
+function oublierAretes() {
+  aretesNommees = []
+  areteChoisie = null
+}
 
 export type EtatAsset = 'en_attente' | 'ok' | 'erreur'
 export type StatutAsset = {
@@ -56,6 +70,7 @@ const moteur = navigateur
         indices: maillage.indices,
         faces: maillage.faces,
       }
+      retenirAretes((maillage as Maillage & { aretes?: AreteKernel[] }).aretes)
       construction = false
       revision += 1
       prevenir()
@@ -106,10 +121,12 @@ async function reconstruireMaillageAssemblage() {
     maille ??= await maillageDepuisAssemblage(doc)
     if (generation !== generationAssemblage || assemblage !== doc) return
     maillageAffiche = maille
+    oublierAretes()
   } catch (erreur) {
     if (generation !== generationAssemblage) return
     console.error(erreur instanceof Error ? erreur.message : String(erreur))
     maillageAffiche = null
+    oublierAretes()
   } finally {
     if (generation === generationAssemblage) {
       construction = false
@@ -132,6 +149,7 @@ function chargerAssemblage(octets: Uint8Array, reconstruire = true) {
   assemblage = CadomDocument.fromLogical(logical)
   reinitialiserStatuts(planLateLoad(assemblage))
   maillageAffiche = null
+  oublierAretes()
   vueEsquisse = null
   revision += 1
   prevenir()
@@ -144,6 +162,15 @@ export const storeShell = {
   construction: () => construction,
   utiliseMoteur: () => moteur !== null,
   maillageAffiche: () => maillageAffiche,
+  aretesNommees: () => aretesNommees,
+  areteChoisie: () => areteChoisie,
+  choisirArete(nom: string) {
+    if (!aretesNommees.some((a) => a.id === nom)) return false
+    areteChoisie = nom
+    revision += 1
+    prevenir()
+    return true
+  },
   assemblage: () => assemblage,
   /** Graph-first asset fetch plan ; null when no assembly is loaded. */
   planChargement: (): LateLoadPlan | null => (assemblage ? planLateLoad(assemblage) : null),
@@ -168,6 +195,7 @@ export const storeShell = {
   },
   ligne(texte: string) {
     vueEsquisse = null
+    areteChoisie = null
     hote.ligne(texte)
     if (texte.trim()) envoyer((sequence) => moteur?.ligne(texte, sequence))
     revision += 1
@@ -218,6 +246,7 @@ export const storeShell = {
   },
   executer(script: string) {
     vueEsquisse = null
+    areteChoisie = null
     hote.executer(script)
     envoyer((sequence) => moteur?.executer(script, sequence))
     revision += 1
@@ -268,6 +297,7 @@ export const storeShell = {
     hote.viderJournal()
     if (script.trim()) hote.executer(script)
     maillageAffiche = null
+    oublierAretes()
     envoyer((sequence) => moteur?.remplacer(script, sequence))
     revision += 1
     prevenir()
@@ -304,6 +334,7 @@ export const storeShell = {
       for (const index of lecture.eteins) suivant.session.activer(index, false)
       vueEsquisse = null
       maillageAffiche = null
+      oublierAretes()
       assemblage = null
       statutsAssets = new Map()
       hote = suivant
