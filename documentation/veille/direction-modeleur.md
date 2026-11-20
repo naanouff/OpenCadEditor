@@ -76,3 +76,7 @@ Sans GCS + features génériques → OCCT, le dépôt reste un **générateur pa
 | Prêt pour FreeCAD / Creo ? | **Non** : manque GCS, features génériques, topo. |
 | Risque principal ? | Continuer les **compilateurs de pièce** au-dessus d’OCCT. |
 | Prochain geste ? | [feuille-de-route.md](../suivi/feuille-de-route.md) : P0 recalage (sprint 37), puis P1 barrette/tube + retrait provisoire ; OpenCAD O1–O2 en parallèle. |
+
+## Suite (2026-11-20)
+
+Le pilotage est figé dans [pilotage-lignes.md](pilotage-lignes.md) : la ligne de `Session` reste l’interface, le MCP l’exécute, l’UI future ne fait que l’émettre. Whittle indique les comportements. Cette note-ci ne change pas de verdict sur le noyau et les formats.

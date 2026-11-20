@@ -4,7 +4,7 @@ Sprint : [sprint-34-mcp-geometrie.md](../sprints/sprint-34-mcp-geometrie.md). Le
 
 ## But
 
-Un agent pilote la création par les lignes déjà lues par `Session` : `piece`, `param`, `esquisse`, `cercle`, `cote`, `extrude`, `enleve`, `revolution`, `pas`, `pointe`. Le même flux met à jour le viewport quand l’éditeur est ouvert.
+Un agent pilote la création par les lignes déjà lues par `Session` : `piece`, `param`, `esquisse`, `cercle`, `cote`, `extrude`, `enleve`, `revolution`, `pas`, `pointe`. Le même flux met à jour le viewport quand l’éditeur est ouvert. Ce palier reste le pilotage par défaut ([pilotage-lignes.md](pilotage-lignes.md)) : l’UI future émet ces lignes, elle n’ajoute pas un outil par verbe.
 
 `Session.lire` reste l’unique parseur. Un verbe nouveau est une ligne de plus, pas un outil de plus.
 

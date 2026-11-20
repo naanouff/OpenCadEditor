@@ -12,6 +12,7 @@ Suivi du projet et notes de travail. Ce dossier n’appartient pas au moteur : l
 | [veille/recalage-cap.md](veille/recalage-cap.md) | Veille P0 : test, CI, doc, hygiène |
 | [sprints/sprint-37-recalage.md](sprints/sprint-37-recalage.md) | Sprint P0 : suite verte + CI tests |
 | [suivi/journal.md](suivi/journal.md) | Décisions datées et état des choix encore ouverts |
+| [veille/pilotage-lignes.md](veille/pilotage-lignes.md) | Ligne de `Session` = interface par défaut ; UI cliente ; Whittle pour les comportements |
 | [developpement.md](developpement.md) | Règle de base : TDD |
 | [veille/](veille/) | Veille fonctionnelle avant développement du modeleur |
 | [maquette/plan-layout.md](maquette/plan-layout.md) | Layout visé de l’éditeur |

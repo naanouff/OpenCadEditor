@@ -50,6 +50,8 @@ Domaines : `parametres`, `esquisse` (dont polygones, GCS), `solide`, `revolution
 
 [App.tsx](../../packages/shell/src/App.tsx) : viewport, Construction (arbre + pointe), Paramètres, Document (ouvrir `.cadompart` / `.cadom`, enregistrer selon le mode), Terminal Monaco, Debug (Build carrure / lunette / fond / verre / couronne / vis / boîte ; Load boîte .cadom). MCP peut piloter la session et, si le shell est ouvert, le viewport.
 
+Décision du 2026-11-20 ([pilotage-lignes.md](../veille/pilotage-lignes.md)) : le terminal et le MCP sont l’interface par défaut. Le ruban et la souris émettent les mêmes lignes. L’écran ne devient pas un second modèle.
+
 TDD : [developpement.md](../developpement.md). Veille avant chaque sprint.
 
 ## Ce qui manque pour le produit annoncé
@@ -58,13 +60,14 @@ TDD : [developpement.md](../developpement.md). Veille avant chaque sprint.
 - **P1** — barrette / tube OCCT, fillet, retrait `noyauProvisoire`, `polygone n`.
 - **OpenCAD** — dialecte expressions (O1), paquet kernel extrait (O2), writers `.cadomesh` / `.cadombrep` (O3), SDK `.cadom` (O4).
 - **P3** — assemblage multi-pièces Milgauss.
-- **P4** — esquisse souris, sélection faces, ruban. Puis Electron, mates, maillons.
+- **P4** — esquisse souris, sélection faces, ruban, comme clients des lignes. Puis Electron, mates, maillons.
 
 ## Lecture utile
 
 - [feuille-de-route.md](feuille-de-route.md) — phases et garde-fous
 - [journal.md](journal.md) — décisions datées
 - [direction-modeleur.md](../veille/direction-modeleur.md) — pivot
+- [pilotage-lignes.md](../veille/pilotage-lignes.md) — ligne par défaut, UI cliente, emprunt fonctionnel à Whittle
 - [recalage-cap.md](../veille/recalage-cap.md) — P0
 - [sprint-37-recalage.md](../sprints/sprint-37-recalage.md) — prochain code
 - [genericite.md](../shell/genericite.md) — où le compilateur de pièce quittait le socle

@@ -1,3 +1,5 @@
+import { indexesFonctions, type Operation } from '@opencad/api-parametrique'
+
 /**
  * P4 / sprint 60 — ruban. Les boutons émettent les lignes du terminal.
  * Cotes de départ : rectangle 10×20, cercle Ø 10, extrusion 8, enlèvement 2, congé 1.
@@ -53,4 +55,19 @@ function boutonsFonctions(etat: EtatRuban): BoutonRuban[] {
     return [{ id: 'fillet', libelle: 'Congé', lignes: [`fillet 1 ${etat.arete}`] }]
   }
   return []
+}
+
+/** Dernière fonction qui porte une expression (extrude, enlève, congé, pas), avec son rang 1-based. */
+export function reglageFonction(historique: Operation[]): { rang: number; expression: string } | null {
+  const indexes = indexesFonctions(historique)
+  for (let rang = indexes.length; rang >= 1; rang--) {
+    const expression = historique[indexes[rang - 1]!]!.arguments.expression
+    if (expression) return { rang, expression }
+  }
+  return null
+}
+
+/** Ligne qui règle la fonction de ce rang. */
+export function ligneReglage(rang: number, expression: string) {
+  return `regle ${rang} ${expression.trim()}`
 }

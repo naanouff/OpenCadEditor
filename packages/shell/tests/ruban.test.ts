@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { Session } from '@opencad/api-parametrique'
-import { boutonsRuban } from '../src/ruban.ts'
+import { boutonsRuban, ligneReglage, reglageFonction } from '../src/ruban.ts'
 
 const vide = {
   piece: true,
@@ -58,5 +58,23 @@ describe('ruban', () => {
   it('ne propose rien sur un assemblage', () => {
     expect(boutonsRuban({ ...vide, onglet: 'esquisse', assemblage: true })).toEqual([])
     expect(boutonsRuban({ ...vide, onglet: 'fonctions', arete: 'arete.bas', assemblage: true })).toEqual([])
+  })
+
+  it('retient l’expression de la dernière extrusion', () => {
+    const session = new Session({ geometrie: false })
+    session.executer(`
+piece boite
+esquisse plan.dessus
+rectangle
+cote largeur 10
+cote longueur 20
+cote ecart 0
+extrude 8
+`)
+    const reglage = reglageFonction(session.historique())
+    expect(reglage).toEqual({ rang: 1, expression: '8' })
+    session.commande(ligneReglage(reglage!.rang, ' 12 '))
+    expect(reglageFonction(session.historique())).toEqual({ rang: 1, expression: '12' })
+    expect(session.historique().filter((op) => op.type === 'extrude')).toHaveLength(1)
   })
 })
