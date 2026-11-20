@@ -17,7 +17,10 @@ describe('assemblage maillage viewport', () => {
         './couronne.cadompart',
         './fond.cadompart',
         './lunette.cadompart',
+        './plateau.cadompart',
+        './poignee.cadompart',
         './verre.cadompart',
+        './vis.cadompart',
       ].sort(),
     )
   })

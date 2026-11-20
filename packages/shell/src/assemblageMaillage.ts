@@ -10,15 +10,21 @@ import { SCRIPT_CARRURE } from './scriptCarrure.ts'
 import { SCRIPT_COURONNE } from './scriptCouronne.ts'
 import { SCRIPT_FOND } from './scriptFond.ts'
 import { SCRIPT_LUNETTE } from './scriptLunette.ts'
+import { SCRIPT_PLATEAU } from './scriptPlateau.ts'
+import { SCRIPT_POIGNEE } from './scriptPoignee.ts'
 import { SCRIPT_VERRE } from './scriptVerre.ts'
+import { SCRIPT_VIS } from './scriptVis.ts'
 
-/** URI → script known to the Debug / Milgauss boîte graph. */
+/** URI → script known to the Debug graphs (boîte Milgauss, plateau). */
 export const SCRIPTS_ASSEMBLAGE: Record<string, string> = {
   './carrure.cadompart': SCRIPT_CARRURE,
   './lunette.cadompart': SCRIPT_LUNETTE,
   './verre.cadompart': SCRIPT_VERRE,
   './fond.cadompart': SCRIPT_FOND,
   './couronne.cadompart': SCRIPT_COURONNE,
+  './plateau.cadompart': SCRIPT_PLATEAU,
+  './poignee.cadompart': SCRIPT_POIGNEE,
+  './vis.cadompart': SCRIPT_VIS,
 }
 
 /** Apply column-major mat4 to positions ; rotate normals. */

@@ -10,6 +10,10 @@ export const couleursTopo = {
   fil: [0.12, 0.13, 0.14, 1] as Rgba,
   survol: [0.2, 0.55, 0.95, 1] as Rgba,
   selection: [0.93, 0.42, 0.08, 1] as Rgba,
+  plan: [0.45, 0.52, 0.58, 1] as Rgba,
+  axeX: [0.75, 0.22, 0.18, 1] as Rgba,
+  axeY: [0.2, 0.58, 0.28, 1] as Rgba,
+  axeZ: [0.22, 0.38, 0.75, 1] as Rgba,
 }
 
 /** Demi-largeur des rubans (mètres). */
@@ -28,6 +32,8 @@ export type CalqueTopo = {
   selectionFace: number | null
   survolArete: number[]
   selectionArete: number[]
+  datumSurvol: string | null
+  datumChoisi: string | null
 }
 
 export const calqueVide: CalqueTopo = {
@@ -35,4 +41,6 @@ export const calqueVide: CalqueTopo = {
   selectionFace: null,
   survolArete: [],
   selectionArete: [],
+  datumSurvol: null,
+  datumChoisi: null,
 }

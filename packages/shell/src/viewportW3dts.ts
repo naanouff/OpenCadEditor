@@ -1,5 +1,6 @@
 import type { EsquissePosee, Frontiere, MaillageOmbre } from '@opencad/api-parametrique'
 import { calqueVide, couleursTopo, epaisseurTopo, type CalqueTopo, type Rgba } from './apparenceCad.ts'
+import { contourPlan, DEMI_DATUM_MM, traitAxe, type AxeId } from './selectionDatum.ts'
 import { documentCad } from './documentCad.ts'
 import { coteSegment, poseGlyphe, repere, repereSurface, vueDuPlan } from './dessin.ts'
 import { remplacementEsquisse } from './entree.ts'
@@ -169,6 +170,7 @@ class ProjetAnneau extends LitAbstractProject {
     poserFil(racine, world, engine, logger, document.brepWireframe.position.array, couleursTopo.fil, 'solide', epaisseurTopo.fil)
     poserFil(racine, world, engine, logger, calque.survolArete, couleursTopo.survol, 'survol-arete', epaisseurTopo.survol)
     poserFil(racine, world, engine, logger, calque.selectionArete, couleursTopo.selection, 'selection-arete', epaisseurTopo.selection)
+    if (!esquisse) poserDatums(racine, world, engine, logger, calque.datumSurvol, calque.datumChoisi)
     poserFil(racine, world, engine, logger, document.grille.position.array, [0.8, 0.81, 0.82, 1], 'grille')
     poserFil(racine, world, engine, logger, document.esquisse.position.array, [0.15, 0.45, 0.92, 1], 'esquisse')
     poserFil(racine, world, engine, logger, document.cotes.position.array, [0.92, 0.55, 0.12, 1], 'cotes')
@@ -286,6 +288,47 @@ function poserMaillage(
     })
     engine.resourceManager.uploadMaterial(matiere)
     parent.add(new SceneNode(`solide-${groupe}`, world, mesh, matiere))
+  }
+}
+
+const METRE = 0.001
+
+function enMetres(mm: number[]) {
+  return mm.map((valeur) => valeur * METRE)
+}
+
+function couleurDatum(id: string, survol: string | null, choisi: string | null): Rgba {
+  if (id === choisi) return couleursTopo.selection
+  if (id === survol) return couleursTopo.survol
+  if (id === 'axe.x') return couleursTopo.axeX
+  if (id === 'axe.y') return couleursTopo.axeY
+  if (id === 'axe.z') return couleursTopo.axeZ
+  return couleursTopo.plan
+}
+
+function poserDatums(
+  parent: SceneNode,
+  world: ProjectLoadParams['world'],
+  engine: Engine,
+  logger: ProjectLoadParams['logger'],
+  survol: string | null,
+  choisi: string | null,
+) {
+  for (const id of ['plan.dessus', 'plan.12h', 'plan.3h']) {
+    poserFil(parent, world, engine, logger, enMetres(contourPlan(id, DEMI_DATUM_MM)), couleurDatum(id, survol, choisi), id, epaisseurTopo.fil)
+  }
+  for (const id of ['axe.x', 'axe.y', 'axe.z'] as AxeId[]) {
+    const actif = id === survol || id === choisi
+    poserFil(
+      parent,
+      world,
+      engine,
+      logger,
+      enMetres(traitAxe(id, DEMI_DATUM_MM)),
+      couleurDatum(id, survol, choisi),
+      id,
+      actif ? epaisseurTopo.selection : epaisseurTopo.survol,
+    )
   }
 }
 

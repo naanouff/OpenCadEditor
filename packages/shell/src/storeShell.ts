@@ -43,8 +43,15 @@ let areteChoisie: string | null = null
 let faceChoisie: { id: number; nom: string } | null = null
 /** Arête BRep sélectionnée (index dans `aretesBrepGroupees`). */
 let segmentChoisi: number | null = null
-/** Survol courant (face ou segment), sans muter le modèle. */
-let survol: { sorte: 'face'; id: number; nom: string } | { sorte: 'arete'; id: number } | null = null
+/** Survol courant, sans muter le modèle. */
+let survol:
+  | { sorte: 'face'; id: number; nom: string }
+  | { sorte: 'arete'; id: number }
+  | { sorte: 'plan'; id: string }
+  | { sorte: 'axe'; id: string }
+  | null = null
+/** Plan ou axe d’origine sélectionné. */
+let datumChoisi: string | null = null
 let assemblage: CadomDocument | null = null
 
 function retenirAretes(aretes: AreteKernel[] | undefined) {
@@ -61,6 +68,7 @@ function oublierAretes() {
 function oublierFace() {
   faceChoisie = null
   segmentChoisi = null
+  datumChoisi = null
   survol = null
 }
 
@@ -195,14 +203,17 @@ export const storeShell = {
     areteChoisie = nom
     faceChoisie = null
     segmentChoisi = null
+    datumChoisi = null
     revision += 1
     prevenir()
     return true
   },
+  datumChoisi: () => datumChoisi,
   choisirFace(id: number, nom: string) {
     faceChoisie = { id, nom }
     areteChoisie = null
     segmentChoisi = null
+    datumChoisi = null
     revision += 1
     prevenir()
   },
@@ -210,7 +221,16 @@ export const storeShell = {
   choisirAreteBrep(id: number, classe: string | null) {
     segmentChoisi = id
     faceChoisie = null
+    datumChoisi = null
     areteChoisie = classe && aretesNommees.some((a) => a.id === classe) ? classe : null
+    revision += 1
+    prevenir()
+  },
+  choisirDatum(id: string) {
+    datumChoisi = id
+    faceChoisie = null
+    segmentChoisi = null
+    areteChoisie = null
     revision += 1
     prevenir()
   },

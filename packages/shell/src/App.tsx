@@ -31,6 +31,7 @@ import {
   SEUIL_SEGMENT_MM,
 } from './selectionSegment.ts'
 import { topologieAffichee } from './topologieAffichee.ts'
+import { axeSousPointeur, planSousPointeur } from './selectionDatum.ts'
 import { RubanVue } from './RubanVue.tsx'
 import { storeShell } from './storeShell.ts'
 import { TerminalMonaco } from './TerminalMonaco.tsx'
@@ -57,9 +58,10 @@ function libelleTopo(maille: Maillage) {
   const survol = storeShell.survol()
   if (survol?.sorte === 'face') return survol.nom
   if (survol?.sorte === 'arete') return nomArete(maille, survol.id)
+  if (survol?.sorte === 'plan' || survol?.sorte === 'axe') return survol.id
   const segment = storeShell.segmentChoisi()
   if (segment !== null) return nomArete(maille, segment)
-  return storeShell.faceChoisie()?.nom ?? ''
+  return storeShell.datumChoisi() ?? storeShell.faceChoisie()?.nom ?? ''
 }
 
 function versMetres(mm: number[]) {
@@ -78,6 +80,8 @@ function calqueAffiche(maille: Maillage): CalqueTopo {
     selectionFace: storeShell.faceChoisie()?.id ?? null,
     survolArete: survol?.sorte === 'arete' ? trait(survol.id) : [],
     selectionArete: trait(storeShell.segmentChoisi()),
+    datumSurvol: survol?.sorte === 'plan' || survol?.sorte === 'axe' ? survol.id : null,
+    datumChoisi: storeShell.datumChoisi(),
   }
 }
 
@@ -207,9 +211,17 @@ function ViewportVue(_props: IDockviewPanelProps) {
       return
     }
     const hit = carreauSousPointeur(maille, rayon)
-    storeShell.definirSurvol(
-      hit ? { sorte: 'face', id: hit.faceId, nom: nomCarreau(hit.faceId, topo.noms) } : null,
-    )
+    if (hit) {
+      storeShell.definirSurvol({ sorte: 'face', id: hit.faceId, nom: nomCarreau(hit.faceId, topo.noms) })
+      return
+    }
+    const axe = axeSousPointeur(rayon, SEUIL_SEGMENT_MM)
+    if (axe) {
+      storeShell.definirSurvol({ sorte: 'axe', id: axe })
+      return
+    }
+    const plan = planSousPointeur(rayon)
+    storeShell.definirSurvol(plan ? { sorte: 'plan', id: plan } : null)
   }
 
   const onPointerLeave = () => {
@@ -244,7 +256,23 @@ function ViewportVue(_props: IDockviewPanelProps) {
           return
         }
         const hit = carreauSousPointeur(maille, rayon)
-        if (hit) {
+        if (!hit) {
+          const axe = axeSousPointeur(rayon, SEUIL_SEGMENT_MM)
+          const plan = axe ?? planSousPointeur(rayon)
+          if (plan) {
+            const deja = storeShell.datumChoisi()
+            storeShell.choisirDatum(plan)
+            if (deja === plan && plan.startsWith('plan.')) {
+              if (!storeShell.ouvrirEsquisseSurSupport(plan)) return
+              esquisse = hote.session.esquisseCourante()
+              if (!esquisse) return
+            } else return
+          } else {
+            if (!storeShell.ouvrirEsquisseSurSupport('plan.dessus')) return
+            esquisse = hote.session.esquisseCourante()
+            if (!esquisse) return
+          }
+        } else if (hit) {
           const nom = nomCarreau(hit.faceId, topo.noms)
           const deja = storeShell.faceChoisie()
           storeShell.choisirFace(hit.faceId, nom)
@@ -253,10 +281,6 @@ function ViewportVue(_props: IDockviewPanelProps) {
             deja?.id === hit.faceId && (nom === 'face.dessus' || nom === 'face.dessous')
           if (!second) return
           if (!storeShell.ouvrirEsquisseSurSupport(nom)) return
-          esquisse = hote.session.esquisseCourante()
-          if (!esquisse) return
-        } else {
-          if (!storeShell.ouvrirEsquisseSurSupport('plan.dessus')) return
           esquisse = hote.session.esquisseCourante()
           if (!esquisse) return
         }

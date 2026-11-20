@@ -622,5 +622,13 @@ Après P4 (56–61), deux phases : [affichage-topologique.md](../veille/affichag
 
 ## 2026-11-20 — Sprint 62 en cours : carreaux BRep
 
-Pick triangle sur `Maillage.faces[]` (`selectionCarreau`) ; noms `face.<n>` + alias `dessus`/`dessous`. La surbrillance est un second maillage orange (le PBR ignore la couleur de sommet). Premier clic : sélection + HUD ; second clic sur `dessus`/`dessous` : esquisse.
+Pick triangle sur `Maillage.faces[]` (`selectionCarreau`) ; noms `face.<n>` + alias `dessus`/`dessous`. Le carreau choisi prend la couleur du groupe (pas un contour). L’arête BRep s’allume entière. Commit `88c17ca`.
+
+## 2026-11-20 — Datums dans le viewport
+
+Les trois plans d’origine et la triade sont dessinés (carré 80 mm, axes colorés). Survol et clic les sélectionnent ; un second clic sur `plan.*` ouvre l’esquisse.
+
+## 2026-11-20 — Sprint 65 : plateau de service
+
+Cotes figées dans `cotesPlateau.ts`. Graphe Design : 3 assets (plateau, poignée, vis Pozi) et 7 instances — les deux poignées et les quatre vis partagent leur définition. Debug : **Load plateau**. Les perçages sont les poses des vis ; les esquisses ne savent pas décentrer un cercle.
 

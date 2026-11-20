@@ -70,7 +70,7 @@ flowchart LR
 | **P3b** Pièces boîte | OpenCadEditor | 48–55 | fait | Pièces + Complete + octets/viewport `.cadomesh` |
 | **P4** Ergonomie des lignes | OpenCadEditor | 56–61 | fait | Souris, ruban et expression : clients des lignes de `Session` |
 | **P5** Viewport topologique | OpenCadEditor | 62–64 | **en cours (62)** | Carreaux, arêtes, datums sélectionnables dans w3dts |
-| **P6** Plateau service | OpenCadEditor | 65–66 | à venir | Démo OpenCAD : plateau alu + 2 poignées laiton + 4 vis |
+| **P6** Plateau service | OpenCadEditor | 65–66 | en cours (65) | Démo OpenCAD : plateau alu + 2 poignées laiton + 4 vis |
 
 ### P0 — Recalage (sprint 37)
 

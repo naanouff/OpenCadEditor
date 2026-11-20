@@ -34,11 +34,15 @@ flowchart TB
   v4 -. same asset .-> vis
 ```
 
-## Géométrie (à figer au démarrage du sprint 65)
+## Géométrie (figée, sprint 65)
 
-- **Plateau** : plaque rectangulaire ; 4 perçages (2 par extrémité) pour les vis.
-- **Poignée** : barre / arc laiton ; 2 trous alignés sur les perçages.
-- **Vis** : réutiliser / simplifier la vis Pozi du pipeline (pas de nouveau noyau).
+| Pièce | Cotes (mm) |
+|-------|------------|
+| Plateau | 280 × 180 × 8, centré, extrudé +Y |
+| Poignée | barre 100 × 16 × 18, posée sur le plateau à x = ±100 |
+| Vis | `SCRIPT_VIS` (Pozi 6 × 30). Dessous de tête à l’altitude locale 27 ; pointe à y = −1 pour que la tête affleure le dessus de poignée (y = 26). Entraxe 60 le long de X. |
+
+Les esquisses sont centrées à l’origine : le plateau et la poignée ne sont pas percés. Les quatre vis marquent les perçages par leur pose.
 
 Poses = transforms locaux fixes (pattern [`assemblageBoite.ts`](../../packages/shell/src/assemblageBoite.ts)). Pas de mates.
 
