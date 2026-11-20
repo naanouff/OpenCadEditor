@@ -632,3 +632,15 @@ Les trois plans d’origine et la triade sont dessinés (carré 80 mm, axes colo
 
 Cotes figées dans `cotesPlateau.ts`. Graphe Design : 3 assets (plateau, poignée, vis Pozi) et 7 instances — les deux poignées et les quatre vis partagent leur définition. Debug : **Load plateau**. Les perçages sont les poses des vis ; les esquisses ne savent pas décentrer un cercle.
 
+## 2026-11-20 — Rendu des arêtes
+
+Les arêtes sortaient en pointillés. Il n’y avait aucun anticrénelage : `LitAbstractProject` charge le graphe sans le lot MSAA, et le FXAA était remplacé par un blit. `configureRenderGraph` applique maintenant le MSAA 4× sur `02_Opaques`. Les rubans avaient une largeur fixe de 0,08 mm, plus fine qu’un pixel, et étaient à moitié dans la matière. Ils font désormais 1,5 px (survol 3, sélection 3,5), recalculés quand le zoom varie de plus de 4 %. Chaque arête est décalée hors de la matière le long de la bissectrice des normales de ses deux faces. Le fil affiché est celui que le pointeur choisit (`segmentsBrep`). Le canevas suit `devicePixelRatio`, plafonné à 2, par la surcharge `surcharges/WebGPUContext.ts`. Les tampons de traits retirés de la scène sont libérés, alors qu’ils fuyaient à chaque survol.
+
+## 2026-11-20 — Survol et sélection en assemblage
+
+L’assemblage coupait le survol et le clic. Il est maintenant en consultation : faces, arêtes et datums se survolent et se sélectionnent, mais aucun clic n’ouvre d’esquisse. Le seuil de capture des traits vaut 5 px à l’écran, au lieu d’une distance fixe en mm. `executer`, `ligne` et `remplacer` quittent l’assemblage. Avant, il restait actif sous la pièce reconstruite.
+
+## 2026-11-20 — Gels au survol
+
+Sur le plateau, chaque survol gelait l’interface 11 à 16 s. Tout réaffichage repassait par `documentCad`, qui recalculait `aretesBrep`. Cette fonction compare chaque arête isolée à tous les triangles. Elle range maintenant les triangles dans une grille spatiale, et son résultat n’est calculé qu’à la lecture : il ne sert que de secours quand la topologie manque. La conversion du volume en mètres est gardée en cache par maillage. Le viewport sépare une base stable (solide en un nœud par face BRep, fil, grille) et une couche d’éclats (rubans de survol et de sélection, datums). Un survol ne change que le matériau des faces concernées et repose les éclats : aucune tâche ne dépasse plus 50 ms. Le chargement du plateau gèle encore environ 4 s : `maillageDepuisAssemblage` tourne sur le fil principal, surtout dans l’union CSG (`retirerDedans`).
+

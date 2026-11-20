@@ -187,6 +187,17 @@ function chargerAssemblage(octets: Uint8Array, reconstruire = true) {
   if (reconstruire) void reconstruireMaillageAssemblage()
 }
 
+function quitterAssemblage() {
+  if (!assemblage) return
+  assemblage = null
+  statutsAssets = new Map()
+  generationAssemblage += 1
+  construction = false
+  maillageAffiche = null
+  oublierAretes()
+  oublierFace()
+}
+
 export const storeShell = {
   hote: () => hote,
   revision: () => revision,
@@ -270,6 +281,7 @@ export const storeShell = {
   ligne(texte: string) {
     vueEsquisse = null
     areteChoisie = null
+    if (texte.trim()) quitterAssemblage()
     hote.ligne(texte)
     if (texte.trim()) envoyer((sequence) => moteur?.ligne(texte, sequence))
     revision += 1
@@ -322,6 +334,7 @@ export const storeShell = {
     vueEsquisse = null
     areteChoisie = null
     faceChoisie = null
+    quitterAssemblage()
     hote.executer(script)
     envoyer((sequence) => moteur?.executer(script, sequence))
     revision += 1
@@ -368,6 +381,7 @@ export const storeShell = {
   },
   remplacer(script: string) {
     vueEsquisse = null
+    quitterAssemblage()
     hote.session.reinitialiser()
     hote.viderJournal()
     if (script.trim()) hote.executer(script)

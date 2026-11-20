@@ -3,6 +3,8 @@
  * Le moteur n’expose aujourd’hui que `PBRGraph` : le solide reste mat (roughness 1).
  * Un matcap CAO remplacera ce graphe dès qu’il sera disponible dans w3dts.
  */
+import { traitsVides, type Traits } from './traitsArete.ts'
+
 export type Rgba = readonly [number, number, number, number]
 
 export const couleursTopo = {
@@ -16,22 +18,25 @@ export const couleursTopo = {
   axeZ: [0.22, 0.38, 0.75, 1] as Rgba,
 }
 
-/** Demi-largeur des rubans (mètres). */
+/** Largeur des traits en pixels CSS, constante quel que soit le zoom. */
 export const epaisseurTopo = {
-  fil: 0.00008,
-  survol: 0.00016,
-  selection: 0.0002,
+  fil: 1.5,
+  survol: 3,
+  selection: 3.5,
+  datum: 1.25,
 }
 
 /**
  * Faces : index de carreau, teinté dans le solide lui-même.
- * Arêtes : polylignes en mètres, dessinées par la passe de lignes.
+ * Arêtes : segments en mètres et sens de sortie, dessinés par la passe de lignes.
  */
 export type CalqueTopo = {
   survolFace: number | null
   selectionFace: number | null
-  survolArete: number[]
-  selectionArete: number[]
+  /** Fil BRep complet ; vide si le maillage n’a pas de carreaux. */
+  fil: Traits
+  survolArete: Traits
+  selectionArete: Traits
   datumSurvol: string | null
   datumChoisi: string | null
 }
@@ -39,8 +44,9 @@ export type CalqueTopo = {
 export const calqueVide: CalqueTopo = {
   survolFace: null,
   selectionFace: null,
-  survolArete: [],
-  selectionArete: [],
+  fil: traitsVides,
+  survolArete: traitsVides,
+  selectionArete: traitsVides,
   datumSurvol: null,
   datumChoisi: null,
 }

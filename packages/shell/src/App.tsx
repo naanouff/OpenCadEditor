@@ -27,10 +27,10 @@ import { rayonOrthoDepuisNdc } from './selectionFace.ts'
 import {
   areteBrepSousPointeur,
   classeKernelDe,
-  polyligneArete,
   SEUIL_SEGMENT_MM,
 } from './selectionSegment.ts'
 import { topologieAffichee } from './topologieAffichee.ts'
+import { traitsDe, traitsVides } from './traitsArete.ts'
 import { axeSousPointeur, planSousPointeur } from './selectionDatum.ts'
 import { RubanVue } from './RubanVue.tsx'
 import { storeShell } from './storeShell.ts'
@@ -64,21 +64,22 @@ function libelleTopo(maille: Maillage) {
   return storeShell.datumChoisi() ?? storeShell.faceChoisie()?.nom ?? ''
 }
 
-function versMetres(mm: number[]) {
-  return mm.map((valeur) => valeur * 0.001)
-}
+const MM = 0.001
+/** Demi-largeur de capture d’une arête ou d’un axe, en pixels CSS. */
+const SEUIL_TRAIT_PX = 5
 
 function calqueAffiche(maille: Maillage): CalqueTopo {
   const survol = storeShell.survol()
-  const { aretes } = topologieAffichee(maille)
+  const { aretes, fil } = topologieAffichee(maille)
   const trait = (id: number | null) => {
     const arete = id === null ? undefined : aretes[id]
-    return arete ? versMetres(polyligneArete(arete)) : []
+    return arete ? traitsDe([arete], MM) : traitsVides
   }
   return {
     survolFace: survol?.sorte === 'face' ? survol.id : null,
     selectionFace: storeShell.faceChoisie()?.id ?? null,
-    survolArete: survol?.sorte === 'arete' ? trait(survol.id) : [],
+    fil,
+    survolArete: trait(survol?.sorte === 'arete' ? survol.id : null),
     selectionArete: trait(storeShell.segmentChoisi()),
     datumSurvol: survol?.sorte === 'plan' || survol?.sorte === 'axe' ? survol.id : null,
     datumChoisi: storeShell.datumChoisi(),
@@ -164,7 +165,7 @@ function ViewportVue(_props: IDockviewPanelProps) {
       !posee && maille.indices.length > 0 ? { faces: [] } : hote.session.frontiere()
     void afficher(canevas, frontiere, posee, maille, calqueAffiche(maille)).catch(
       (erreur: unknown) => {
-        console.error(erreur instanceof Error ? erreur.message : String(erreur))
+        console.error(erreur instanceof Error ? (erreur.stack ?? erreur.message) : String(erreur))
       },
     )
   }, [hote, revision])
@@ -193,10 +194,19 @@ function ViewportVue(_props: IDockviewPanelProps) {
     )
   }
 
+  /** Seuil de pick d’un trait : quelques pixels à l’écran, jamais moins que la tolérance en mm. */
+  const seuilTrait = () => {
+    const canevas = ref.current
+    const cadre = cadreCameraPick()
+    if (!canevas || !cadre || canevas.clientHeight < 1) return SEUIL_SEGMENT_MM
+    const mmParPixel = (2 * cadre.demiHauteur * 1000) / canevas.clientHeight
+    return Math.max(SEUIL_SEGMENT_MM, SEUIL_TRAIT_PX * mmParPixel)
+  }
+
   const onPointerMove = (e: ReactPointerEvent) => {
     // Bouton enfoncé : la caméra tourne, pas de survol.
     if (e.buttons !== 0) return
-    if (storeShell.assemblage() || hote.session.esquisseCourante()) {
+    if (hote.session.esquisseCourante()) {
       storeShell.definirSurvol(null)
       return
     }
@@ -205,7 +215,8 @@ function ViewportVue(_props: IDockviewPanelProps) {
     const maille = mailleAffichee()
     const topo = topologieAffichee(maille)
     const rayon = rayonVersMm(rayonM)
-    const arete = areteBrepSousPointeur(topo.aretes, rayon, SEUIL_SEGMENT_MM)
+    const seuil = seuilTrait()
+    const arete = areteBrepSousPointeur(topo.aretes, rayon, seuil)
     if (arete) {
       storeShell.definirSurvol({ sorte: 'arete', id: arete.id })
       return
@@ -215,7 +226,7 @@ function ViewportVue(_props: IDockviewPanelProps) {
       storeShell.definirSurvol({ sorte: 'face', id: hit.faceId, nom: nomCarreau(hit.faceId, topo.noms) })
       return
     }
-    const axe = axeSousPointeur(rayon, SEUIL_SEGMENT_MM)
+    const axe = axeSousPointeur(rayon, seuil)
     if (axe) {
       storeShell.definirSurvol({ sorte: 'axe', id: axe })
       return
@@ -237,7 +248,8 @@ function ViewportVue(_props: IDockviewPanelProps) {
     pointe.current = null
     if (e.button !== 0 || !debut) return
     if (Math.hypot(e.clientX - debut.x, e.clientY - debut.y) > 4) return
-    if (storeShell.assemblage()) return
+    // Assemblage : on consulte, aucune pièce n’est en édition pour recevoir une esquisse.
+    const consultation = storeShell.assemblage() !== null
     const rayonM = rayonSousPointeur(e)
     if (!rayonM) return
     const maille = mailleAffichee()
@@ -250,24 +262,26 @@ function ViewportVue(_props: IDockviewPanelProps) {
       if (!esquisse) {
         const rayon = rayonVersMm(rayonM)
         const topo = topologieAffichee(maille)
-        const arete = areteBrepSousPointeur(topo.aretes, rayon, SEUIL_SEGMENT_MM)
+        const seuil = seuilTrait()
+        const arete = areteBrepSousPointeur(topo.aretes, rayon, seuil)
         if (arete) {
           storeShell.choisirAreteBrep(arete.id, classeKernelDe(arete, storeShell.aretesNommees()))
           return
         }
         const hit = carreauSousPointeur(maille, rayon)
         if (!hit) {
-          const axe = axeSousPointeur(rayon, SEUIL_SEGMENT_MM)
+          const axe = axeSousPointeur(rayon, seuil)
           const plan = axe ?? planSousPointeur(rayon)
           if (plan) {
             const deja = storeShell.datumChoisi()
             storeShell.choisirDatum(plan)
-            if (deja === plan && plan.startsWith('plan.')) {
+            if (deja === plan && plan.startsWith('plan.') && !consultation) {
               if (!storeShell.ouvrirEsquisseSurSupport(plan)) return
               esquisse = hote.session.esquisseCourante()
               if (!esquisse) return
             } else return
           } else {
+            if (consultation) return
             if (!storeShell.ouvrirEsquisseSurSupport('plan.dessus')) return
             esquisse = hote.session.esquisseCourante()
             if (!esquisse) return
@@ -279,7 +293,7 @@ function ViewportVue(_props: IDockviewPanelProps) {
           // Premier clic : sélection visible. Second clic sur dessus/dessous : esquisse.
           const second =
             deja?.id === hit.faceId && (nom === 'face.dessus' || nom === 'face.dessous')
-          if (!second) return
+          if (!second || consultation) return
           if (!storeShell.ouvrirEsquisseSurSupport(nom)) return
           esquisse = hote.session.esquisseCourante()
           if (!esquisse) return

@@ -464,6 +464,7 @@ export function aretesBrep(maillage: Maillage) {
     const w = (d00 * d21 - d01 * d20) / denom
     return Math.min(1 - v - w, v, w) >= -0.02
   }
+  const grilleTriangles = grilleSpatiale(triangles, tolerance)
   for (const arete of seules) {
     const milieu = [
       (arete.a[0] + arete.b[0]) / 2,
@@ -473,7 +474,7 @@ export function aretesBrep(maillage: Maillage) {
     let meme = false
     let autre = false
     let couvert = false
-    for (const triangle of triangles) {
+    for (const triangle of grilleTriangles(milieu)) {
       if (milieu[0] < triangle.min[0] - tolerance || milieu[0] > triangle.max[0] + tolerance) continue
       if (milieu[1] < triangle.min[1] - tolerance || milieu[1] > triangle.max[1] + tolerance) continue
       if (milieu[2] < triangle.min[2] - tolerance || milieu[2] > triangle.max[2] + tolerance) continue
@@ -491,6 +492,37 @@ export function aretesBrep(maillage: Maillage) {
     if (autre || (!meme && !couvert)) poser(arete.a, arete.b)
   }
   return array
+}
+
+const CELLULES_PAR_AXE = 32
+
+/** Boîtes englobantes rangées dans une grille régulière : `candidats(p)` rend celles dont la cellule contient `p`. */
+function grilleSpatiale<T extends { min: number[]; max: number[] }>(boites: T[], marge: number) {
+  const bas = [Infinity, Infinity, Infinity]
+  const haut = [-Infinity, -Infinity, -Infinity]
+  for (const boite of boites) {
+    for (let axe = 0; axe < 3; axe++) {
+      bas[axe] = Math.min(bas[axe], boite.min[axe] - marge)
+      haut[axe] = Math.max(haut[axe], boite.max[axe] + marge)
+    }
+  }
+  const pas = Math.max(haut[0] - bas[0], haut[1] - bas[1], haut[2] - bas[2], marge) / CELLULES_PAR_AXE
+  const cellule = (valeur: number, axe: number) => Math.floor((valeur - bas[axe]) / pas)
+  const cellules = new Map<number, T[]>()
+  const cle = (i: number, j: number, k: number) => (i * 1024 + j) * 1024 + k
+  for (const boite of boites) {
+    const de = [0, 1, 2].map((axe) => cellule(boite.min[axe] - marge, axe))
+    const a = [0, 1, 2].map((axe) => cellule(boite.max[axe] + marge, axe))
+    for (let i = de[0]; i <= a[0]; i++)
+      for (let j = de[1]; j <= a[1]; j++)
+        for (let k = de[2]; k <= a[2]; k++) {
+          const liste = cellules.get(cle(i, j, k))
+          if (liste) liste.push(boite)
+          else cellules.set(cle(i, j, k), [boite])
+        }
+  }
+  const aucun: T[] = []
+  return (point: number[]) => cellules.get(cle(cellule(point[0], 0), cellule(point[1], 1), cellule(point[2], 2))) ?? aucun
 }
 
 /**

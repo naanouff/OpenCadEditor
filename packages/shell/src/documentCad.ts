@@ -47,23 +47,39 @@ export function documentCad(
   }
   // Keep the solid visible under an open sketch (grid / profile overlay on top).
   const volumeActif = volume && volume.indices.length > 0 ? volume : null
+  const duVolume = volumeActif ? volumeEnMetres(volumeActif) : null
+  const filFrontiere = duVolume
+    ? null
+    : enMetres(!esquisse && frontiere.faces.length > 0 ? filDeFer(frontiere).position.array : [])
   return {
-    brepWireframe: enMetres(
-      volumeActif
-        ? aretesBrep(volumeActif)
-        : !esquisse && frontiere.faces.length > 0
-          ? filDeFer(frontiere).position.array
-          : [],
-    ),
+    /** Lu seulement quand le viewport n’a pas la topologie du volume. */
+    get brepWireframe() {
+      return duVolume ? duVolume.fil() : filFrontiere!
+    },
     grille: enMetres(grilleMm),
     esquisse: enMetres(esquisseMm),
     cotes: enMetres(cotesMm),
-    maillage: volumeActif
-      ? enMetresOmbre(volumeActif)
+    maillage: duVolume
+      ? duVolume.maillage
       : esquisse
         ? { positions: [], normales: [], indices: [] }
         : maillage(frontiere),
   }
+}
+
+const volumesConvertis = new WeakMap<
+  MaillageOmbre,
+  { fil: () => ReturnType<typeof enMetres>; maillage: ReturnType<typeof enMetresOmbre> }
+>()
+
+/** Chaque réaffichage (survol compris) repasse par ici : un volume n'est converti qu'une fois. */
+function volumeEnMetres(volume: MaillageOmbre) {
+  const connu = volumesConvertis.get(volume)
+  if (connu) return connu
+  let fil: ReturnType<typeof enMetres> | null = null
+  const converti = { fil: () => (fil ??= enMetres(aretesBrep(volume))), maillage: enMetresOmbre(volume) }
+  volumesConvertis.set(volume, converti)
+  return converti
 }
 
 /** Le noyau donne déjà la normale de chaque surface. Seules les longueurs changent d'unité. */

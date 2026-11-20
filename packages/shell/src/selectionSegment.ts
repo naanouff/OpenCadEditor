@@ -11,6 +11,8 @@ export type SegmentBrep = {
   a: Point
   b: Point
   faces: readonly number[]
+  /** Bissectrice unitaire des normales voisines : sens de sortie de la matière. */
+  normale: Point
 }
 
 export type AreteBrep = {
@@ -85,15 +87,29 @@ export function segmentsBrep(maillage: Maillage): SegmentBrep[] {
   for (const acc of map.values()) {
     const ids = [...new Set(acc.faces)].sort((x, y) => x - y)
     if (ids.length < 2) {
-      if (acc.faces.length === 1) segments.push({ a: acc.a, b: acc.b, faces: ids })
+      if (acc.faces.length === 1) segments.push({ a: acc.a, b: acc.b, faces: ids, normale: bissectrice(acc.normales) })
       continue
     }
     const u = acc.normales[0]!
     const coplanaires = acc.normales.every((v) => u[0] * v[0] + u[1] * v[1] + u[2] * v[2] > COPLANAIRE)
     if (coplanaires) continue
-    segments.push({ a: acc.a, b: acc.b, faces: ids })
+    segments.push({ a: acc.a, b: acc.b, faces: ids, normale: bissectrice(acc.normales) })
   }
   return segments
+}
+
+function bissectrice(normales: readonly (readonly [number, number, number])[]): Point {
+  let x = 0
+  let y = 0
+  let z = 0
+  for (const n of normales) {
+    x += n[0]
+    y += n[1]
+    z += n[2]
+  }
+  const len = Math.hypot(x, y, z)
+  // Arête en lame (normales opposées) : pas de sens de sortie.
+  return len < 1e-6 ? [0, 0, 0] : [x / len, y / len, z / len]
 }
 
 /** Regroupe les segments par paire de carreaux puis par connexité. */

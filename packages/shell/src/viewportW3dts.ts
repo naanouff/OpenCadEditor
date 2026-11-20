@@ -1,6 +1,7 @@
 import type { EsquissePosee, Frontiere, MaillageOmbre } from '@opencad/api-parametrique'
 import { calqueVide, couleursTopo, epaisseurTopo, type CalqueTopo, type Rgba } from './apparenceCad.ts'
 import { contourPlan, DEMI_DATUM_MM, traitAxe, type AxeId } from './selectionDatum.ts'
+import { decaler, metresParPixel, traitsBruts, zoomAChange, type Traits } from './traitsArete.ts'
 import { documentCad } from './documentCad.ts'
 import { coteSegment, poseGlyphe, repere, repereSurface, vueDuPlan } from './dessin.ts'
 import { remplacementEsquisse } from './entree.ts'
@@ -90,6 +91,14 @@ class ProjetAnneau extends LitAbstractProject {
   private racine: SceneNode | null = null
   private modeVue = ''
   private enceinte = enceinteDefaut()
+  private dernier: { document: ReturnType<typeof documentCad>; esquisse: EsquissePosee | null; calque: CalqueTopo } | null = null
+  private solide = new Map<number, FaceSolide>()
+  private traits: SceneNode | null = null
+  private tampons: GPUBuffer[] = []
+  private eclats: SceneNode | null = null
+  private tamponsEclats: GPUBuffer[] = []
+  /** Taille monde d’un pixel CSS au dernier calcul des rubans. */
+  private pixel = 0
 
   constructor() {
     super('ProjetAnneau')
@@ -107,6 +116,8 @@ class ProjetAnneau extends LitAbstractProject {
     if (opaques) opaques.clearColor = { r: 0.66, g: 0.67, b: 0.68, a: 1 }
     const fxaa = passes.find((passe) => passe.name === '07_FXAA')
     if (fxaa && 'shaderPath' in fxaa) fxaa.shaderPath = '/shaders/post-processing/blit.frag.wgsl'
+    // LitAbstractProject charge le graphe sans le lot MSAA : sans cet appel, `setMsaaSampleCount` est sans effet.
+    graph.applyMsaaBundleFromEngineSettings()
     engine.renderer.iblIntensity = 0.45
   }
 
@@ -141,6 +152,75 @@ class ProjetAnneau extends LitAbstractProject {
     scene.add(lumiere)
   }
 
+  /** Rubans à l’échelle du zoom courant, sous la racine du modèle. */
+  private poserTraits() {
+    const params = this.params
+    const racine = this.racine
+    const dernier = this.dernier
+    if (!params || !racine || !dernier) return
+    if (this.traits) racine.remove(this.traits)
+    libererTampons(params.engine, this.tampons)
+    const traits = new SceneNode('traits', params.world)
+    racine.add(traits)
+    this.traits = traits
+    this.pixel = this.pixelCourant()
+    const { document, calque } = dernier
+    const pose = new PoseTraits(traits, params, this.pixel || 0.0002)
+    const fil = calque.fil.segments.length > 0 ? calque.fil : traitsBruts(document.brepWireframe.position.array)
+    pose.ruban(fil, couleursTopo.fil, 'solide', epaisseurTopo.fil)
+    pose.trait(document.grille.position.array, [0.8, 0.81, 0.82, 1], 'grille')
+    pose.trait(document.esquisse.position.array, [0.15, 0.45, 0.92, 1], 'esquisse')
+    pose.trait(document.cotes.position.array, [0.92, 0.55, 0.12, 1], 'cotes')
+    this.tampons = pose.tampons
+    this.poserEclats()
+  }
+
+  /** Survol, sélection et datums : la seule couche de traits qu’un survol reconstruit. */
+  private poserEclats() {
+    const params = this.params
+    const racine = this.racine
+    const dernier = this.dernier
+    if (!params || !racine || !dernier) return
+    if (this.eclats) racine.remove(this.eclats)
+    libererTampons(params.engine, this.tamponsEclats)
+    const eclats = new SceneNode('eclats', params.world)
+    racine.add(eclats)
+    this.eclats = eclats
+    const { esquisse, calque } = dernier
+    const pose = new PoseTraits(eclats, params, this.pixel || 0.0002)
+    pose.ruban(calque.survolArete, couleursTopo.survol, 'survol-arete', epaisseurTopo.survol)
+    pose.ruban(calque.selectionArete, couleursTopo.selection, 'selection-arete', epaisseurTopo.selection)
+    if (!esquisse) poserDatums(pose, calque.datumSurvol, calque.datumChoisi)
+    this.tamponsEclats = pose.tampons
+  }
+
+  /** Change le matériau des seules faces dont l’état survol/sélection a bougé. */
+  private teinter(calque: CalqueTopo) {
+    const params = this.params
+    const racine = this.racine
+    if (!params || !racine) return
+    for (const [face, entree] of this.solide) {
+      const groupe = groupeDe(face, calque)
+      if (groupe === entree.groupe) continue
+      racine.remove(entree.noeud)
+      const noeud = new SceneNode(`face-${face}`, params.world, entree.mesh, matiere(params.engine, groupe))
+      racine.add(noeud)
+      this.solide.set(face, { mesh: entree.mesh, noeud, groupe })
+    }
+  }
+
+  private pixelCourant() {
+    const cadre = this.cadrePick()
+    return cadre && canevasMoteur ? metresParPixel(cadre.demiHauteur, canevasMoteur.clientHeight) : 0
+  }
+
+  /** Appelé à chaque trame : les rubans suivent le zoom. */
+  suivreZoom() {
+    if (!this.dernier) return
+    const pixel = this.pixelCourant()
+    if (pixel > 0 && zoomAChange(this.pixel, pixel)) this.poserTraits()
+  }
+
   cadrePick(): {
     eye: [number, number, number]
     target: [number, number, number]
@@ -161,20 +241,34 @@ class ProjetAnneau extends LitAbstractProject {
   ) {
     const params = this.params
     if (!params) return
-    const { scene, world, engine, cameraControllerManager, logger } = params
+    const { scene, world, engine, cameraControllerManager } = params
+    const precedent = this.dernier
+    if (
+      precedent &&
+      !esquisse &&
+      !precedent.esquisse &&
+      document.maillage === precedent.document.maillage &&
+      calque.fil === precedent.calque.fil
+    ) {
+      this.dernier = { document, esquisse, calque }
+      this.teinter(calque)
+      this.poserEclats()
+      return
+    }
     if (this.racine) scene.remove(this.racine)
+    libererTampons(engine, this.tampons)
+    libererTampons(engine, this.tamponsEclats)
+    this.tampons = []
+    this.tamponsEclats = []
     const racine = new SceneNode('anneau', world)
     scene.add(racine)
     this.racine = racine
-    poserMaillage(racine, world, engine, document, calque)
-    poserFil(racine, world, engine, logger, document.brepWireframe.position.array, couleursTopo.fil, 'solide', epaisseurTopo.fil)
-    poserFil(racine, world, engine, logger, calque.survolArete, couleursTopo.survol, 'survol-arete', epaisseurTopo.survol)
-    poserFil(racine, world, engine, logger, calque.selectionArete, couleursTopo.selection, 'selection-arete', epaisseurTopo.selection)
-    if (!esquisse) poserDatums(racine, world, engine, logger, calque.datumSurvol, calque.datumChoisi)
-    poserFil(racine, world, engine, logger, document.grille.position.array, [0.8, 0.81, 0.82, 1], 'grille')
-    poserFil(racine, world, engine, logger, document.esquisse.position.array, [0.15, 0.45, 0.92, 1], 'esquisse')
-    poserFil(racine, world, engine, logger, document.cotes.position.array, [0.92, 0.55, 0.12, 1], 'cotes')
+    this.solide = poserSolide(racine, world, engine, document, calque)
     poserGlyphes(racine, world, engine, esquisse)
+    this.dernier = { document, esquisse, calque }
+    this.traits = null
+    this.eclats = null
+    this.poserTraits()
     const mode = esquisse?.support ?? '3d'
     const cadre = esquisse
       ? [...document.esquisse.position.array, ...document.cotes.position.array]
@@ -224,34 +318,66 @@ class ProjetAnneau extends LitAbstractProject {
 
 type GroupeSolide = 'solide' | 'survol' | 'selection'
 
+type FaceSolide = { mesh: Mesh; noeud: SceneNode; groupe: GroupeSolide }
+
+/** Clé des triangles d’un maillage sans étiquettes de face. */
+const SANS_FACE = -1
+
+function groupeDe(face: number, calque: CalqueTopo): GroupeSolide {
+  if (face === SANS_FACE) return 'solide'
+  if (face === calque.selectionFace) return 'selection'
+  if (face === calque.survolFace) return 'survol'
+  return 'solide'
+}
+
+let matieres: { engine: Engine; parGroupe: Record<GroupeSolide, Material> } | null = null
+
+function matiere(engine: Engine, groupe: GroupeSolide) {
+  if (matieres?.engine !== engine) {
+    const creer = (nom: GroupeSolide) => {
+      const couleur = couleursTopo[nom]
+      const cree = new Material({
+        name: `solide-${nom}`,
+        shadingModel: 'pbr',
+        shaderGraph: graphe ?? undefined,
+        properties: {
+          baseColor: [couleur[0], couleur[1], couleur[2]],
+          roughness: 1,
+          metallic: 0,
+          normalTexture: null,
+          metallicRoughnessTexture: null,
+        },
+      })
+      engine.resourceManager.uploadMaterial(cree)
+      return cree
+    }
+    matieres = { engine, parGroupe: { solide: creer('solide'), survol: creer('survol'), selection: creer('selection') } }
+  }
+  return matieres.parGroupe[groupe]
+}
+
 /**
- * Le solide est réparti en groupes de triangles, un matériau par groupe :
- * chaque triangle est tracé une fois, le carreau choisi prend la couleur de sélection.
+ * Un nœud par face BRep, chaque triangle tracé une fois :
+ * survoler ou choisir une face change son matériau sans remonter de maillage.
  */
-function poserMaillage(
+function poserSolide(
   parent: SceneNode,
   world: ProjectLoadParams['world'],
   engine: Engine,
   document: ReturnType<typeof documentCad>,
   calque: CalqueTopo,
 ) {
+  const solide = new Map<number, FaceSolide>()
   const { positions, normales, indices, faces } = document.maillage
-  if (indices.length === 0) return
-  const groupeDe = (triangle: number): GroupeSolide => {
-    const face = faces?.[triangle]
-    if (face === undefined) return 'solide'
-    if (face === calque.selectionFace) return 'selection'
-    if (face === calque.survolFace) return 'survol'
-    return 'solide'
-  }
-  const parGroupe = new Map<GroupeSolide, number[]>()
+  if (indices.length === 0) return solide
+  const parFace = new Map<number, number[]>()
   for (let t = 0; t < indices.length / 3; t++) {
-    const groupe = groupeDe(t)
-    const liste = parGroupe.get(groupe)
+    const face = faces?.[t] ?? SANS_FACE
+    const liste = parFace.get(face)
     if (liste) liste.push(t)
-    else parGroupe.set(groupe, [t])
+    else parFace.set(face, [t])
   }
-  for (const [groupe, triangles] of parGroupe) {
+  for (const [face, triangles] of parFace) {
     const remap = new Map<number, number>()
     const sommets: number[] = []
     const locaux: number[] = []
@@ -271,24 +397,14 @@ function poserMaillage(
       }
     }
     const tampon = remap.size > 0xffff ? new Uint32Array(locaux) : new Uint16Array(locaux)
-    const mesh = new Mesh(new Float32Array(sommets), tampon, `solide-${groupe}`)
+    const mesh = new Mesh(new Float32Array(sommets), tampon, `face-${face}`)
     engine.resourceManager.uploadMesh(mesh)
-    const couleur = couleursTopo[groupe]
-    const matiere = new Material({
-      name: `solide-${groupe}`,
-      shadingModel: 'pbr',
-      shaderGraph: graphe ?? undefined,
-      properties: {
-        baseColor: [couleur[0], couleur[1], couleur[2]],
-        roughness: 1,
-        metallic: 0,
-        normalTexture: null,
-        metallicRoughnessTexture: null,
-      },
-    })
-    engine.resourceManager.uploadMaterial(matiere)
-    parent.add(new SceneNode(`solide-${groupe}`, world, mesh, matiere))
+    const groupe = groupeDe(face, calque)
+    const noeud = new SceneNode(`face-${face}`, world, mesh, matiere(engine, groupe))
+    parent.add(noeud)
+    solide.set(face, { mesh, noeud, groupe })
   }
+  return solide
 }
 
 const METRE = 0.001
@@ -306,30 +422,54 @@ function couleurDatum(id: string, survol: string | null, choisi: string | null):
   return couleursTopo.plan
 }
 
-function poserDatums(
-  parent: SceneNode,
-  world: ProjectLoadParams['world'],
-  engine: Engine,
-  logger: ProjectLoadParams['logger'],
-  survol: string | null,
-  choisi: string | null,
-) {
+function poserDatums(pose: PoseTraits, survol: string | null, choisi: string | null) {
   for (const id of ['plan.dessus', 'plan.12h', 'plan.3h']) {
-    poserFil(parent, world, engine, logger, enMetres(contourPlan(id, DEMI_DATUM_MM)), couleurDatum(id, survol, choisi), id, epaisseurTopo.fil)
+    const actif = id === survol || id === choisi
+    pose.ruban(traitsBruts(enMetres(contourPlan(id, DEMI_DATUM_MM))), couleurDatum(id, survol, choisi), id, actif ? epaisseurTopo.survol : epaisseurTopo.datum)
   }
   for (const id of ['axe.x', 'axe.y', 'axe.z'] as AxeId[]) {
     const actif = id === survol || id === choisi
-    poserFil(
-      parent,
-      world,
-      engine,
-      logger,
-      enMetres(traitAxe(id, DEMI_DATUM_MM)),
-      couleurDatum(id, survol, choisi),
-      id,
-      actif ? epaisseurTopo.selection : epaisseurTopo.survol,
-    )
+    pose.ruban(traitsBruts(enMetres(traitAxe(id, DEMI_DATUM_MM))), couleurDatum(id, survol, choisi), id, actif ? epaisseurTopo.selection : epaisseurTopo.fil)
   }
+}
+
+/** Pose les traits d’un calque et garde leurs tampons pour les libérer au prochain tour. */
+class PoseTraits {
+  readonly tampons: GPUBuffer[] = []
+
+  constructor(
+    private readonly parent: SceneNode,
+    private readonly params: ProjectLoadParams,
+    /** Taille monde d’un pixel CSS. */
+    private readonly pixel: number,
+  ) {}
+
+  /** Ruban de `px` pixels, sorti de la matière d’une demi-largeur. */
+  ruban(traits: Traits, rgba: Rgba, nom: string, px: number) {
+    const demi = (px / 2) * this.pixel
+    this.poser(decaler(traits, demi), rgba, nom, demi)
+  }
+
+  /** Trait d’un pixel matériel (grille, esquisse) : ni décalage ni épaisseur. */
+  trait(segments: number[], rgba: Rgba, nom: string) {
+    this.poser(segments, rgba, nom)
+  }
+
+  private poser(segments: number[], rgba: Rgba, nom: string, demiLargeur?: number) {
+    const tampon = poserFil(this.parent, this.params.world, this.params.engine, this.params.logger, segments, rgba, nom, demiLargeur)
+    if (tampon) this.tampons.push(tampon)
+  }
+}
+
+/** Libère des tampons retirés de la scène, après la trame en cours. */
+function libererTampons(engine: Engine, tampons: GPUBuffer[]) {
+  if (tampons.length === 0) return
+  const queue = engine.webGPUContext.device.queue
+  requestAnimationFrame(() => {
+    void queue.onSubmittedWorkDone().then(() => {
+      for (const tampon of tampons) tampon.destroy()
+    })
+  })
 }
 
 function poserGlyphes(
@@ -404,11 +544,11 @@ function poserFil(
   nom: string,
   /** Demi-largeur en mètres. Un ruban passe devant la surface ; un trait matériel s'y noie de profil. */
   demiLargeur?: number,
-) {
+): GPUBuffer | null {
   const construit = demiLargeur
     ? buildLineRibbonInterleavedVertices(segments, rgba, 50_000, demiLargeur, logger, nom)
     : buildLineListInterleavedVertices(segments, rgba, 50_000, logger, nom)
-  if (construit.vertexCount === 0) return
+  if (construit.vertexCount === 0) return null
   const tampon = engine.resourceManager.createLineOverlayVertexBuffer(construit.vertices, nom)
   const noeud = new SceneNode(nom, world)
   world.addComponent(
@@ -416,6 +556,7 @@ function poserFil(
     new VectorLineOverlayComponent(tampon, construit.vertexCount, 0, demiLargeur ? 'triangle-list' : 'line-list'),
   )
   parent.add(noeud)
+  return tampon
 }
 
 let projet: ProjetAnneau | null = null
@@ -449,6 +590,7 @@ async function demarrer(canevas: HTMLCanvasElement) {
   const logger = new Logger()
   await GPUManager.initialize(logger)
   const engine = await new EngineBuilder(canevas).setLogger(logger).withModelLoader(chargeurVide).build()
+  engine.scheduler.addSystem(() => projet?.suivreZoom())
   engine.scheduler.addSystem(createVectorLineOverlaySystem(engine.renderer))
   projet = new ProjetAnneau()
   engine.director.register(projet)

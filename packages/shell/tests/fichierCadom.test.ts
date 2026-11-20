@@ -50,7 +50,23 @@ describe('fichier cadom', () => {
     expect(html).toContain('Part B')
   })
 
+  it('quitte l’assemblage quand on exécute une pièce', async () => {
+    definirSelecteur({
+      async ouvrir() {
+        return new Uint8Array(fixtureA)
+      },
+      async enregistrer() {},
+    })
+    await storeShell.demanderOuverture()
+    expect(storeShell.assemblage()).not.toBeNull()
+    storeShell.executer('piece reste\nparam garde 5')
+    expect(storeShell.assemblage()).toBeNull()
+    expect(storeShell.planChargement()).toBeNull()
+    expect(storeShell.hote().session.expression('garde')).toBe('5')
+  })
+
   it('refuse des octets illisibles sans toucher l’assemblage', async () => {
+    storeShell.executer('piece reste\nparam garde 4')
     definirSelecteur({
       async ouvrir() {
         return new Uint8Array(fixtureA)
@@ -60,7 +76,6 @@ describe('fichier cadom', () => {
     await storeShell.demanderOuverture()
     expect(storeShell.assemblage()).not.toBeNull()
 
-    storeShell.executer('piece reste\nparam garde 4')
     definirSelecteur({
       async ouvrir() {
         return new Uint8Array([1, 2, 3])
