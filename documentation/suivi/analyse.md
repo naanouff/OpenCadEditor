@@ -26,7 +26,7 @@ flowchart LR
 - **[packages/mcp](../../packages/mcp)** — serveur stdio + pont WebSocket viewport (sprint 34).
 - **[packages/shell](../../packages/shell)** — hôte Dockview, terminal Monaco, pipeline OCCT, worker. `pnpm dev` via Vite.
 - **`vendor/w3dts`** — moteur WebGPU. Chrome via `@naanouff/w3dts-editor-ui`.
-- **`vendor/occt-wasm`** @ v0.2.0 — sources ; artefacts dans `packages/shell/occt/`.
+- **`vendor/occt-wasm`** @ v0.3.0 — sources ; artefacts dans `packages/shell/occt/`.
 
 Pas de `package.json` racine : chaque paquet a son propre lockfile.
 
