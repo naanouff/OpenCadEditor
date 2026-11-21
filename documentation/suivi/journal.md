@@ -1,5 +1,29 @@
 # Journal de suivi
 
+## 2026-11-21 — Sprint 71 : filtre viewport
+
+Barre Tout / Corps / Face / Arête sur le canvas ; pick filtré. P4b clos (67–71). Branche `feature/shell-viewport-hints`.
+
+## 2026-11-21 — Sprint 70 : layout Dockview v6
+
+Layout Whittle : browser / viewport / inspector / timeline + terminal (`layout.v6`). Debug hors requis. Branche `feature/shell-layout-v6`. Suite : overlays viewport (phase 5).
+
+## 2026-11-21 — Sprint 69 : ruban Lucide
+
+`RubanVue` en grille Whittle (ESQUISSE / SOLIDE, Lucide, outils grisés + raison). Actions toujours via `boutonsRuban` / `executer`. Branche `feature/shell-ribbon`. Suite : layout Dockview v6.
+
+## 2026-11-21 — Sprint 68 : chrome + StatusBar
+
+Chrome OpenCad Editor (marque, fichier, undo/redo, titre, Ctrl+K placeholder, thème) et StatusBar (mode · sélection · unité). Branche `feature/shell-chrome`. Suite : ruban Lucide (phase 3).
+
+## 2026-11-21 — Sprint 67 : DS OpenCad dans le shell
+
+`packages/shell/src/ds/` porte tokens + primitives de la maquette. Thème `light|dark` (`opencad.shell.theme`), bascule dans le ruban, bridge Dockview. Layout `v5` inchangé. Suite : chrome (phase 2).
+
+## 2026-11-21 — Intégration maquette v2 → shell
+
+[plan-integration-shell.md](../maquette/plan-integration-shell.md) fixe le portage par couches (DS → chrome → ruban → layout Whittle + terminal). Design seulement ; CAM / CTRL / Render restent maquette. [sprint-67-shell-ds.md](../sprints/sprint-67-shell-ds.md) ouvre la phase 1 sur `feature/shell-ds`. Feuille de route : jalon **P4b**.
+
 ## 2026-11-21 — Une définition MBD pour tous les espaces
 
 La maquette lit une seule définition. Design porte les cotes, les tolérances, les références et les états de surface. CAM en déduit l’opération et l’outil, CTRL juge le relevé dans cette bande, Render en déduit la rugosité PBR. Chaque viewport dessine ces PMI sur la pièce.

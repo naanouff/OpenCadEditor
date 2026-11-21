@@ -1,15 +1,10 @@
 import '@naanouff/w3dts-editor-ui/styles.css'
 import './tailwind.css'
 import { createRoot } from 'react-dom/client'
-import {
-  applyResolvedThemeToDocument,
-  loadThemeFromStorage,
-  resolveThemeForDom,
-} from '@naanouff/w3dts-editor-ui'
+import { applyOcTheme, loadOcTheme } from './ds'
 import { App } from './App.tsx'
 
-const theme = resolveThemeForDom(loadThemeFromStorage())
-applyResolvedThemeToDocument(theme)
+applyOcTheme(loadOcTheme())
 
 const root = document.getElementById('root')
 if (!root) throw new Error('Missing #root')

@@ -1,15 +1,8 @@
 import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
 import type { DockviewApi, IDockviewPanelProps } from 'dockview'
-import {
-  EditorDock,
-  Panel,
-  loadThemeFromStorage,
-  subscribeResolvedTheme,
-  type ResolvedThemeId,
-} from '@naanouff/w3dts-editor-ui'
-import { ArbreConstructionVue } from './ArbreConstructionVue.tsx'
+import { EditorDock, type ResolvedThemeId } from '@naanouff/w3dts-editor-ui'
+import { applyOcTheme, loadOcTheme, type OcTheme } from './ds'
 import { DebugVue } from './DebugVue.tsx'
-import { DocumentVue } from './DocumentVue.tsx'
 import { PreferencesVue } from './PreferencesVue.tsx'
 import {
   altitudeSupport,
@@ -33,21 +26,25 @@ import {
 import { topologieAffichee } from './topologieAffichee.ts'
 import { traitsDe, traitsVides } from './traitsArete.ts'
 import { axeSousPointeur, planSousPointeur } from './selectionDatum.ts'
+import { Chrome } from './Chrome.tsx'
+import { BrowserPanel } from './panels/BrowserPanel.tsx'
+import { InspectorPanel } from './panels/InspectorPanel.tsx'
+import { TimelinePanel } from './panels/TimelinePanel.tsx'
 import { RubanVue } from './RubanVue.tsx'
+import { ShellStatusBar } from './ShellStatusBar.tsx'
 import { storeShell } from './storeShell.ts'
 import { TerminalMonaco } from './TerminalMonaco.tsx'
+import {
+  ViewportFilterBar,
+  autoriseArete,
+  autoriseDatum,
+  autoriseFace,
+  type FiltreSelection,
+} from './ViewportFilterBar.tsx'
 import { afficher, cadreCameraPick, cadrerVue, pivoterVue } from './viewportW3dts.ts'
 
-const STORAGE_KEY = 'opencad.shell.dockview.layout.v5'
-const REQUIRED = [
-  'viewport',
-  'terminal',
-  'parametres',
-  'historique',
-  'document',
-  'debug',
-  'preferences',
-] as const
+const STORAGE_KEY = 'opencad.shell.dockview.layout.v6'
+const REQUIRED = ['viewport', 'browser', 'inspector', 'timeline', 'terminal'] as const
 
 function nomArete(maille: Maillage, id: number) {
   const arete = topologieAffichee(maille).aretes[id]
@@ -101,50 +98,38 @@ function buildDefaultLayout(api: DockviewApi): void {
     params: { hideClose: true },
     minimumWidth: 200,
     minimumHeight: 200,
-    initialWidth: 640,
-    initialHeight: 400,
+    initialWidth: 720,
+    initialHeight: 420,
   })
   api.addPanel({
-    id: 'historique',
-    component: 'historique',
-    title: 'Construction',
+    id: 'browser',
+    component: 'browser',
+    title: 'Browser',
     position: { referencePanel: 'viewport', direction: 'left' },
     params: { hideClose: true },
   })
   api.addPanel({
-    id: 'parametres',
-    component: 'parametres',
-    title: 'Paramètres',
-    position: { referencePanel: 'historique', direction: 'below' },
+    id: 'inspector',
+    component: 'inspector',
+    title: 'Inspector',
+    position: { referencePanel: 'viewport', direction: 'right' },
     params: { hideClose: true },
   })
   api.addPanel({
-    id: 'document',
-    component: 'document',
-    title: 'Document',
-    position: { referencePanel: 'parametres', direction: 'below' },
+    id: 'timeline',
+    component: 'timeline',
+    title: 'Timeline',
+    position: { referencePanel: 'viewport', direction: 'below' },
     params: { hideClose: true },
+    initialHeight: 72,
   })
   api.addPanel({
     id: 'terminal',
     component: 'terminal',
     title: 'Terminal',
-    position: { referencePanel: 'viewport', direction: 'below' },
+    position: { referencePanel: 'timeline', direction: 'below' },
     params: { hideClose: true },
-  })
-  api.addPanel({
-    id: 'debug',
-    component: 'debug',
-    title: 'Debug',
-    position: { referencePanel: 'viewport', direction: 'right' },
-    params: { hideClose: true },
-  })
-  api.addPanel({
-    id: 'preferences',
-    component: 'preferences',
-    title: 'Préférences',
-    position: { referencePanel: 'debug', direction: 'below' },
-    params: { hideClose: true },
+    initialHeight: 140,
   })
   viewport.api.setActive()
 }
@@ -153,6 +138,7 @@ function ViewportVue(_props: IDockviewPanelProps) {
   const { hote, revision } = useStoreShell()
   const ref = useRef<HTMLCanvasElement>(null)
   const pointe = useRef<{ x: number; y: number } | null>(null)
+  const [filtre, setFiltre] = useState<FiltreSelection>('any')
   useEffect(() => {
     const canevas = ref.current
     if (!canevas) return
@@ -228,23 +214,35 @@ function ViewportVue(_props: IDockviewPanelProps) {
     const topo = topologieAffichee(maille)
     const rayon = rayonVersMm(rayonM)
     const seuil = seuilTrait()
-    const arete = areteBrepSousPointeur(topo.aretes, rayon, seuil)
-    if (arete) {
-      storeShell.definirSurvol({ sorte: 'arete', id: arete.id })
+    if (autoriseArete(filtre)) {
+      const arete = areteBrepSousPointeur(topo.aretes, rayon, seuil)
+      if (arete) {
+        storeShell.definirSurvol({ sorte: 'arete', id: arete.id })
+        return
+      }
+    }
+    if (autoriseFace(filtre)) {
+      const hit = carreauSousPointeur(maille, rayon)
+      if (hit) {
+        storeShell.definirSurvol({
+          sorte: 'face',
+          id: hit.faceId,
+          nom: nomCarreau(hit.faceId, topo.noms),
+        })
+        return
+      }
+    }
+    if (autoriseDatum(filtre)) {
+      const axe = axeSousPointeur(rayon, seuil)
+      if (axe) {
+        storeShell.definirSurvol({ sorte: 'axe', id: axe })
+        return
+      }
+      const plan = planSousPointeur(rayon)
+      storeShell.definirSurvol(plan ? { sorte: 'plan', id: plan } : null)
       return
     }
-    const hit = carreauSousPointeur(maille, rayon)
-    if (hit) {
-      storeShell.definirSurvol({ sorte: 'face', id: hit.faceId, nom: nomCarreau(hit.faceId, topo.noms) })
-      return
-    }
-    const axe = axeSousPointeur(rayon, seuil)
-    if (axe) {
-      storeShell.definirSurvol({ sorte: 'axe', id: axe })
-      return
-    }
-    const plan = planSousPointeur(rayon)
-    storeShell.definirSurvol(plan ? { sorte: 'plan', id: plan } : null)
+    storeShell.definirSurvol(null)
   }
 
   const onPointerLeave = () => {
@@ -289,31 +287,35 @@ function ViewportVue(_props: IDockviewPanelProps) {
         const rayon = rayonVersMm(rayonM)
         const topo = topologieAffichee(maille)
         const seuil = seuilTrait()
-        const arete = areteBrepSousPointeur(topo.aretes, rayon, seuil)
-        if (arete) {
-          storeShell.choisirAreteBrep(arete.id, classeKernelDe(arete, storeShell.aretesNommees()))
-          return
-        }
-        const hit = carreauSousPointeur(maille, rayon)
-        if (!hit) {
-          const axe = axeSousPointeur(rayon, seuil)
-          const plan = axe ?? planSousPointeur(rayon)
-          if (plan) {
-            const deja = storeShell.datumChoisi()
-            storeShell.choisirDatum(plan)
-            if (deja === plan && plan.startsWith('plan.') && !consultation) {
-              if (!storeShell.ouvrirEsquisseSurSupport(plan)) return
-              esquisse = hote.session.esquisseCourante()
-              if (!esquisse) return
-            } else return
-          } else {
-            // Le vide retire la sélection. On n’ouvre une esquisse que si rien n’était choisi.
-            if (storeShell.deselectionner() || consultation) return
-            if (!storeShell.ouvrirEsquisseSurSupport('plan.dessus')) return
-            esquisse = hote.session.esquisseCourante()
-            if (!esquisse) return
+        if (autoriseArete(filtre)) {
+          const arete = areteBrepSousPointeur(topo.aretes, rayon, seuil)
+          if (arete) {
+            storeShell.choisirAreteBrep(arete.id, classeKernelDe(arete, storeShell.aretesNommees()))
+            return
           }
-        } else if (hit) {
+        }
+        const hit = autoriseFace(filtre) ? carreauSousPointeur(maille, rayon) : null
+        if (!hit) {
+          if (autoriseDatum(filtre)) {
+            const axe = axeSousPointeur(rayon, seuil)
+            const plan = axe ?? planSousPointeur(rayon)
+            if (plan) {
+              const deja = storeShell.datumChoisi()
+              storeShell.choisirDatum(plan)
+              if (deja === plan && plan.startsWith('plan.') && !consultation) {
+                if (!storeShell.ouvrirEsquisseSurSupport(plan)) return
+                esquisse = hote.session.esquisseCourante()
+                if (!esquisse) return
+              } else return
+            }
+          }
+          // Le vide retire la sélection. On n’ouvre une esquisse que si rien n’était choisi.
+          if (storeShell.deselectionner() || consultation) return
+          if (!autoriseDatum(filtre)) return
+          if (!storeShell.ouvrirEsquisseSurSupport('plan.dessus')) return
+          esquisse = hote.session.esquisseCourante()
+          if (!esquisse) return
+        } else {
           const nom = nomCarreau(hit.faceId, topo.noms)
           const deja = storeShell.faceChoisie()
           storeShell.choisirFace(hit.faceId, nom)
@@ -354,14 +356,17 @@ function ViewportVue(_props: IDockviewPanelProps) {
         onPointerLeave={onPointerLeave}
       />
       {storeShell.construction() ? (
-        <p className="pointer-events-none absolute left-3 top-3 m-0 font-ui text-[13px] text-[var(--color-text-primary)]">
+        <p className="pointer-events-none absolute left-3 top-3 m-0 font-ui text-[13px] text-oc-text">
           Construction…
         </p>
       ) : (
-        <p className="pointer-events-none absolute left-3 top-3 m-0 font-ui text-[13px] text-[var(--color-text-primary)]">
+        <p className="pointer-events-none absolute left-3 top-3 m-0 font-ui text-[13px] text-oc-text">
           {libelleTopo(mailleAffichee())}
         </p>
       )}
+      {!hote.session.esquisseCourante() ? (
+        <ViewportFilterBar value={filtre} onChange={setFiltre} />
+      ) : null}
     </div>
   )
 }
@@ -370,68 +375,29 @@ function TerminalVue(_props: IDockviewPanelProps) {
   return <TerminalMonaco />
 }
 
-function HistoriqueVue(_props: IDockviewPanelProps) {
-  return <ArbreConstructionVue />
-}
-
 function DebugPanel(_props: IDockviewPanelProps) {
   return <DebugVue />
-}
-
-function DocumentPanel(_props: IDockviewPanelProps) {
-  return <DocumentVue />
 }
 
 function PreferencesPanel(_props: IDockviewPanelProps) {
   return <PreferencesVue />
 }
 
-function ParametresVue(_props: IDockviewPanelProps) {
-  const { hote, revision } = useStoreShell()
-  const liste = useMemo(() => [...hote.session.parametres()], [hote, revision])
-  return (
-    <aside className="h-full overflow-auto bg-[var(--color-surface-panel)] p-3 font-ui text-[13px] text-foreground">
-      <Panel title="Paramètres" collapsible={false}>
-        {liste.length === 0 ? (
-          <p className="m-0 text-[var(--color-text-secondary)]">Aucun paramètre</p>
-        ) : (
-          <ul className="m-0 list-none p-0">
-            {liste.map(([nom, expression]) => (
-              <li
-                key={nom}
-                className="mb-1.5 font-mono text-[12px] text-[var(--color-text-secondary)]"
-              >
-                <span className="text-accent">{nom}</span>
-                <span className="text-[var(--color-text-tertiary)]"> = </span>
-                {expression}
-              </li>
-            ))}
-          </ul>
-        )}
-      </Panel>
-    </aside>
-  )
-}
-
 export function App() {
-  const [theme] = useState(() => loadThemeFromStorage())
-  const [resolvedTheme, setResolvedTheme] = useState<ResolvedThemeId>(() =>
-    document.documentElement.dataset.theme === 'light'
-      ? 'light'
-      : document.documentElement.dataset.theme === 'w3dts'
-        ? 'w3dts'
-        : 'dark',
-  )
+  const [theme, setTheme] = useState<OcTheme>(() => loadOcTheme())
+  const resolvedTheme: ResolvedThemeId = theme
 
-  useEffect(() => subscribeResolvedTheme(theme, setResolvedTheme), [theme])
+  useEffect(() => {
+    applyOcTheme(theme)
+  }, [theme])
 
   const components = useMemo(
     () => ({
       viewport: ViewportVue,
+      browser: BrowserPanel,
+      inspector: InspectorPanel,
+      timeline: TimelinePanel,
       terminal: TerminalVue,
-      parametres: ParametresVue,
-      historique: HistoriqueVue,
-      document: DocumentPanel,
       debug: DebugPanel,
       preferences: PreferencesPanel,
     }),
@@ -440,16 +406,18 @@ export function App() {
 
   return (
     <div className="shell-root">
+      <Chrome theme={theme} onThemeChange={setTheme} />
       <RubanVue />
       <div className="shell-dock">
-      <EditorDock
-        resolvedTheme={resolvedTheme}
-        components={components}
-        storageKey={STORAGE_KEY}
-        requiredPanelIds={REQUIRED}
-        buildDefaultLayout={buildDefaultLayout}
-      />
+        <EditorDock
+          resolvedTheme={resolvedTheme}
+          components={components}
+          storageKey={STORAGE_KEY}
+          requiredPanelIds={REQUIRED}
+          buildDefaultLayout={buildDefaultLayout}
+        />
       </div>
+      <ShellStatusBar />
     </div>
   )
 }

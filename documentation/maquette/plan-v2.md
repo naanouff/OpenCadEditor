@@ -191,6 +191,10 @@ Thèmes supplémentaires (accent, density, system) : hors v2 ; les tokens sont d
 | `v2/src/panels/` | Contenu mock des panneaux |
 | `v2/src/App.tsx` | Chrome + Hint + EditorDock + états |
 
+## Suite : intégration shell
+
+Le portage dans l’applicatif est décrit dans [plan-integration-shell.md](plan-integration-shell.md) (P4b). Premier sprint code : [sprint-67-shell-ds.md](../sprints/sprint-67-shell-ds.md).
+
 ## Hors de cette maquette
 
 Solveur, WebGPU / viewport w3dts réel, `.cadom` / `.cadompart`, MCP, Electron, assemblage, extraction packagée du DS vers un paquet publié, sync layout avec le store shell de production.

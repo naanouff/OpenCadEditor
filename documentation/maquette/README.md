@@ -9,3 +9,4 @@
 |------|------|
 | [plan-v2.md](plan-v2.md) | Layout Whittle, Dockview, thèmes |
 | [plan-espaces.md](plan-espaces.md) | Espaces CAM, CTRL, Render Studio — [sprint 65](../sprints/sprint-65-maquette-espaces.md) |
+| [plan-integration-shell.md](plan-integration-shell.md) | Portage maquette → `packages/shell` — [sprint 67](../sprints/sprint-67-shell-ds.md) |
