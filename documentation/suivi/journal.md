@@ -1,5 +1,9 @@
 # Journal de suivi
 
+## 2026-11-21 — Intégration maquette v2 → shell
+
+[plan-integration-shell.md](../maquette/plan-integration-shell.md) fixe le portage par couches (DS → chrome → ruban → layout Whittle + terminal). Design seulement ; CAM / CTRL / Render restent maquette. [sprint-67-shell-ds.md](../sprints/sprint-67-shell-ds.md) ouvre la phase 1 sur `feature/shell-ds`. Feuille de route : jalon **P4b**.
+
 ## 2026-11-21 — Une définition MBD pour tous les espaces
 
 La maquette lit une seule définition. Design porte les cotes, les tolérances, les références et les états de surface. CAM en déduit l’opération et l’outil, CTRL juge le relevé dans cette bande, Render en déduit la rugosité PBR. Chaque viewport dessine ces PMI sur la pièce.

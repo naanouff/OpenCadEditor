@@ -22,7 +22,9 @@ Suivi du projet et notes de travail. Ce dossier n’appartient pas au moteur : l
 | [maquette/](maquette/) | Maquettes layout : [v1](maquette/v1/) HTML, [v2](maquette/v2/) React/Dockview |
 | [maquette/plan-v2.md](maquette/plan-v2.md) | Plan maquette v2 (Whittle, DS, light/dark) |
 | [maquette/plan-espaces.md](maquette/plan-espaces.md) | Espaces CAM, CTRL, Render Studio |
+| [maquette/plan-integration-shell.md](maquette/plan-integration-shell.md) | Intégration maquette v2 → shell (P4b) |
 | [sprints/sprint-65-maquette-espaces.md](sprints/sprint-65-maquette-espaces.md) | Sprint de ces espaces, dessiné dans la maquette v2 |
+| [sprints/sprint-67-shell-ds.md](sprints/sprint-67-shell-ds.md) | Sprint 67 : DS OpenCad dans `packages/shell` |
 | [maquette/v1/plan-layout.md](maquette/v1/plan-layout.md) | Layout v1 (archive sprint 01) |
 | [maquette/v2/](maquette/v2/) | Maquette interactive : `pnpm dev` dans ce dossier |
 | [sprints/sprint-01-maquette-layout.md](sprints/sprint-01-maquette-layout.md) | Sprint de la maquette de layout, déjà dessinée |

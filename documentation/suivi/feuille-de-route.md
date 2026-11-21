@@ -1,6 +1,6 @@
 # Feuille de route — OpenCadEditor et OpenCAD
 
-État au 2026-11-20. Synthèse après les sprints 03–61. Le détail daté reste dans [journal.md](journal.md). Cap technique : [direction-modeleur.md](../veille/direction-modeleur.md). Pilotage : [pilotage-lignes.md](../veille/pilotage-lignes.md) (2026-11-20). Doctrine formats : [OpenCAD](https://github.com/naanouff/OpenCAD/blob/develop/documentation/opencad-doctrine.md).
+État au 2026-11-21. Synthèse après les sprints 03–61 ; P4b ouvert (sprint 67). Le détail daté reste dans [journal.md](journal.md). Cap technique : [direction-modeleur.md](../veille/direction-modeleur.md). Pilotage : [pilotage-lignes.md](../veille/pilotage-lignes.md) (2026-11-20). Doctrine formats : [OpenCAD](https://github.com/naanouff/OpenCAD/blob/develop/documentation/opencad-doctrine.md).
 
 ## Cap
 
@@ -32,6 +32,7 @@ flowchart LR
     P1[P1 Sortie du provisoire s38-40]
     P3[P3 Boite en assemblage s44-47]
     P4[P4 Ergonomie des lignes s56-61]
+    P4b[P4b Chrome Whittle + DS s67+]
     P5[P5 Viewport topologique s62-64]
     P6[P6 Plateau service OpenCAD s65-66]
   end
@@ -53,6 +54,7 @@ flowchart LR
   O4 --> P3
   O3 --> P3
   P1 --> P4
+  P4 --> P4b
   P4 --> P5
   P5 --> P6
 ```
@@ -69,6 +71,7 @@ flowchart LR
 | **P3** Assemblage | OpenCadEditor | 44–47 | fait (graphe) | open/save/plan/fetch `.cadom` |
 | **P3b** Pièces boîte | OpenCadEditor | 48–55 | fait | Pièces + Complete + octets/viewport `.cadomesh` |
 | **P4** Ergonomie des lignes | OpenCadEditor | 56–61 | fait | Souris, ruban et expression : clients des lignes de `Session` |
+| **P4b** Chrome Whittle + DS | OpenCadEditor | [67](../sprints/sprint-67-shell-ds.md)+ | **ouvert (67)** | Intégration maquette v2 → shell ([plan](../maquette/plan-integration-shell.md)) |
 | **P5** Viewport topologique | OpenCadEditor | 62–64 | **en cours (62)** | Carreaux, arêtes, datums sélectionnables dans w3dts |
 | **P6** Plateau service | OpenCadEditor | 65–66 | en cours (65) | Démo OpenCAD : plateau alu + 2 poignées laiton + 4 vis |
 
@@ -105,6 +108,10 @@ Sprints 56–58 : clic → `esquisse face.*` / cercle / rectangle ([selection-fa
 
 La souris et le ruban restent des clients des lignes ([pilotage-lignes.md](../veille/pilotage-lignes.md)). Pas de second modèle côté React. Les comportements empruntés à Whittle (geste refusé avec la raison, aperçu d’une ligne non écrite, référence ambiguë signalée) arrivent sur les verbes déjà dans le pipeline. Hors moyen terme : maillons, Electron, mates. W1 helix en parallèle occt-wasm.
 
+### P4b — Chrome Whittle + design system (dès sprint 67)
+
+Plan : [plan-integration-shell.md](../maquette/plan-integration-shell.md). Porter la maquette v2 dans le shell par couches (DS → chrome → ruban Lucide → layout Dockview v6 + terminal). Design seulement ; CAM / CTRL / Render restent maquette. Sprint 67 : tokens + primitives dans `packages/shell/src/ds/` ([sprint-67-shell-ds.md](../sprints/sprint-67-shell-ds.md), branche `feature/shell-ds`). Parallèle à P5 / P6, sans les bloquer.
+
 ### P5 — Viewport topologique (dès sprint 62)
 
 Veille : [affichage-topologique.md](../veille/affichage-topologique.md). Sprint 62 : carreaux BRep pick + surbrillance ([sprint-62-carreaux-brep.md](../sprints/sprint-62-carreaux-brep.md)). Sprint 63 : arêtes sur segments du fil BRep. Sprint 64 : datums / repères 3D visibles et pickables. Pick triangle sur `Maillage.faces[]` ; pas de GPU picking ni de pile Three.js.
@@ -131,4 +138,6 @@ Veille : [plateau-service-cadom.md](../veille/plateau-service-cadom.md). Cas pé
 - [recalage-cap.md](../veille/recalage-cap.md) — écarts P0
 - [affichage-topologique.md](../veille/affichage-topologique.md) — P5 viewport CAO
 - [plateau-service-cadom.md](../veille/plateau-service-cadom.md) — P6 démo formats
-- [sprint-62-carreaux-brep.md](../sprints/sprint-62-carreaux-brep.md) — prochain code
+- [sprint-62-carreaux-brep.md](../sprints/sprint-62-carreaux-brep.md) — P5 carreaux
+- [plan-integration-shell.md](../maquette/plan-integration-shell.md) — P4b intégration maquette → shell
+- [sprint-67-shell-ds.md](../sprints/sprint-67-shell-ds.md) — P4b phase 1 (DS)
