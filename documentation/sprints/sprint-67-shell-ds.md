@@ -19,8 +19,8 @@ Hors sprint : Chrome / StatusBar (phase 2), ruban Lucide (phase 3), layout Whitt
 
 ## Terminé quand
 
-- `pnpm dev` dans le shell bascule light / dark et persiste la préférence.
-- Les primitives DS sont importables depuis `packages/shell/src/ds/`.
-- Dockview et le viewport restent lisibles (pas de clear / thème cassé).
-- Aucune nouvelle mutation hors lignes `Session` ; `ruban.ts` et les tests ruban restent verts.
-- [plan-integration-shell.md](../maquette/plan-integration-shell.md) et la feuille de route pointent ce sprint.
+- [x] `pnpm dev` dans le shell bascule light / dark et persiste la préférence.
+- [x] Les primitives DS sont importables depuis `packages/shell/src/ds/`.
+- [x] Dockview et le viewport restent lisibles (pas de clear / thème cassé).
+- [x] Aucune nouvelle mutation hors lignes `Session` ; `ruban.ts` et les tests ruban restent verts.
+- [x] [plan-integration-shell.md](../maquette/plan-integration-shell.md) et la feuille de route pointent ce sprint.

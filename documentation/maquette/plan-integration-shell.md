@@ -50,7 +50,7 @@ Sources : `packages/shell/src/App.tsx`, `documentation/maquette/v2/src/App.tsx`.
 
 ## Phase 1 — Design system dans le shell
 
-Sprint : [67](../sprints/sprint-67-shell-ds.md). Branche : `feature/shell-ds`.
+Sprint : [67](../sprints/sprint-67-shell-ds.md). Branche : `feature/shell-ds`. **Fait.**
 
 **Livrable** : tokens + primitives consommables par le shell, sans changer le layout Dockview.
 
@@ -59,7 +59,7 @@ Sprint : [67](../sprints/sprint-67-shell-ds.md). Branche : `feature/shell-ds`.
 3. Unifier le thème : préférence OpenCad `light|dark` (`opencad.shell.theme`), bridge `--oc-*` → `--color-*` pour Dockview / viewport.
 4. Remplacer progressivement les couleurs en dur par les tokens (sans refactor structurel).
 
-**Done** : bascule light/dark persistée ; chrome actuel fonctionnel ; pas de régression viewport.
+**Done** : bascule light/dark persistée (toggle ruban) ; layout `v5` inchangé ; pas de régression viewport.
 
 ## Phase 2 — Chrome + StatusBar (Design)
 

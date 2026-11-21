@@ -1,12 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
 import type { DockviewApi, IDockviewPanelProps } from 'dockview'
-import {
-  EditorDock,
-  Panel,
-  loadThemeFromStorage,
-  subscribeResolvedTheme,
-  type ResolvedThemeId,
-} from '@naanouff/w3dts-editor-ui'
+import { EditorDock, Panel, type ResolvedThemeId } from '@naanouff/w3dts-editor-ui'
+import { applyOcTheme, loadOcTheme, type OcTheme } from './ds'
 import { ArbreConstructionVue } from './ArbreConstructionVue.tsx'
 import { DebugVue } from './DebugVue.tsx'
 import { DocumentVue } from './DocumentVue.tsx'
@@ -414,16 +409,12 @@ function ParametresVue(_props: IDockviewPanelProps) {
 }
 
 export function App() {
-  const [theme] = useState(() => loadThemeFromStorage())
-  const [resolvedTheme, setResolvedTheme] = useState<ResolvedThemeId>(() =>
-    document.documentElement.dataset.theme === 'light'
-      ? 'light'
-      : document.documentElement.dataset.theme === 'w3dts'
-        ? 'w3dts'
-        : 'dark',
-  )
+  const [theme, setTheme] = useState<OcTheme>(() => loadOcTheme())
+  const resolvedTheme: ResolvedThemeId = theme
 
-  useEffect(() => subscribeResolvedTheme(theme, setResolvedTheme), [theme])
+  useEffect(() => {
+    applyOcTheme(theme)
+  }, [theme])
 
   const components = useMemo(
     () => ({
@@ -440,15 +431,15 @@ export function App() {
 
   return (
     <div className="shell-root">
-      <RubanVue />
+      <RubanVue theme={theme} onThemeChange={setTheme} />
       <div className="shell-dock">
-      <EditorDock
-        resolvedTheme={resolvedTheme}
-        components={components}
-        storageKey={STORAGE_KEY}
-        requiredPanelIds={REQUIRED}
-        buildDefaultLayout={buildDefaultLayout}
-      />
+        <EditorDock
+          resolvedTheme={resolvedTheme}
+          components={components}
+          storageKey={STORAGE_KEY}
+          requiredPanelIds={REQUIRED}
+          buildDefaultLayout={buildDefaultLayout}
+        />
       </div>
     </div>
   )

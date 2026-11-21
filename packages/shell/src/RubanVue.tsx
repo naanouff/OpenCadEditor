@@ -1,4 +1,6 @@
+import { Moon, Sun } from 'lucide-react'
 import { useEffect, useState, type ReactElement } from 'react'
+import { IconButton, type OcTheme } from './ds'
 import { storeShell } from './storeShell.ts'
 import { boutonsRuban, ligneReglage, reglageFonction, type OngletRuban, type ProfilRuban } from './ruban.ts'
 
@@ -8,7 +10,12 @@ function useRevision() {
   return revision
 }
 
-export function RubanVue(): ReactElement {
+type Props = {
+  theme: OcTheme
+  onThemeChange: (theme: OcTheme) => void
+}
+
+export function RubanVue({ theme, onThemeChange }: Props): ReactElement {
   const revision = useRevision()
   const [onglet, setOnglet] = useState<OngletRuban>('esquisse')
   const posee = storeShell.hote().session.esquisseCourante()
@@ -36,27 +43,27 @@ export function RubanVue(): ReactElement {
   void revision
 
   return (
-    <div className="flex shrink-0 items-center gap-2 border-b border-[var(--color-border-default)] bg-[var(--color-surface-panel)] px-2 py-1 font-ui text-[13px]">
+    <div className="flex shrink-0 items-center gap-2 border-b border-oc-line bg-[var(--oc-ribbon)] px-2 py-1 font-ui text-[13px] text-oc-text">
       {(['esquisse', 'fonctions'] as const).map((id) => (
         <button
           key={id}
           type="button"
           className={
             onglet === id
-              ? 'rounded px-2 py-1 text-[var(--color-text-primary)] bg-[var(--color-surface-hover)]'
-              : 'rounded px-2 py-1 text-[var(--color-text-secondary)]'
+              ? 'rounded-oc px-2 py-1 text-oc-text bg-oc-select'
+              : 'rounded-oc px-2 py-1 text-oc-muted hover:bg-oc-panel-2 hover:text-oc-text'
           }
           onClick={() => setOnglet(id)}
         >
           {id === 'esquisse' ? 'Esquisse' : 'Fonctions'}
         </button>
       ))}
-      <span className="mx-1 h-4 w-px bg-[var(--color-border-default)]" />
+      <span className="mx-1 h-4 w-px bg-oc-line" />
       {boutons.map((bouton) => (
         <button
           key={bouton.id}
           type="button"
-          className="rounded border border-[var(--color-border-default)] bg-[var(--color-surface-input)] px-2 py-1 text-[var(--color-text-primary)] hover:bg-[var(--color-surface-hover)]"
+          className="rounded-oc border border-oc-line bg-oc-panel-2 px-2 py-1 text-oc-text hover:border-oc-accent"
           onClick={() => storeShell.executer(bouton.lignes.join('\n'))}
         >
           {bouton.libelle}
@@ -75,12 +82,20 @@ export function RubanVue(): ReactElement {
         >
           <input
             aria-label="Expression"
-            className="w-16 rounded border border-[var(--color-border-default)] bg-[var(--color-surface-input)] px-2 py-1 text-[var(--color-text-primary)]"
+            className="w-16 rounded-oc border border-oc-line bg-oc-panel-2 px-2 py-1 font-mono text-oc-text outline-none focus:border-oc-accent"
             value={valeur}
             onChange={(event) => setValeur(event.target.value)}
           />
         </form>
       ) : null}
+      <div className="ml-auto">
+        <IconButton
+          label={theme === 'dark' ? 'Thème clair' : 'Thème sombre'}
+          onClick={() => onThemeChange(theme === 'dark' ? 'light' : 'dark')}
+        >
+          {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+        </IconButton>
+      </div>
     </div>
   )
 }

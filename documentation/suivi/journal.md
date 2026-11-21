@@ -1,5 +1,9 @@
 # Journal de suivi
 
+## 2026-11-21 — Sprint 67 : DS OpenCad dans le shell
+
+`packages/shell/src/ds/` porte tokens + primitives de la maquette. Thème `light|dark` (`opencad.shell.theme`), bascule dans le ruban, bridge Dockview. Layout `v5` inchangé. Suite : chrome (phase 2).
+
 ## 2026-11-21 — Intégration maquette v2 → shell
 
 [plan-integration-shell.md](../maquette/plan-integration-shell.md) fixe le portage par couches (DS → chrome → ruban → layout Whittle + terminal). Design seulement ; CAM / CTRL / Render restent maquette. [sprint-67-shell-ds.md](../sprints/sprint-67-shell-ds.md) ouvre la phase 1 sur `feature/shell-ds`. Feuille de route : jalon **P4b**.

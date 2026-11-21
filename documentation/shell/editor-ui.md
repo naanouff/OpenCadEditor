@@ -36,10 +36,10 @@ Ils vivent dans `packages/shell/src/surcharges/`. Un plugin Vite redirige les mo
 
 ## Host React
 
-- Styles : `@naanouff/w3dts-editor-ui/styles.css` (tokens + Dockview) **avant** le premier rendu
-- Tailwind : `src/tailwind.css` scanne `src/` et `vendor/w3dts/packages/editor-ui/src` (primitives)
-- Thème : `loadThemeFromStorage`, `applyResolvedThemeToDocument`, `subscribeResolvedTheme`
-- `EditorDock` : clé `opencad.shell.dockview.layout.v4`, panneaux requis `viewport`, `terminal`, `parametres`, `historique`, `document`, `debug`
+- Styles : `@naanouff/w3dts-editor-ui/styles.css` (tokens + Dockview) **avant** le premier rendu, puis `src/tailwind.css` qui importe `src/ds/tokens.css` (charte OpenCad)
+- Tailwind : `src/tailwind.css` scanne `src/` et `vendor/w3dts/packages/editor-ui/src` (primitives) ; classes `oc-*` mappées sur `--oc-*`
+- Thème : OpenCad `light|dark` via `applyOcTheme` / `loadOcTheme` (`opencad.shell.theme`) ; bridge `--oc-*` → `--color-*` pour Dockview ; `EditorDock` reçoit `resolvedTheme` light/dark. Intégration complète : [plan-integration-shell.md](../maquette/plan-integration-shell.md)
+- `EditorDock` : clé `opencad.shell.dockview.layout.v5`, panneaux requis `viewport`, `terminal`, `parametres`, `historique`, `document`, `debug`, `preferences`
 - Layout par défaut : construction à gauche, paramètres sous l’arbre, document sous les paramètres, viewport au centre, terminal en bas
 - Panneaux métier : tokens CSS + primitive `Panel` (pas le store `viewer-editor`)
 - Terminal : Monaco comme le Script panel w3dts (`Entrée` exécute, `Maj+Entrée` nouvelle ligne, ↑ historique)
