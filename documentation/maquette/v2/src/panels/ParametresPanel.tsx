@@ -2,9 +2,9 @@ import type { IDockviewPanelProps } from 'dockview'
 import { PanelSection } from '../ds'
 
 const PARAMS = [
-  { nom: 'diametre_boite', valeur: '40 mm' },
-  { nom: 'epaisseur_paroi', valeur: '2,5 mm' },
-  { nom: 'entrecorne', valeur: '20 mm' },
+  { nom: 'longueur', valeur: '500 mm' },
+  { nom: 'entraxe', valeur: '180 mm' },
+  { nom: 'longueur_vis', valeur: '20 mm' },
 ] as const
 
 export function ParametresPanel(_props: IDockviewPanelProps) {

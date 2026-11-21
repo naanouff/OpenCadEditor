@@ -6,8 +6,8 @@ const ITEMS = [
   'Plan de dessus',
   'Plan de face',
   'Plan de droite',
-  'Esquisse anneau',
-  'Extrusion — carrure',
+  'Esquisse plateau',
+  'Extrusion — plateau',
   'Portée lunette',
   'Portée fond',
   'Cornes',
@@ -22,7 +22,7 @@ export function ConstructionPanel(_props: IDockviewPanelProps) {
             <TimelineItem
               key={label}
               label={label}
-              selected={label === 'Esquisse anneau'}
+              selected={label === 'Esquisse plateau'}
               trailing={
                 label === 'Cornes' ? (
                   <Badge tone="proposal">symétrie 6 h</Badge>

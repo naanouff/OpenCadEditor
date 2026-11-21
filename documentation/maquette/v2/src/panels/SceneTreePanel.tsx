@@ -36,7 +36,7 @@ type SceneNode = {
 
 const TREE: SceneNode = {
   id: 'piece',
-  label: 'Carrure',
+  label: 'Plateau',
   icon: 'piece',
   children: [
     {
@@ -56,7 +56,7 @@ const TREE: SceneNode = {
       children: [
         {
           id: 'esquisse-anneau',
-          label: 'Esquisse anneau',
+          label: 'Esquisse plateau',
           icon: 'sketch',
           selectable: true,
         },

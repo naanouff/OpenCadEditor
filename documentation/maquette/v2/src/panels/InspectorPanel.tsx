@@ -4,8 +4,6 @@ import { Badge, Button, Field } from '../ds'
 import {
   CTRL_MBD,
   CTRL_VARS,
-  MBD_APPEARANCE,
-  mbdRoughness,
   ctrlRatio,
   findCam,
   mbdById,
@@ -148,7 +146,7 @@ function MbdCard({ feature, sentence }: { feature: CtrlVar; sentence: string }) 
         {feature.id} · {feature.nominal} {feature.tolerance}
       </p>
       <p className="m-0 text-oc-muted">
-        Réf. {feature.datum} · {feature.surface} · {MBD_APPEARANCE}
+        {feature.matiere} · {feature.cadomat} · {feature.surface} · réf. {feature.datum}
       </p>
       <p className="m-0 mt-1 text-oc-text">{sentence}</p>
     </div>
@@ -338,7 +336,7 @@ function RenderInspector() {
           <div>
             <h2 className="m-0 text-[14px] font-semibold">Studio</h2>
             <p className="m-0 mt-0.5 text-[11px] text-oc-muted">
-              {MBD_APPEARANCE} · {feature.surface}
+              {feature.matiere} · {feature.surface}
             </p>
           </div>
         </div>
@@ -346,11 +344,11 @@ function RenderInspector() {
       <div className="flex-1 px-3 py-3">
         <MbdCard
           feature={feature}
-          sentence={`Le PBR reprend « ${MBD_APPEARANCE} ». La rugosité ${mbdRoughness(feature.surface)} est déduite de ${feature.surface}.`}
+          sentence={`Le PBR « ${feature.matiere} » reprend la rugosité ${feature.roughness} de ${feature.cadomat}.`}
         />
-        <Field label="Apparence MBD" inputProps={{ value: MBD_APPEARANCE, readOnly: true }} />
+        <Field label="Matière" inputProps={{ value: feature.matiere, readOnly: true }} />
         <Field label="État de surface" inputProps={{ value: feature.surface, readOnly: true }} />
-        <Field label="Rugosité PBR" inputProps={{ value: mbdRoughness(feature.surface), readOnly: true }} />
+        <Field label="Rugosité PBR" inputProps={{ value: feature.roughness, readOnly: true }} />
         <Field label="HDRI" inputProps={{ value: 'studio-navy', readOnly: true }} />
         <Field label="Résolution" inputProps={{ value: '1920×1080', readOnly: true }} />
         {renderReady ? <Badge tone="accent">Rendu 1 · 2 s</Badge> : null}
@@ -433,7 +431,7 @@ export function InspectorPanel(_props: IDockviewPanelProps) {
       <div className="border-b border-oc-line px-3 py-2">
         <div className="flex items-start justify-between gap-2">
           <div>
-            <h2 className="m-0 text-[14px] font-semibold">Carrure</h2>
+            <h2 className="m-0 text-[14px] font-semibold">Plateau</h2>
             <p className="m-0 mt-0.5 text-[11px] text-oc-muted">Extrusion en cours</p>
           </div>
           <select
@@ -470,8 +468,8 @@ export function InspectorPanel(_props: IDockviewPanelProps) {
         </h3>
         <Field
           label="Distance"
-          hint="Entrée écrirait extrude hauteur_carrure"
-          inputProps={{ defaultValue: 'hauteur_carrure', readOnly: true }}
+          hint="Entrée écrirait extrude hauteur"
+          inputProps={{ defaultValue: 'hauteur', readOnly: true }}
         />
         <div className="rounded-oc border border-dashed border-oc-preview/50 bg-oc-select/50 p-2">
           <div className="mb-1 flex items-center gap-1.5 text-[11px] text-oc-preview">

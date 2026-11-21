@@ -12,7 +12,7 @@ export type MockScene = 'sketch' | 'extrude'
 export type RibbonTab = 'solide' | 'esquisse' | 'outils'
 export type SelectFilter = 'any' | 'body' | 'face' | 'edge'
 export type Workspace = 'design' | 'cam' | 'ctrl' | 'render'
-export type CtrlVarId = 'diametre_boite' | 'epaisseur_paroi' | 'entrecorne'
+export type CtrlVarId = 'plateau' | 'poignee' | 'vis'
 
 export type SketchToggle = {
   lookAt: boolean
@@ -56,185 +56,97 @@ export type CamPart = {
   setups: CamSetup[]
 }
 
-/** Pièces de `assemblageBoite.ts`. Un setup par couple machine + posage. */
+/** Pièces de `assemblagePlateau.ts`. Un setup par couple machine + posage. */
 export const CAM_PARTS: CamPart[] = [
   {
-    id: 'carrure',
-    label: 'Carrure',
-    definition: 'carrure.cadompart',
+    id: 'plateau',
+    label: 'Plateau',
+    definition: 'plateau.cadompart',
     setups: [
       {
-        id: 'carrure-tour',
-        label: 'Setup Tour',
-        machine: 'Tour',
-        outils: ['plaquette CNMG'],
-        brut: 'tube',
-        final: 'carrure.cadompart',
-        posage: 'mandrin',
+        id: 'plateau-fraise',
+        label: 'Setup Fraiseuse',
+        machine: 'Fraiseuse 3 axes',
+        outils: ['fraise Ø10'],
+        brut: 'plaque aluminium',
+        final: 'plateau.cadompart',
+        posage: 'étau',
         operations: [
           {
             id: 'op10',
-            label: 'Op10 ébauche',
-            parcours: 'contour extérieur',
-            tool: 'plaquette CNMG',
-            feed: '0,2 mm/tr',
-            pass: '0,4 mm',
-            mbd: 'diametre_boite',
-            mbdUse: 'Ébauche tour · plaquette CNMG · passe 0,4, la cote finie est laissée à Op20.',
+            label: 'Op10 poche',
+            parcours: 'poche',
+            tool: 'fraise Ø10',
+            feed: '800 mm/min',
+            pass: '1 mm',
+            mbd: 'plateau',
+            mbdUse: 'Ébauche de la poche · aluminium · la finition tient 500 ±0,5 et la rugosité 0,55.',
           },
           {
             id: 'op20',
             label: 'Op20 finition',
             parcours: 'profil',
-            tool: 'plaquette CNMG',
-            feed: '0,08 mm/tr',
-            pass: '0,1 mm',
-            mbd: 'diametre_boite',
-            mbdUse: 'Finition · passe 0,1 pour tenir ±0,05 et Ra 0,8.',
-          },
-        ],
-      },
-      {
-        id: 'carrure-fraise',
-        label: 'Setup Fraiseuse',
-        machine: 'Fraiseuse 3 axes',
-        outils: ['fraise Ø6', 'foret Ø1,2'],
-        brut: 'ébauche tour',
-        final: 'carrure.cadompart',
-        posage: 'montage cornes',
-        operations: [
-          {
-            id: 'op30',
-            label: 'Op30 perçages barrette',
-            parcours: '4 trous',
-            tool: 'foret Ø1,2',
-            feed: '120 mm/min',
-            pass: 'traversant',
-            mbd: 'entrecorne',
-            mbdUse: 'Perçage des barrettes · foret Ø1,2 positionné sur entrecorne ±0,10.',
-          },
-        ],
-      },
-    ],
-  },
-  {
-    id: 'lunette',
-    label: 'Lunette',
-    definition: 'lunette.cadompart',
-    setups: [
-      {
-        id: 'lunette-tour',
-        label: 'Setup Tour',
-        machine: 'Tour',
-        outils: ['plaquette CNMG'],
-        brut: 'barre',
-        final: 'lunette.cadompart',
-        posage: 'mandrin',
-        operations: [
-          {
-            id: 'lunette-op10',
-            label: 'Op10 dressage',
-            parcours: 'face',
-            tool: 'plaquette CNMG',
-            feed: '0,15 mm/tr',
+            tool: 'fraise Ø10',
+            feed: '400 mm/min',
             pass: '0,2 mm',
+            mbd: 'plateau',
+            mbdUse: 'Finition du fond et du rebord · rugosité 0,55 lue sur aluminium.cadomat.',
           },
         ],
       },
     ],
   },
   {
-    id: 'verre',
-    label: 'Verre',
-    definition: 'verre.cadompart',
+    id: 'poignee',
+    label: 'Poignée',
+    definition: 'poignee.cadompart',
     setups: [
       {
-        id: 'verre-fraise',
+        id: 'poignee-fraise',
         label: 'Setup Fraiseuse',
         machine: 'Fraiseuse 3 axes',
         outils: ['fraise Ø6'],
-        brut: 'disque',
-        final: 'verre.cadompart',
-        posage: 'ventouse',
+        brut: 'plat laiton',
+        final: 'poignee.cadompart',
+        posage: 'étau',
         operations: [
           {
-            id: 'verre-op10',
-            label: 'Op10 détourage',
+            id: 'op30',
+            label: 'Op30 contour D',
             parcours: 'contour',
             tool: 'fraise Ø6',
-            feed: '600 mm/min',
-            pass: '0,3 mm',
+            feed: '500 mm/min',
+            pass: '0,5 mm',
+            mbd: 'poignee',
+            mbdUse: 'Contour du D · laiton · entraxe 180 ±0,2 · rugosité 0,50.',
           },
         ],
       },
     ],
   },
   {
-    id: 'fond',
-    label: 'Fond',
-    definition: 'fond.cadompart',
+    id: 'vis',
+    label: 'Vis',
+    definition: 'vis.cadompart',
     setups: [
       {
-        id: 'fond-tour',
+        id: 'vis-tour',
         label: 'Setup Tour',
         machine: 'Tour',
-        outils: ['plaquette CNMG'],
-        brut: 'rondelle',
-        final: 'fond.cadompart',
-        posage: 'mandrin',
-        operations: [
-          {
-            id: 'fond-op10',
-            label: 'Op10 tournage',
-            parcours: 'profil',
-            tool: 'plaquette CNMG',
-            feed: '0,12 mm/tr',
-            pass: '0,2 mm',
-          },
-        ],
-      },
-    ],
-  },
-  {
-    id: 'couronne',
-    label: 'Couronne',
-    definition: 'couronne.cadompart',
-    setups: [
-      {
-        id: 'couronne-tour',
-        label: 'Setup Tour',
-        machine: 'Tour',
-        outils: ['plaquette CNMG'],
-        brut: 'barre Ø6',
-        final: 'couronne.cadompart',
+        outils: ['plaquette'],
+        brut: 'barre acier',
+        final: 'vis.cadompart',
         posage: 'pince',
         operations: [
           {
-            id: 'couronne-op10',
-            label: 'Op10 tournage',
+            id: 'op40',
+            label: 'Op40 M4',
             parcours: 'révolution',
-            tool: 'plaquette CNMG',
+            tool: 'plaquette',
             feed: '0,08 mm/tr',
-            pass: '0,15 mm',
-          },
-        ],
-      },
-      {
-        id: 'couronne-fraise',
-        label: 'Setup Fraiseuse',
-        machine: 'Fraiseuse 3 axes',
-        outils: ['fraise Ø2'],
-        brut: 'ébauche tour',
-        final: 'couronne.cadompart',
-        posage: 'pince diviseur',
-        operations: [
-          {
-            id: 'couronne-op20',
-            label: 'Op20 cannelure',
-            parcours: 'moletage',
-            tool: 'fraise Ø2',
-            feed: '200 mm/min',
-            pass: '0,1 mm',
+            pass: '0,2 mm',
+            mbd: 'vis',
+            mbdUse: 'Tournage M4 × 20 · acier · rugosité 0,55 de acier.cadomat.',
           },
         ],
       },
@@ -282,23 +194,21 @@ export type CtrlVar = {
   inTolerance: boolean
   offset: string
   datum: string
+  /** État de surface lu sur le `.cadomat` de la pièce : rugosité PBR. */
   surface: string
+  matiere: string
+  cadomat: string
+  roughness: string
+  swatch: string
   /** Opération et outil que la CAM déduit de cette cote. */
   camUse: string
 }
 
-/** Tolérances, références, apparence et états de surface portés par la définition. */
-export const CTRL_MBD = 'carrure.cadompart'
-export const MBD_APPEARANCE = 'acier brossé'
-const ROUGHNESS_FROM_SURFACE: Record<string, string> = {
-  'Ra 0,8': '0,18',
-  'Ra 1,6': '0,35',
-  'Ra 3,2': '0,62',
-}
+/** Assemblage, matières et rugosités du plateau de service. */
+export const CTRL_MBD = 'PlateauService.cadom'
 
-/** Rugosité PBR déduite de l’état de surface de la définition. */
-export function mbdRoughness(surface: string): string {
-  return ROUGHNESS_FROM_SURFACE[surface] ?? '0,35'
+export function isCtrlVar(id: string): id is CtrlVarId {
+  return id === 'plateau' || id === 'poignee' || id === 'vis'
 }
 
 export function mbdById(id: CtrlVarId) {
@@ -340,46 +250,58 @@ export function ctrlHeat(ratio: number) {
 
 export const CTRL_VARS: CtrlVar[] = [
   {
-    id: 'diametre_boite',
-    nominal: '40 mm',
-    tolerance: '±0,05 mm',
-    mini: '39,95 mm',
-    maxi: '40,05 mm',
-    measured: '40,08 mm',
-    ecart: '+0,08 mm',
+    id: 'plateau',
+    nominal: '500 mm',
+    tolerance: '±0,5 mm',
+    mini: '499,5 mm',
+    maxi: '500,5 mm',
+    measured: '500,8 mm',
+    ecart: '+0,8 mm',
     inTolerance: false,
-    offset: '−0,08 mm',
+    offset: '−0,8 mm',
     datum: 'A',
-    surface: 'Ra 0,8',
-    camUse: 'Finition tour · plaquette CNMG · passe 0,1 pour tenir ±0,05 et Ra 0,8.',
+    surface: 'rugosité 0,55',
+    matiere: 'aluminium',
+    cadomat: 'aluminium.cadomat',
+    roughness: '0,55',
+    swatch: '#c7ccd4',
+    camUse: 'Fraisage de la poche · aluminium · rugosité 0,55.',
   },
   {
-    id: 'epaisseur_paroi',
-    nominal: '2,5 mm',
-    tolerance: '±0,05 mm',
-    mini: '2,45 mm',
-    maxi: '2,55 mm',
-    measured: '2,52 mm',
-    ecart: '+0,02 mm',
+    id: 'poignee',
+    nominal: '180 mm',
+    tolerance: '±0,2 mm',
+    mini: '179,8 mm',
+    maxi: '180,2 mm',
+    measured: '180,08 mm',
+    ecart: '+0,08 mm',
     inTolerance: true,
     offset: '0 mm',
     datum: 'B',
-    surface: 'Ra 1,6',
-    camUse: 'Ébauche de face · la passe reste à l’intérieur de ±0,05.',
+    surface: 'rugosité 0,50',
+    matiere: 'laiton',
+    cadomat: 'laiton.cadomat',
+    roughness: '0,50',
+    swatch: '#d9a84c',
+    camUse: 'Contour du D · laiton · entraxe 180 · rugosité 0,50.',
   },
   {
-    id: 'entrecorne',
+    id: 'vis',
     nominal: '20 mm',
-    tolerance: '±0,10 mm',
-    mini: '19,90 mm',
-    maxi: '20,10 mm',
+    tolerance: '±0,1 mm',
+    mini: '19,9 mm',
+    maxi: '20,1 mm',
     measured: '20 mm',
     ecart: '0 mm',
     inTolerance: true,
     offset: '0 mm',
-    datum: 'A-B',
-    surface: 'Ra 3,2',
-    camUse: 'Perçage des barrettes · foret Ø1,2 positionné sur cette cote.',
+    datum: 'C',
+    surface: 'rugosité 0,55',
+    matiere: 'acier',
+    cadomat: 'acier.cadomat',
+    roughness: '0,55',
+    swatch: '#8c8e94',
+    camUse: 'Tournage M4 × 20 · acier · rugosité 0,55.',
   },
 ]
 
@@ -463,7 +385,7 @@ export function MockProvider({ children }: { children: ReactNode }) {
   const [showMachineFrame, setShowMachineFrame] = useState(true)
   const [showStockFrame, setShowStockFrame] = useState(true)
   const [framesSuperposed, setFramesSuperposed] = useState(false)
-  const [ctrlVar, setCtrlVar] = useState<CtrlVarId>('diametre_boite')
+  const [ctrlVar, setCtrlVar] = useState<CtrlVarId>('plateau')
   const [rattrapageLabel, setRattrapageLabel] = useState<string | null>(null)
   const [locked, setLocked] = useState(false)
   const [renderReady, setRenderReady] = useState(false)

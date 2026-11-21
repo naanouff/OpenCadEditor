@@ -4,7 +4,7 @@ import { EditorDock } from '@naanouff/w3dts-editor-ui'
 import { StatusBar } from './ds'
 import { Chrome } from './Chrome'
 import { Ribbon } from './Ribbon'
-import { MBD_APPEARANCE, MockProvider, findCam, mbdById, mbdRoughness, useMock, type CtrlVarId } from './mockState'
+import { MockProvider, findCam, mbdById, useMock, type CtrlVarId } from './mockState'
 import { BrowserPanel } from './panels/BrowserPanel'
 import { InspectorPanel } from './panels/InspectorPanel'
 import { TimelinePanel } from './panels/TimelinePanel'
@@ -51,12 +51,12 @@ function buildDefaultLayout(api: DockviewApi): void {
 function statusLeft(workspace: string, featureId: CtrlVarId, camNode: string): string {
   const operation = workspace === 'cam' ? findCam(camNode).operation : undefined
   const feature = mbdById(operation?.mbd ?? featureId)
-  const definition = `${feature.id} ${feature.nominal} ${feature.tolerance} · réf. ${feature.datum} · ${feature.surface}`
+  const definition = `${feature.matiere} · ${feature.nominal} ${feature.tolerance} · ${feature.surface} · réf. ${feature.datum}`
   if (workspace === 'cam') return `CAM · ${operation?.mbdUse ?? feature.camUse}`
   if (workspace === 'ctrl') {
     return `CTRL · ${feature.measured} ${feature.inTolerance ? 'dans' : 'hors'} ${feature.tolerance}`
   }
-  if (workspace === 'render') return `Render · ${MBD_APPEARANCE} · rugosité ${mbdRoughness(feature.surface)} depuis ${feature.surface}`
+  if (workspace === 'render') return `Render · ${feature.matiere} · rugosité ${feature.roughness} depuis ${feature.cadomat}`
   return `Définition · ${definition}`
 }
 

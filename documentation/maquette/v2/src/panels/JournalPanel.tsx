@@ -6,8 +6,8 @@ export function JournalPanel(_props: IDockviewPanelProps) {
   const { scene } = useMock()
   const lignes =
     scene === 'extrude'
-      ? ['piece Carrure', 'esquisse plan.dessus', 'cercle diametre_boite', '# extrude hauteur_carrure  (candidat)']
-      : ['piece Carrure', 'esquisse plan.dessus', 'cercle diametre_boite']
+      ? ['piece Plateau', 'esquisse plan.dessus', 'rectangle longueur', '# extrude hauteur  (candidat)']
+      : ['piece Plateau', 'esquisse plan.dessus', 'rectangle longueur']
 
   return (
     <aside className="h-full overflow-auto bg-oc-panel text-oc-text">

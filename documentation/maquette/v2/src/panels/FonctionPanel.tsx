@@ -8,7 +8,7 @@ export function FonctionPanel(_props: IDockviewPanelProps) {
   if (scene === 'sketch') {
     return (
       <aside className="h-full overflow-auto bg-oc-panel p-2 text-oc-text">
-        <PanelSection title="Esquisse anneau">
+        <PanelSection title="Esquisse plateau">
           <p className="m-0 px-1 text-[12.5px] leading-snug text-oc-muted">
             Cercle extérieur sélectionné. Le ruban lance ; ce panneau règle une fonction
             quand elle est active.
@@ -23,11 +23,11 @@ export function FonctionPanel(_props: IDockviewPanelProps) {
 
   return (
     <aside className="h-full overflow-auto bg-oc-panel p-2 text-oc-text">
-      <PanelSection title="Extrusion — carrure">
+      <PanelSection title="Extrusion — plateau">
         <Field
           label="Distance"
-          hint="Entrée écrirait extrude hauteur_carrure dans le journal"
-          inputProps={{ defaultValue: 'hauteur_carrure', readOnly: true }}
+          hint="Entrée écrirait extrude hauteur dans le journal"
+          inputProps={{ defaultValue: 'hauteur', readOnly: true }}
         />
         <label className="mb-3 grid gap-1 text-[12px]">
           <span className="text-oc-muted">Sens</span>
@@ -58,7 +58,7 @@ export function FonctionPanel(_props: IDockviewPanelProps) {
               strokeDasharray="4 3"
             />
             <text x="40" y="40" fill="var(--oc-preview)" fontSize="12">
-              hauteur_carrure
+              hauteur
             </text>
           </svg>
         </div>

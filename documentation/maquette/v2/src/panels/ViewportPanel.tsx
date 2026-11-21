@@ -62,74 +62,144 @@ function SurfaceMark({ x, y, label, color }: { x: number; y: number; label: stri
   )
 }
 
-function callout(nominal: string, tolerance: string, diameter = false) {
-  const value = nominal.replace(' mm', '')
-  const band = tolerance.replace(' mm', '')
-  return `${diameter ? 'Ø ' : ''}${value} ${band}`
+function callout(nominal: string, tolerance: string) {
+  return `${nominal.replace(' mm', '')} ${tolerance.replace(' mm', '')}`
+}
+
+function MatiereMark({
+  x,
+  y,
+  name,
+  swatch,
+  color,
+}: {
+  x: number
+  y: number
+  name: string
+  swatch: string
+  color: string
+}) {
+  const width = name.length * 5.6 + 16
+  return (
+    <g transform={`translate(${x} ${y})`}>
+      <rect width={width} height="13" rx="1.5" fill="var(--oc-panel)" stroke={color} strokeWidth="1" />
+      <rect width="7" height="13" rx="1.5" fill={swatch} />
+      <text x="10" y="9.5" fill={color} fontSize="8" fontWeight="700">
+        {name}
+      </text>
+    </g>
+  )
+}
+
+function PlateauBody({
+  tray = 'none',
+  handle = 'none',
+  screw = 'none',
+  stroke = 'var(--oc-ok)',
+  onPick,
+}: {
+  tray?: string
+  handle?: string
+  screw?: string
+  stroke?: string
+  onPick?: (id: CtrlVarId) => void
+}) {
+  const screws = [
+    [22, 82],
+    [22, 108],
+    [178, 82],
+    [178, 108],
+  ]
+  return (
+    <g>
+      <rect
+        x="28"
+        y="52"
+        width="144"
+        height="86"
+        rx="8"
+        fill={tray}
+        stroke={stroke}
+        strokeWidth="2.2"
+        className={onPick ? 'cursor-pointer' : undefined}
+        onClick={() => onPick?.('plateau')}
+      />
+      <rect x="40" y="62" width="120" height="66" rx="3" fill="none" stroke={stroke} strokeWidth="1.2" />
+      <path
+        d="M28 74 H16 A20 22 0 0 0 16 116 H28"
+        fill={handle}
+        stroke={stroke}
+        strokeWidth="2"
+        className={onPick ? 'cursor-pointer' : undefined}
+        onClick={() => onPick?.('poignee')}
+      />
+      <path
+        d="M172 74 H184 A20 22 0 0 1 184 116 H172"
+        fill={handle}
+        stroke={stroke}
+        strokeWidth="2"
+        className={onPick ? 'cursor-pointer' : undefined}
+        onClick={() => onPick?.('poignee')}
+      />
+      {screws.map(([x, y]) => (
+        <circle
+          key={`${x}-${y}`}
+          cx={x}
+          cy={y}
+          r="2.8"
+          fill={screw}
+          stroke={stroke}
+          strokeWidth="1"
+          className={onPick ? 'cursor-pointer' : undefined}
+          onClick={() => onPick?.('vis')}
+        />
+      ))}
+    </g>
+  )
 }
 
 function PmiOnPart({ active, onPick }: { active: CtrlVarId; onPick: (id: CtrlVarId) => void }) {
-  const diameter = mbdById('diametre_boite')
-  const wall = mbdById('epaisseur_paroi')
-  const horns = mbdById('entrecorne')
+  const tray = mbdById('plateau')
+  const handle = mbdById('poignee')
+  const screw = mbdById('vis')
   const ink = (id: CtrlVarId) => pmiInk(id === active)
   return (
     <g fontFamily="ui-sans-serif, system-ui, sans-serif">
-      <g className="cursor-pointer" onClick={() => onPick('diametre_boite')}>
-        <line x1="22" y1="20" x2="22" y2="-34" stroke={ink('diametre_boite')} strokeWidth="0.8" />
-        <line x1="178" y1="20" x2="178" y2="-34" stroke={ink('diametre_boite')} strokeWidth="0.8" />
-        <line x1="22" y1="-34" x2="178" y2="-34" stroke={ink('diametre_boite')} strokeWidth="1.1" />
-        <polygon points="22,-34 28,-31.4 28,-36.6" fill={ink('diametre_boite')} />
-        <polygon points="178,-34 172,-31.4 172,-36.6" fill={ink('diametre_boite')} />
-        <text x="100" y="-40" textAnchor="middle" fill={ink('diametre_boite')} fontSize="10" fontWeight="650">
-          {callout(diameter.nominal, diameter.tolerance, true)}
+      <g className="cursor-pointer" onClick={() => onPick('plateau')}>
+        <line x1="28" y1="138" x2="28" y2="164" stroke={ink('plateau')} strokeWidth="0.8" />
+        <line x1="172" y1="138" x2="172" y2="164" stroke={ink('plateau')} strokeWidth="0.8" />
+        <line x1="28" y1="164" x2="172" y2="164" stroke={ink('plateau')} strokeWidth="1.1" />
+        <polygon points="28,164 34,161.4 34,166.6" fill={ink('plateau')} />
+        <polygon points="172,164 166,161.4 166,166.6" fill={ink('plateau')} />
+        <text x="100" y="178" textAnchor="middle" fill={ink('plateau')} fontSize="10" fontWeight="650">
+          {callout(tray.nominal, tray.tolerance)}
         </text>
-        <DatumFlag x={192} y={-28} letter={diameter.datum} color={ink('diametre_boite')} />
-        <SurfaceMark x={-70} y={24} label={diameter.surface} color={ink('diametre_boite')} />
-        <line x1="-6" y1="34" x2="34" y2="46" stroke={ink('diametre_boite')} strokeWidth="0.7" />
+        <DatumFlag x={186} y={170} letter={tray.datum} color={ink('plateau')} />
+        <MatiereMark x={36} y={30} name={tray.matiere} swatch={tray.swatch} color={ink('plateau')} />
+        <line x1="70" y1="43" x2="84" y2="52" stroke={ink('plateau')} strokeWidth="0.7" />
+        <SurfaceMark x={108} y={24} label={tray.surface} color={ink('plateau')} />
       </g>
-      <g className="cursor-pointer" onClick={() => onPick('epaisseur_paroi')}>
-        <line x1="22" y1="124" x2="8" y2="124" stroke={ink('epaisseur_paroi')} strokeWidth="0.8" />
-        <line x1="42" y1="124" x2="8" y2="124" stroke={ink('epaisseur_paroi')} strokeWidth="0.8" />
-        <polygon points="22,124 28,121.5 28,126.5" fill={ink('epaisseur_paroi')} />
-        <polygon points="42,124 36,121.5 36,126.5" fill={ink('epaisseur_paroi')} />
-        <text x="-70" y="118" fill={ink('epaisseur_paroi')} fontSize="10" fontWeight="650">
-          {callout(wall.nominal, wall.tolerance)}
+      <g className="cursor-pointer" onClick={() => onPick('poignee')}>
+        <line x1="22" y1="82" x2="4" y2="82" stroke={ink('poignee')} strokeWidth="0.8" />
+        <line x1="22" y1="108" x2="4" y2="108" stroke={ink('poignee')} strokeWidth="0.8" />
+        <line x1="4" y1="82" x2="4" y2="108" stroke={ink('poignee')} strokeWidth="1.1" />
+        <polygon points="4,82 1.4,88 6.6,88" fill={ink('poignee')} />
+        <polygon points="4,108 1.4,102 6.6,102" fill={ink('poignee')} />
+        <text x="-62" y="98" fill={ink('poignee')} fontSize="10" fontWeight="650">
+          {callout(handle.nominal, handle.tolerance)}
         </text>
-        <DatumFlag x={-58} y={148} letter={wall.datum} color={ink('epaisseur_paroi')} />
-        <SurfaceMark x={-70} y={156} label={wall.surface} color={ink('epaisseur_paroi')} />
+        <DatumFlag x={-48} y={118} letter={handle.datum} color={ink('poignee')} />
+        <MatiereMark x={-68} y={58} name={handle.matiere} swatch={handle.swatch} color={ink('poignee')} />
+        <SurfaceMark x={-68} y={128} label={handle.surface} color={ink('poignee')} />
       </g>
-      <g className="cursor-pointer" onClick={() => onPick('entrecorne')}>
-        <rect
-          x="72"
-          y="176"
-          width="14"
-          height="24"
-          rx="2"
-          fill="var(--oc-viewport-bg)"
-          stroke={ink('entrecorne')}
-          strokeWidth={active === 'entrecorne' ? 2 : 1.3}
-        />
-        <rect
-          x="114"
-          y="176"
-          width="14"
-          height="24"
-          rx="2"
-          fill="var(--oc-viewport-bg)"
-          stroke={ink('entrecorne')}
-          strokeWidth={active === 'entrecorne' ? 2 : 1.3}
-        />
-        <line x1="86" y1="200" x2="86" y2="222" stroke={ink('entrecorne')} strokeWidth="0.8" />
-        <line x1="114" y1="200" x2="114" y2="222" stroke={ink('entrecorne')} strokeWidth="0.8" />
-        <line x1="86" y1="222" x2="114" y2="222" stroke={ink('entrecorne')} strokeWidth="1.1" />
-        <polygon points="86,222 92,219.4 92,224.6" fill={ink('entrecorne')} />
-        <polygon points="114,222 108,219.4 108,224.6" fill={ink('entrecorne')} />
-        <text x="154" y="226" fill={ink('entrecorne')} fontSize="10" fontWeight="650">
-          {callout(horns.nominal, horns.tolerance)}
+      <g className="cursor-pointer" onClick={() => onPick('vis')}>
+        <line x1="181" y1="82" x2="206" y2="64" stroke={ink('vis')} strokeWidth="0.8" />
+        <text x="198" y="58" fill={ink('vis')} fontSize="10" fontWeight="650">
+          M4 × {callout(screw.nominal, screw.tolerance)}
         </text>
-        <DatumFlag x={176} y={214} letter={horns.datum} color={ink('entrecorne')} />
-        <SurfaceMark x={148} y={148} label={horns.surface} color={ink('entrecorne')} />
+        <DatumFlag x={214} y={78} letter={screw.datum} color={ink('vis')} />
+        <MatiereMark x={198} y={86} name={screw.matiere} swatch={screw.swatch} color={ink('vis')} />
+        <SurfaceMark x={198} y={104} label={screw.surface} color={ink('vis')} />
       </g>
     </g>
   )
@@ -243,35 +313,37 @@ function SketchCanvas() {
 
         {showDims ? (
           <g fontFamily="ui-sans-serif, system-ui, sans-serif">
-            <g className="cursor-pointer" onClick={() => setCtrlVar('diametre_boite')}>
-              <line x1="175" y1="100" x2="198" y2="78" stroke={pmiInk(ctrlVar === 'diametre_boite')} strokeWidth="0.8" />
-              <text x="200" y="76" fill={pmiInk(ctrlVar === 'diametre_boite')} fontSize="10" fontWeight="650">
-                {callout(mbdById('diametre_boite').nominal, mbdById('diametre_boite').tolerance, true)}
+            <g className="cursor-pointer" onClick={() => setCtrlVar('plateau')}>
+              <line x1="175" y1="100" x2="198" y2="78" stroke={pmiInk(ctrlVar === 'plateau')} strokeWidth="0.8" />
+              <text x="200" y="76" fill={pmiInk(ctrlVar === 'plateau')} fontSize="10" fontWeight="650">
+                {callout(mbdById('plateau').nominal, mbdById('plateau').tolerance)}
               </text>
-              <DatumFlag x={214} y={98} letter="A" color={pmiInk(ctrlVar === 'diametre_boite')} />
-              <SurfaceMark x={200} y={104} label="Ra 0,8" color={pmiInk(ctrlVar === 'diametre_boite')} />
+              <DatumFlag x={214} y={98} letter="A" color={pmiInk(ctrlVar === 'plateau')} />
+              <MatiereMark x={200} y={104} name={mbdById('plateau').matiere} swatch={mbdById('plateau').swatch} color={pmiInk(ctrlVar === 'plateau')} />
+              <SurfaceMark x={200} y={122} label={mbdById('plateau').surface} color={pmiInk(ctrlVar === 'plateau')} />
             </g>
-            <g className="cursor-pointer" onClick={() => setCtrlVar('epaisseur_paroi')}>
-              <rect x="81" y="78" width="78" height="44" fill="none" stroke={pmiInk(ctrlVar === 'epaisseur_paroi')} strokeWidth="1" />
-              <line x1="65" y1="100" x2="48" y2="100" stroke={pmiInk(ctrlVar === 'epaisseur_paroi')} strokeWidth="0.8" />
-              <line x1="81" y1="100" x2="48" y2="100" stroke={pmiInk(ctrlVar === 'epaisseur_paroi')} strokeWidth="0.8" />
-              <text x="-8" y="96" fill={pmiInk(ctrlVar === 'epaisseur_paroi')} fontSize="10" fontWeight="650">
-                {callout(mbdById('epaisseur_paroi').nominal, mbdById('epaisseur_paroi').tolerance)}
+            <g className="cursor-pointer" onClick={() => setCtrlVar('vis')}>
+              <line x1="65" y1="100" x2="48" y2="100" stroke={pmiInk(ctrlVar === 'vis')} strokeWidth="0.8" />
+              <line x1="81" y1="100" x2="48" y2="100" stroke={pmiInk(ctrlVar === 'vis')} strokeWidth="0.8" />
+              <text x="-8" y="96" fill={pmiInk(ctrlVar === 'vis')} fontSize="10" fontWeight="650">
+                M4 × {callout(mbdById('vis').nominal, mbdById('vis').tolerance)}
               </text>
-              <DatumFlag x={8} y={124} letter="B" color={pmiInk(ctrlVar === 'epaisseur_paroi')} />
-              <SurfaceMark x={-12} y={132} label="Ra 1,6" color={pmiInk(ctrlVar === 'epaisseur_paroi')} />
+              <DatumFlag x={8} y={124} letter="C" color={pmiInk(ctrlVar === 'vis')} />
+              <MatiereMark x={-12} y={132} name={mbdById('vis').matiere} swatch={mbdById('vis').swatch} color={pmiInk(ctrlVar === 'vis')} />
+              <SurfaceMark x={-12} y={150} label={mbdById('vis').surface} color={pmiInk(ctrlVar === 'vis')} />
             </g>
-            <g className="cursor-pointer" onClick={() => setCtrlVar('entrecorne')}>
-              <line x1="95" y1="62" x2="95" y2="36" stroke={pmiInk(ctrlVar === 'entrecorne')} strokeWidth="0.8" />
-              <line x1="145" y1="62" x2="145" y2="36" stroke={pmiInk(ctrlVar === 'entrecorne')} strokeWidth="0.8" />
-              <line x1="95" y1="36" x2="145" y2="36" stroke={pmiInk(ctrlVar === 'entrecorne')} strokeWidth="1.1" />
-              <polygon points="95,36 101,33.4 101,38.6" fill={pmiInk(ctrlVar === 'entrecorne')} />
-              <polygon points="145,36 139,33.4 139,38.6" fill={pmiInk(ctrlVar === 'entrecorne')} />
-              <text x="120" y="28" textAnchor="middle" fill={pmiInk(ctrlVar === 'entrecorne')} fontSize="10" fontWeight="650">
-                {callout(mbdById('entrecorne').nominal, mbdById('entrecorne').tolerance)}
+            <g className="cursor-pointer" onClick={() => setCtrlVar('poignee')}>
+              <line x1="95" y1="62" x2="95" y2="36" stroke={pmiInk(ctrlVar === 'poignee')} strokeWidth="0.8" />
+              <line x1="145" y1="62" x2="145" y2="36" stroke={pmiInk(ctrlVar === 'poignee')} strokeWidth="0.8" />
+              <line x1="95" y1="36" x2="145" y2="36" stroke={pmiInk(ctrlVar === 'poignee')} strokeWidth="1.1" />
+              <polygon points="95,36 101,33.4 101,38.6" fill={pmiInk(ctrlVar === 'poignee')} />
+              <polygon points="145,36 139,33.4 139,38.6" fill={pmiInk(ctrlVar === 'poignee')} />
+              <text x="120" y="28" textAnchor="middle" fill={pmiInk(ctrlVar === 'poignee')} fontSize="10" fontWeight="650">
+                {callout(mbdById('poignee').nominal, mbdById('poignee').tolerance)}
               </text>
-              <DatumFlag x={158} y={30} letter="A-B" color={pmiInk(ctrlVar === 'entrecorne')} />
-              <SurfaceMark x={168} y={8} label="Ra 3,2" color={pmiInk(ctrlVar === 'entrecorne')} />
+              <DatumFlag x={158} y={30} letter="B" color={pmiInk(ctrlVar === 'poignee')} />
+              <MatiereMark x={168} y={8} name={mbdById('poignee').matiere} swatch={mbdById('poignee').swatch} color={pmiInk(ctrlVar === 'poignee')} />
+              <SurfaceMark x={168} y={-8} label={mbdById('poignee').surface} color={pmiInk(ctrlVar === 'poignee')} />
             </g>
           </g>
         ) : null}
@@ -288,7 +360,7 @@ function SketchCanvas() {
           Outil · <span className="font-medium text-oc-accent">{activeTool}</span>
         </div>
         <div>
-          MBD · {feature.id} {feature.tolerance} · réf. {feature.datum} · {feature.surface}
+          MBD · {feature.matiere} · {feature.surface} · réf. {feature.datum}
         </div>
       </div>
 
@@ -339,16 +411,15 @@ function SolidCanvas() {
         <span className="text-[9px] font-semibold text-oc-muted">ISO</span>
       </div>
       <div className="absolute left-3 top-3 z-10 rounded-oc border border-oc-line bg-oc-panel/95 px-2 py-1 text-[11px] text-oc-muted">
-        MBD · {feature.id} {feature.tolerance} · réf. {feature.datum} · {feature.surface}
+        MBD · {feature.matiere} · {feature.surface} · réf. {feature.datum}
       </div>
       <svg
         className="absolute left-1/2 top-[46%] z-[1] h-[min(440px,74%)] w-[min(440px,74%)] -translate-x-1/2 -translate-y-1/2"
         viewBox={PART_VIEWBOX}
         role="img"
-        aria-label="Carrure et PMI"
+        aria-label="Plateau et PMI"
       >
-        <circle cx="100" cy="100" r="78" fill="none" stroke="var(--oc-ok)" strokeWidth="2.5" />
-        <circle cx="100" cy="100" r="58" fill="none" stroke="var(--oc-ok)" strokeWidth="2" />
+        <PlateauBody stroke="var(--oc-ok)" onPick={setCtrlVar} />
         <PmiOnPart active={ctrlVar} onPick={setCtrlVar} />
       </svg>
       <div className="absolute bottom-3 left-1/2 z-10 flex -translate-x-1/2 items-center gap-1 rounded-full border border-oc-line bg-oc-panel/95 px-2 py-1 shadow-md">
@@ -379,24 +450,13 @@ function Ring({ studio = false }: { studio?: boolean }) {
       className="absolute left-1/2 top-[46%] z-[1] h-[min(440px,74%)] w-[min(440px,74%)] -translate-x-1/2 -translate-y-1/2"
       viewBox={PART_VIEWBOX}
       role="img"
-      aria-label={studio ? 'Anneau studio' : 'Anneau'}
+      aria-label={studio ? 'Plateau studio' : 'Plateau'}
     >
-      <circle
-        cx="100"
-        cy="100"
-        r="78"
-        fill={studio ? 'color-mix(in srgb, var(--oc-accent) 8%, transparent)' : 'none'}
-        stroke={studio ? '#94a3b8' : 'var(--oc-ok)'}
-        strokeWidth="8"
-      />
-      <circle cx="100" cy="100" r="58" fill="var(--oc-viewport-bg)" stroke="none" />
-      <circle
-        cx="100"
-        cy="100"
-        r="58"
-        fill="none"
-        stroke={studio ? '#cbd5e1' : 'var(--oc-ok)'}
-        strokeWidth="2"
+      <PlateauBody
+        tray={studio ? mbdById('plateau').swatch : 'none'}
+        handle={studio ? mbdById('poignee').swatch : 'none'}
+        screw={studio ? mbdById('vis').swatch : 'none'}
+        stroke={studio ? '#e2e8f0' : 'var(--oc-ok)'}
       />
     </svg>
   )
@@ -459,6 +519,7 @@ function PathStroke({
 }
 
 function Toolpath({ parcours }: { parcours: string }) {
+  const pocket = parcours.includes('poche') || parcours.includes('contour') || parcours.includes('profil')
   const drill = parcours.includes('trou')
   const face = parcours.includes('face')
   const zigzag = parcours.includes('molet')
@@ -481,7 +542,17 @@ function Toolpath({ parcours }: { parcours: string }) {
       role="img"
       aria-label={`Parcours ${parcours}`}
     >
-      {drill ? (
+      {pocket ? (
+        <>
+          <PathStroke command="plunge" x1={52} y1={48} x2={52} y2={72} />
+          <PathStroke command="goto" x1={52} y1={72} x2={148} y2={72} />
+          <PathStroke command="curve" d="M 148 72 A 8 8 0 0 1 148 88" />
+          <PathStroke command="goto" x1={148} y1={88} x2={52} y2={88} />
+          <PathStroke command="curve" d="M 52 88 A 8 8 0 0 0 52 104" />
+          <PathStroke command="goto" x1={52} y1={104} x2={148} y2={104} />
+          <PathStroke command="retract" x1={148} y1={104} x2={148} y2={124} />
+        </>
+      ) : drill ? (
         <>
           <PathStroke command="goto" d={`M 18 72 H 34 V 128 H 166 V 72`} />
           <PathStroke command="retract" x1={166} y1={72} x2={166} y2={48} />
@@ -659,6 +730,7 @@ function CamSimCanvas() {
         role="img"
         aria-label="Enlèvement de matière"
       >
+        <PlateauBody stroke="var(--oc-ok)" />
         <circle cx="100" cy="100" r={radius} fill="none" stroke="var(--oc-ok)" strokeWidth="16" />
         <circle
           cx="100"
@@ -769,7 +841,6 @@ function CtrlCanvas() {
     CtrlVarId,
     string
   >
-  const pick = (id: CtrlVarId) => () => setCtrlVar(id)
   return (
     <div className="relative h-full min-h-[220px] overflow-hidden bg-oc-bg">
       <div
@@ -785,7 +856,7 @@ function CtrlCanvas() {
       />
       <svg
         className="absolute left-1/2 top-[46%] z-[1] h-[min(460px,78%)] w-[min(520px,86%)] -translate-x-1/2 -translate-y-1/2"
-        viewBox="-78 -52 360 268"
+        viewBox={PART_VIEWBOX}
         role="img"
         aria-label="Heatmap écart définition relevé"
       >
@@ -798,96 +869,22 @@ function CtrlCanvas() {
             <stop offset="1" stopColor="#ef4444" />
           </linearGradient>
         </defs>
-        <circle
-          cx="118"
-          cy="82"
-          r="52"
-          fill="none"
-          stroke={heat.epaisseur_paroi}
-          strokeWidth={ctrlVar === 'epaisseur_paroi' ? 20 : 16}
-          className="cursor-pointer"
-          onClick={pick('epaisseur_paroi')}
+        <PlateauBody
+          tray={heat.plateau}
+          handle={heat.poignee}
+          screw={heat.vis}
+          stroke={ctrlVar === 'plateau' ? '#f8fafc' : 'transparent'}
+          onPick={setCtrlVar}
         />
-        <circle
-          cx="118"
-          cy="82"
-          r="66"
-          fill="none"
-          stroke={heat.diametre_boite}
-          strokeWidth={ctrlVar === 'diametre_boite' ? 10 : 7}
-          className="cursor-pointer"
-          onClick={pick('diametre_boite')}
-        />
-        {ctrlVar === 'diametre_boite' ? (
-          <circle cx="118" cy="82" r="66" fill="none" stroke="#f8fafc" strokeWidth="1.2" />
-        ) : null}
-        {ctrlVar === 'epaisseur_paroi' ? (
-          <circle cx="118" cy="82" r="52" fill="none" stroke="#f8fafc" strokeWidth="1.2" />
-        ) : null}
-        <rect
-          x="16"
-          y="66"
-          width="24"
-          height="32"
-          rx="3"
-          fill={heat.entrecorne}
-          stroke={ctrlVar === 'entrecorne' ? '#f8fafc' : 'transparent'}
-          strokeWidth="1.4"
-          className="cursor-pointer"
-          onClick={pick('entrecorne')}
-        />
-        <rect
-          x="196"
-          y="66"
-          width="24"
-          height="32"
-          rx="3"
-          fill={heat.entrecorne}
-          stroke={ctrlVar === 'entrecorne' ? '#f8fafc' : 'transparent'}
-          strokeWidth="1.4"
-          className="cursor-pointer"
-          onClick={pick('entrecorne')}
-        />
-        <g fontFamily="ui-sans-serif, system-ui, sans-serif">
-          <line x1="52" y1="16" x2="52" y2="-30" stroke={pmiInk(ctrlVar === 'diametre_boite')} strokeWidth="0.8" />
-          <line x1="184" y1="16" x2="184" y2="-30" stroke={pmiInk(ctrlVar === 'diametre_boite')} strokeWidth="0.8" />
-          <line x1="52" y1="-30" x2="184" y2="-30" stroke={pmiInk(ctrlVar === 'diametre_boite')} strokeWidth="1.1" />
-          <polygon points="52,-30 58,-27.4 58,-32.6" fill={pmiInk(ctrlVar === 'diametre_boite')} />
-          <polygon points="184,-30 178,-27.4 178,-32.6" fill={pmiInk(ctrlVar === 'diametre_boite')} />
-          <text x="118" y="-36" textAnchor="middle" fill={pmiInk(ctrlVar === 'diametre_boite')} fontSize="10" fontWeight="650">
-            {callout(mbdById('diametre_boite').nominal, mbdById('diametre_boite').tolerance, true)}
-          </text>
-          <DatumFlag x={198} y={-24} letter="A" color={pmiInk(ctrlVar === 'diametre_boite')} />
-          <SurfaceMark x={-72} y={4} label="Ra 0,8" color={pmiInk(ctrlVar === 'diametre_boite')} />
-          <line x1="-8" y1="14" x2="58" y2="28" stroke={pmiInk(ctrlVar === 'diametre_boite')} strokeWidth="0.7" />
-          <line x1="52" y1="108" x2="36" y2="108" stroke={pmiInk(ctrlVar === 'epaisseur_paroi')} strokeWidth="0.8" />
-          <line x1="66" y1="108" x2="36" y2="108" stroke={pmiInk(ctrlVar === 'epaisseur_paroi')} strokeWidth="0.8" />
-          <polygon points="52,108 58,105.5 58,110.5" fill={pmiInk(ctrlVar === 'epaisseur_paroi')} />
-          <polygon points="66,108 60,105.5 60,110.5" fill={pmiInk(ctrlVar === 'epaisseur_paroi')} />
-          <text x="-72" y="102" fill={pmiInk(ctrlVar === 'epaisseur_paroi')} fontSize="10" fontWeight="650">
-            {callout(mbdById('epaisseur_paroi').nominal, mbdById('epaisseur_paroi').tolerance)}
-          </text>
-          <DatumFlag x={-60} y={132} letter="B" color={pmiInk(ctrlVar === 'epaisseur_paroi')} />
-          <SurfaceMark x={-72} y={140} label="Ra 1,6" color={pmiInk(ctrlVar === 'epaisseur_paroi')} />
-          <line x1="28" y1="98" x2="28" y2="162" stroke={pmiInk(ctrlVar === 'entrecorne')} strokeWidth="0.8" />
-          <line x1="208" y1="98" x2="208" y2="162" stroke={pmiInk(ctrlVar === 'entrecorne')} strokeWidth="0.8" />
-          <line x1="28" y1="162" x2="208" y2="162" stroke={pmiInk(ctrlVar === 'entrecorne')} strokeWidth="1.1" />
-          <polygon points="28,162 34,159.4 34,164.6" fill={pmiInk(ctrlVar === 'entrecorne')} />
-          <polygon points="208,162 202,159.4 202,164.6" fill={pmiInk(ctrlVar === 'entrecorne')} />
-          <text x="118" y="176" textAnchor="middle" fill={pmiInk(ctrlVar === 'entrecorne')} fontSize="10" fontWeight="650">
-            {callout(mbdById('entrecorne').nominal, mbdById('entrecorne').tolerance)}
-          </text>
-          <DatumFlag x={214} y={154} letter="A-B" color={pmiInk(ctrlVar === 'entrecorne')} />
-          <SurfaceMark x={214} y={78} label="Ra 3,2" color={pmiInk(ctrlVar === 'entrecorne')} />
-        </g>
-        <rect x="36" y="196" width="168" height="8" rx="4" fill="url(#oc-ctrl-heat)" />
-        <text x="36" y="216" fill="var(--oc-muted)" fontSize="8">
+        <PmiOnPart active={ctrlVar} onPick={setCtrlVar} />
+        <rect x="36" y="210" width="168" height="8" rx="4" fill="url(#oc-ctrl-heat)" />
+        <text x="36" y="230" fill="var(--oc-muted)" fontSize="8">
           − tolérance
         </text>
-        <text x="120" y="216" textAnchor="middle" fill="var(--oc-text)" fontSize="8">
+        <text x="120" y="230" textAnchor="middle" fill="var(--oc-text)" fontSize="8">
           nominal
         </text>
-        <text x="204" y="216" textAnchor="end" fill="var(--oc-muted)" fontSize="8">
+        <text x="204" y="230" textAnchor="end" fill="var(--oc-muted)" fontSize="8">
           + tolérance
         </text>
       </svg>
@@ -919,7 +916,7 @@ function RenderCanvas() {
         </div>
       ) : (
         <div className="absolute left-3 top-3 z-10 text-[11px] text-oc-muted">
-          PBR · {mbdById(ctrlVar).surface} · acier brossé
+          PBR · {mbdById(ctrlVar).matiere} · {mbdById(ctrlVar).surface}
         </div>
       )}
     </div>

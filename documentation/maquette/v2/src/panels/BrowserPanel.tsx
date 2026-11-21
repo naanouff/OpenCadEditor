@@ -182,7 +182,7 @@ function Tree({
 }
 
 function isCtrlVar(id: string): id is CtrlVarId {
-  return id === 'diametre_boite' || id === 'epaisseur_paroi' || id === 'entrecorne'
+  return id === 'plateau' || id === 'poignee' || id === 'vis'
 }
 
 function DesignBrowser() {
@@ -196,9 +196,9 @@ function DesignBrowser() {
       icon: <SlidersHorizontal className="h-3.5 w-3.5" />,
       count: '3',
       children: [
-        { id: 'p-diam', label: 'diametre_boite = 40 mm', icon: null },
-        { id: 'p-ep', label: 'epaisseur_paroi = 2,5 mm', icon: null },
-        { id: 'p-ec', label: 'entrecorne = 20 mm', icon: null },
+        { id: 'p-longueur', label: 'longueur = 500 mm', icon: null },
+        { id: 'p-entraxe', label: 'entraxe = 180 mm', icon: null },
+        { id: 'p-vis', label: 'longueur_vis = 20 mm', icon: null },
       ],
     },
     {
@@ -208,7 +208,7 @@ function DesignBrowser() {
       count: '3',
       children: CTRL_VARS.map((variable) => ({
         id: variable.id,
-        label: `${variable.id} ${variable.tolerance} · ${variable.datum} · ${variable.surface}`,
+        label: `${variable.matiere} · ${variable.nominal} ${variable.tolerance} · ${variable.surface}`,
         icon: <Ruler className="h-3.5 w-3.5" />,
       })),
     },
@@ -236,7 +236,7 @@ function DesignBrowser() {
       empty: inSketch ? 'No bodies yet' : undefined,
       children: inSketch
         ? undefined
-        : [{ id: 'body-1', label: 'Carrure', icon: <Box className="h-3.5 w-3.5" /> }],
+        : [{ id: 'body-1', label: 'Plateau', icon: <Box className="h-3.5 w-3.5" /> }],
     },
     {
       id: 'sketches',
@@ -246,7 +246,7 @@ function DesignBrowser() {
       children: [
         {
           id: 'sk-1',
-          label: inSketch ? 'Sketch 1' : 'Esquisse anneau',
+          label: inSketch ? 'Sketch 1' : 'Esquisse plateau',
           icon: <Circle className="h-3.5 w-3.5" />,
           activeSketch: inSketch,
         },
@@ -331,7 +331,7 @@ function CamBrowser() {
   return (
     <Tree
       rows={rows}
-      expandedIds={['carrure', 'carrure-tour', 'carrure-fraise', 'op10', 'op20', 'op30']}
+      expandedIds={['plateau', 'plateau-fraise', 'op10', 'op20', 'poignee', 'vis']}
       selected={camNode}
       onSelect={setCamNode}
     />
@@ -348,7 +348,7 @@ function CtrlBrowser() {
       count: '3',
       children: CTRL_VARS.map((variable) => ({
         id: variable.id,
-        label: `${variable.id} ${variable.tolerance} · réf. ${variable.datum} · ${variable.measured} ${variable.inTolerance ? 'dans' : 'hors'}`,
+        label: `${variable.matiere} · ${variable.nominal} ${variable.tolerance} · ${variable.measured} ${variable.inTolerance ? 'dans' : 'hors'}`,
         icon: <Ruler className="h-3.5 w-3.5" />,
       })),
     },
@@ -359,15 +359,14 @@ function CtrlBrowser() {
       expandedIds={['variables']}
       selected={ctrlVar}
       onSelect={(id) => {
-        if (id === 'diametre_boite' || id === 'epaisseur_paroi' || id === 'entrecorne') {
-          setCtrlVar(id)
-        }
+        if (id === 'plateau' || id === 'poignee' || id === 'vis') setCtrlVar(id)
       }}
     />
   )
 }
 
 function RenderBrowser() {
+  const { ctrlVar, setCtrlVar } = useMock()
   const rows: Row[] = [
     {
       id: 'cameras',
@@ -390,13 +389,24 @@ function RenderBrowser() {
       id: 'materials',
       label: 'Matières',
       icon: <Box className="h-3.5 w-3.5" />,
-      count: '1',
-      children: [
-        { id: 'steel', label: 'Acier brossé · depuis la définition', icon: <Box className="h-3.5 w-3.5" /> },
-      ],
+      count: '3',
+      children: CTRL_VARS.map((variable) => ({
+        id: variable.id,
+        label: `${variable.matiere} · ${variable.surface}`,
+        icon: <Box className="h-3.5 w-3.5" />,
+      })),
     },
   ]
-  return <Tree rows={rows} expandedIds={['cameras', 'lights', 'materials']} selected="cam-34" onSelect={() => undefined} />
+  return (
+    <Tree
+      rows={rows}
+      expandedIds={['cameras', 'lights', 'materials']}
+      selected={ctrlVar}
+      onSelect={(id) => {
+        if (isCtrlVar(id)) setCtrlVar(id)
+      }}
+    />
+  )
 }
 
 export function BrowserPanel(_props: IDockviewPanelProps) {

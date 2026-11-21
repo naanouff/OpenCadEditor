@@ -23,11 +23,11 @@ const WORKSPACES: { id: Workspace; label: string }[] = [
 ]
 
 function titleFor(workspace: Workspace, scene: string): { name: string; badge: string } {
-  if (workspace === 'cam') return { name: 'Boîte — Gamme', badge: 'CAM' }
-  if (workspace === 'ctrl') return { name: 'Carrure — Rattrapage', badge: 'CTRL' }
-  if (workspace === 'render') return { name: 'Carrure — Studio', badge: 'Render' }
-  if (scene === 'sketch') return { name: 'Carrure — Sketch 1', badge: 'Unsaved sketch' }
-  return { name: 'Carrure', badge: 'Solide' }
+  if (workspace === 'cam') return { name: 'Plateau — Gamme', badge: 'CAM' }
+  if (workspace === 'ctrl') return { name: 'Plateau — Rattrapage', badge: 'CTRL' }
+  if (workspace === 'render') return { name: 'Plateau — Studio', badge: 'Render' }
+  if (scene === 'sketch') return { name: 'Plateau — Sketch 1', badge: 'Unsaved sketch' }
+  return { name: 'Plateau de service', badge: 'Solide' }
 }
 
 export function Chrome() {
