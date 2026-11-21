@@ -1,5 +1,9 @@
 # Journal de suivi
 
+## 2026-11-21 — Sprint 70 : layout Dockview v6
+
+Layout Whittle : browser / viewport / inspector / timeline + terminal (`layout.v6`). Debug hors requis. Branche `feature/shell-layout-v6`. Suite : overlays viewport (phase 5).
+
 ## 2026-11-21 — Sprint 69 : ruban Lucide
 
 `RubanVue` en grille Whittle (ESQUISSE / SOLIDE, Lucide, outils grisés + raison). Actions toujours via `boutonsRuban` / `executer`. Branche `feature/shell-ribbon`. Suite : layout Dockview v6.

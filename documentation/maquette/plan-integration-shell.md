@@ -79,7 +79,7 @@ Sprint : [69](../sprints/sprint-69-shell-ribbon.md). Branche : `feature/shell-ri
 
 ## Phase 4 — Layout Dockview v6 (Whittle + terminal)
 
-Branche prévue : `feature/shell-layout-v6`.
+Sprint : [70](../sprints/sprint-70-shell-layout-v6.md). Branche : `feature/shell-layout-v6`. **Fait.**
 
 1. `STORAGE_KEY` → `opencad.shell.dockview.layout.v6` (reset des layouts sauvés).
 2. `REQUIRED` : `viewport`, `browser`, `inspector`, `timeline`, `terminal`.

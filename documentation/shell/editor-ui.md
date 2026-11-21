@@ -38,14 +38,16 @@ Ils vivent dans `packages/shell/src/surcharges/`. Un plugin Vite redirige les mo
 
 - Styles : `@naanouff/w3dts-editor-ui/styles.css` (tokens + Dockview) **avant** le premier rendu, puis `src/tailwind.css` qui importe `src/ds/tokens.css` (charte OpenCad)
 - Tailwind : `src/tailwind.css` scanne `src/` et `vendor/w3dts/packages/editor-ui/src` (primitives) ; classes `oc-*` mappées sur `--oc-*`
-- Thème : OpenCad `light|dark` via `applyOcTheme` / `loadOcTheme` (`opencad.shell.theme`) ; bridge `--oc-*` → `--color-*` pour Dockview ; `EditorDock` reçoit `resolvedTheme` light/dark. Intégration complète : [plan-integration-shell.md](../maquette/plan-integration-shell.md)
-- `EditorDock` : clé `opencad.shell.dockview.layout.v5`, panneaux requis `viewport`, `terminal`, `parametres`, `historique`, `document`, `debug`, `preferences`
-- Layout par défaut : construction à gauche, paramètres sous l’arbre, document sous les paramètres, viewport au centre, terminal en bas
-- Panneaux métier : tokens CSS + primitive `Panel` (pas le store `viewer-editor`)
-- Terminal : Monaco comme le Script panel w3dts (`Entrée` exécute, `Maj+Entrée` nouvelle ligne, ↑ historique)
-- Construction : arbre de `session.historique()` (pièce → origine / fonctions, esquisse sous la fonction). Chaque opérateur a une case : éteint, il reste dans l’arbre et n’est plus rejoué, avec l’esquisse qu’il consomme. Un clic sur une esquisse ouvre sa vue : grille, traits et cotes, sans le solide. **Quitter l'esquisse**, un second clic, ou un clic sur la pièce rend la vue 3D. Les paramètres restent dans leur panneau. Le fil de fer d’un solide maillé vient des frontières de faces. Pendant que le worker calcule le volume, le viewport affiche « Construction… ».
-- Document : auteur, version semantique, unité et repère de référence (`session.document()`)
-- Debug : boutons **Build carrure** (`scriptCarrure.ts`) et **Build vis** (`scriptVis.ts`)
+- Thème : OpenCad `light|dark` via `applyOcTheme` / `loadOcTheme` (`opencad.shell.theme`) ; bridge `--oc-*` → `--color-*` pour Dockview ; `EditorDock` reçoit `resolvedTheme` light/dark. Intégration : [plan-integration-shell.md](../maquette/plan-integration-shell.md)
+- Chrome + ruban Lucide + StatusBar au-dessus / au-dessous du dock (sprints 68–69)
+- `EditorDock` : clé `opencad.shell.dockview.layout.v6`, panneaux requis `viewport`, `browser`, `inspector`, `timeline`, `terminal`
+- Layout par défaut (Whittle) : browser à gauche, viewport au centre, inspector à droite, timeline + terminal en bas (onglets)
+- Browser : arbre de construction + paramètres + méta document ; Construction inchangée (interrupteurs, vue esquisse)
+- Inspector : sélection, expression (`regle`), hints « prochaines étapes »
+- Timeline : historique horizontal + `pointe` / fin
+- Terminal : Monaco (`Entrée` exécute, `Maj+Entrée` nouvelle ligne, ↑ historique)
+- Debug / préférences : composants encore enregistrés, hors layout requis (sprint 70)
+- Pendant que le worker calcule le volume, le viewport affiche « Construction… »
 
 `Hote` et les tests Vitest restent hors React. La page Vite est le consommateur UI.
 
