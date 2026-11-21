@@ -1,4 +1,6 @@
 import type { OcTheme } from './ds'
+import iconDark from './brand/icon-editor-std.svg'
+import iconLight from './brand/icon-editor-std-light.svg'
 
 /** Icône officielle extraite de la planche (icon-editor-std). */
 export function BrandMark({
@@ -8,8 +10,8 @@ export function BrandMark({
   theme: OcTheme
   compact?: boolean
 }) {
-  const src =
-    theme === 'light' ? '/brand/icon-editor-std-light.svg' : '/brand/icon-editor-std.svg'
+  // Vite du shell pointe publicDir vers w3dts : un URL /brand/… n’est pas servi.
+  const src = theme === 'light' ? iconLight : iconDark
   const size = compact ? 22 : 28
 
   return (
