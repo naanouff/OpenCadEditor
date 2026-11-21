@@ -7,9 +7,9 @@ import {
   type Esquisse,
 } from '@opencad/api-parametrique'
 import { resoudreViaKernel } from './gcsKernel.ts'
+import { marquerArcs, marquerCercle, type Polyline3 } from './opsDepuisFonction.ts'
 
-/** Polyligne XYZ plate pour `make_wire_polyline` (dernier point = premier si fermée). */
-export type Polyline3 = number[]
+export type { Polyline3 }
 
 export type OptionsPolylines = {
   /** Altitude le long de la normale du datum (défaut 0). */
@@ -29,6 +29,8 @@ function fermer(xyz: number[]): Polyline3 {
   return xyz
 }
 
+type Point3 = [number, number, number]
+
 function cercleSurDatum(
   rayon: number,
   altitude: number,
@@ -36,30 +38,36 @@ function cercleSurDatum(
   support: string,
 ): Polyline3 {
   const datum = datumParId(support)
+  // face.* : plan XZ à altitude Y (même convention que l’ancien cercleXz)
+  const versMonde = (u: number, v: number): Point3 =>
+    datum ? (gcsVersMonde(datum, u, v, altitude) as Point3) : [u, altitude, v]
   const xyz: number[] = []
   for (let i = 0; i < segments; i++) {
     const a = (i / segments) * Math.PI * 2
-    const u = Math.cos(a) * rayon
-    const v = Math.sin(a) * rayon
-    if (datum) {
-      xyz.push(...gcsVersMonde(datum, u, v, altitude))
-    } else {
-      // face.* : plan XZ à altitude Y (même convention que l’ancien cercleXz)
-      xyz.push(u, altitude, v)
-    }
+    xyz.push(...versMonde(Math.cos(a) * rayon, Math.sin(a) * rayon))
   }
-  return fermer(xyz)
+  const centre = versMonde(0, 0)
+  const bord = versMonde(rayon, 0)
+  return marquerCercle(fermer(xyz), {
+    centre,
+    radial: [bord[0] - centre[0], bord[1] - centre[1], bord[2] - centre[2]],
+  })
 }
 
+/** Sommets (rayon, hauteur) dans l’ordre ; un arc passe par son sommet, entre ses deux voisins. */
 function profilRevolution(entites: EntiteEsquisse[], evaluer: (e: string) => number): Polyline3 {
-  const segments = entites.filter((e) => e.sorte === 'segment')
-  if (segments.length < 2) throw new Error('profil révolution trop court')
+  const sommets = entites.filter((e) => e.sorte === 'segment' || e.sorte === 'arc')
+  if (sommets.length < 2) throw new Error('profil révolution trop court')
   const xyz: number[] = []
-  for (const s of segments) {
-    if (s.rayon === undefined || s.hauteur === undefined) throw new Error('segment sans rayon/hauteur')
+  const genres: number[] = []
+  for (const s of sommets) {
+    if (s.rayon === undefined || s.hauteur === undefined) throw new Error(`${s.sorte} sans rayon/hauteur`)
     xyz.push(evaluer(s.rayon), evaluer(s.hauteur), 0)
+    genres.push(s.sorte === 'arc' ? 1 : 0)
   }
-  return fermer(xyz)
+  const ferme = fermer(xyz)
+  while (genres.length < ferme.length / 3) genres.push(0)
+  return marquerArcs(ferme, genres)
 }
 
 /**
@@ -78,8 +86,10 @@ export function polylinesDepuisEsquisse(
   const { support, entites } = esquisse
 
   if (support === 'plan.12h') {
-    const segments = entites.filter((e) => e.sorte === 'segment' && e.rayon !== undefined && e.hauteur !== undefined)
-    if (segments.length >= 2) return [profilRevolution(entites, evaluer)]
+    const sommets = entites.filter(
+      (e) => (e.sorte === 'segment' || e.sorte === 'arc') && e.rayon !== undefined && e.hauteur !== undefined,
+    )
+    if (sommets.length >= 2) return [profilRevolution(entites, evaluer)]
   }
 
   const datum = datumParId(support)

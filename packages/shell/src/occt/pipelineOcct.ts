@@ -1,21 +1,30 @@
 import {
-  Session,
   datumParId,
   evaluateurProvisoire,
   rejouables,
-  union,
   type EntiteEsquisse,
   type Esquisse,
   type Maillage,
   type MaillageOmbre,
   type Operation,
+  type Session,
 } from '@opencad/api-parametrique'
 import { opsBarrettesPedagogiques } from '@opencad/kernel/barrettes'
 import { opsElevationCornes } from '@opencad/kernel/elevation'
+import { opsFilet } from '@opencad/kernel/filet'
 import { runBatch, type KernelBatchOp, type OcctKernelModule } from './chargerKernel.ts'
 import { polylinesDepuisEsquisse, type Polyline3 } from './esquissePolylines.ts'
-import { indicesDepuisSelecteurs, parseSelecteursAretes, type AreteKernel } from './aretesOcct.ts'
-import { accrocherSolide, opsCouper, opsExtrude, opsFillet, opsRevolution } from './opsDepuisFonction.ts'
+import { bornesYMilieux, indicesDepuisSelecteurs, parseSelecteursAretes, type AreteKernel } from './aretesOcct.ts'
+import {
+  accrocherSolide,
+  decalerPolyline,
+  opsCouper,
+  opsExtrude,
+  opsChanfrein,
+  opsFillet,
+  opsProfil,
+  opsRevolution,
+} from './opsDepuisFonction.ts'
 import { compilerViaKernel } from './historiqueKernel.ts'
 import { maillageDepuisTessellate } from './maillageDepuisTessellate.ts'
 import {
@@ -42,13 +51,7 @@ function directionDatum(
 /** Décalage monde pour centrer le tube à mi-hauteur de carrure (GCS cercle à u=v=0). */
 function decalerPolylines(polys: Polyline3[], dx: number, dy: number, dz: number): Polyline3[] {
   if (dx === 0 && dy === 0 && dz === 0) return polys
-  return polys.map((poly) => {
-    const out: number[] = []
-    for (let i = 0; i < poly.length; i += 3) {
-      out.push(poly[i]! + dx, poly[i + 1]! + dy, poly[i + 2]! + dz)
-    }
-    return out
-  })
+  return polys.map((poly) => decalerPolyline(poly, dx, dy, dz))
 }
 
 /**
@@ -136,34 +139,8 @@ function tesselle(
   return { maille: maillageDepuisTessellate(mesh), aretes: aretesDepuisAlias(out.aliases?.edges) }
 }
 
-function filetHote(parametres: Map<string, string>, profilScript: string): MaillageOmbre {
-  const session = new Session()
-  const lignes = ['piece filet']
-  for (const [nom, expression] of parametres) {
-    lignes.push(`param ${nom} ${expression}`)
-  }
-  lignes.push(profilScript, 'revolution', 'pas')
-  session.executer(lignes.join('\n'))
-  const maille = session.maillage()
-  if (!maille.normales) throw new Error('filet sans normales')
-  return {
-    positions: maille.positions,
-    normales: maille.normales,
-    indices: maille.indices,
-    faces: maille.faces,
-  }
-}
-
-function scriptProfil(entites: EntiteEsquisse[]): string {
-  const lignes = ['esquisse plan.12h']
-  for (const e of entites) {
-    if (e.sorte !== 'segment' || e.rayon === undefined || e.hauteur === undefined) continue
-    lignes.push('segment', `cote rayon ${e.rayon}`, `cote hauteur ${e.hauteur}`)
-  }
-  return lignes.join('\n')
-}
-
-type FilletEnAttente = {
+type AreteEnAttente = {
+  sorte: 'fillet' | 'chanfrein'
   expression: string
   selecteurs: string[]
 }
@@ -171,10 +148,8 @@ type FilletEnAttente = {
 type Compilation = {
   ops: KernelBatchOp[]
   solidAs: string
-  pas: boolean
   parametres: Map<string, string>
-  entitesPas: EntiteEsquisse[] | null
-  fillets: FilletEnAttente[]
+  fillets: AreteEnAttente[]
   yMin: number
   yMax: number
 }
@@ -183,20 +158,10 @@ function compiler(historique: Operation[], pointe: number | null = null): Compil
   // O2-9 : préfixe simple → `@opencad/kernel/compiler` (mm) ; sinon chemin local.
   const viaKernel = compilerViaKernel(historique, pointe)
   if (viaKernel?.solidAs && viaKernel.ops.length > 0) {
-    const entitesPas =
-      viaKernel.entitesPas?.map((s) => ({
-        id: s.id,
-        sorte: 'segment' as const,
-        degres: 0,
-        rayon: s.rayon,
-        hauteur: s.hauteur,
-      })) ?? null
     return {
       ops: viaKernel.ops,
       solidAs: viaKernel.solidAs,
-      pas: viaKernel.pas,
       parametres: viaKernel.parametres,
-      entitesPas,
       fillets: [],
       yMin: viaKernel.yMin,
       yMax: viaKernel.yMax,
@@ -214,9 +179,8 @@ function compiler(historique: Operation[], pointe: number | null = null): Compil
   let faces: RegistreFaces = new Map()
   const opsRejouees = rejouables(historique, pointe)
   const pas = opsRejouees.some((op) => op.type === 'pas')
-  let entitesPas: EntiteEsquisse[] | null = null
   let revolutions = 0
-  const fillets: FilletEnAttente[] = []
+  const fillets: AreteEnAttente[] = []
 
   const evaluer = (expression: string) => evaluateurProvisoire.evaluer(expression, parametres)
   const assurerEsquisse = () => {
@@ -271,9 +235,10 @@ function compiler(historique: Operation[], pointe: number | null = null): Compil
     }
     if (operation.type === 'pas') continue
 
-    if (operation.type === 'fillet') {
-      if (!solidAs) throw new Error('fillet sans solide')
+    if (operation.type === 'fillet' || operation.type === 'chanfrein') {
+      if (!solidAs) throw new Error(`${operation.type} sans solide`)
       fillets.push({
+        sorte: operation.type,
         expression: operation.arguments.expression,
         selecteurs: parseSelecteursAretes(operation.arguments.aretes),
       })
@@ -294,21 +259,24 @@ function compiler(historique: Operation[], pointe: number | null = null): Compil
       for (const e of esquisse.entites) {
         if (e.hauteur) yMax = Math.max(yMax, evaluer(e.hauteur))
       }
-      if (revolutions === 1) {
-        entitesPas = esquisse.entites.map((e) => ({ ...e }))
-        if (!pas) {
-          ops.push(...feat.ops)
-          const acc = accrocherSolide(solidAs, feat.as, String(uid++))
-          ops.push(...acc.ops)
-          solidAs = acc.solidAs
-        }
-      } else {
-        ops.push(...feat.ops)
-        const acc = accrocherSolide(solidAs, feat.as, String(uid++))
-        ops.push(...acc.ops)
-        solidAs = acc.solidAs
-      }
-      // Même avec `pas` (corps hôte), les faces existent pour une tête sur face.dessus.
+      const corps =
+        revolutions === 1 && pas
+          ? opsFilet(
+              polys[0]!,
+              {
+                rayonCrete: evaluer('diametre') / 2,
+                rayonAme: evaluer('diametre_ame') / 2,
+                pas: evaluer('pas'),
+                angleFilet: evaluer('angle_filet'),
+                anglePointe: evaluer('angle_pointe'),
+              },
+              () => String(uid++),
+            )
+          : feat
+      ops.push(...corps.ops)
+      const acc = accrocherSolide(solidAs, corps.as, String(uid++))
+      ops.push(...acc.ops)
+      solidAs = acc.solidAs
       yMin = Math.min(yMin, 0)
       faces = faceDepuisBornesY(yMin, yMax)
       esquisse = null
@@ -353,13 +321,13 @@ function compiler(historique: Operation[], pointe: number | null = null): Compil
           }))
           .sort((a, b) => b.r - a.r)
         const exterieur = classes[0]!
-        const feat = opsExtrude(exterieur.poly, dir, String(uid++))
+        const feat = opsProfil(exterieur.poly, dir, String(uid++))
         ops.push(...feat.ops)
         const acc = accrocherSolide(solidAs, feat.as, String(uid++))
         ops.push(...acc.ops)
         solidAs = acc.solidAs
         for (const interieur of classes.slice(1)) {
-          const outil = opsExtrude(
+          const outil = opsProfil(
             interieur.poly,
             [dir[0], dir[1] + Math.sign(dir[1] || 1) * 0.4, dir[2]],
             String(uid++),
@@ -371,7 +339,7 @@ function compiler(historique: Operation[], pointe: number | null = null): Compil
         }
       } else {
         for (const poly of polys) {
-          const feat = opsExtrude(poly, dir, String(uid++))
+          const feat = opsProfil(poly, dir, String(uid++))
           ops.push(...feat.ops)
           const acc = accrocherSolide(solidAs, feat.as, String(uid++))
           ops.push(...acc.ops)
@@ -439,7 +407,7 @@ function compiler(historique: Operation[], pointe: number | null = null): Compil
           polys = decalerPolylines(polys, dx, dy, dz)
         }
         for (const poly of polys) {
-          const feat = opsExtrude(poly, dir, String(uid++))
+          const feat = opsProfil(poly, dir, String(uid++))
           ops.push(...feat.ops)
           const cut = opsCouper(solidAs, feat.as, String(uid++))
           ops.push(...cut.ops)
@@ -455,7 +423,7 @@ function compiler(historique: Operation[], pointe: number | null = null): Compil
   }
 
   if (!solidAs || ops.length === 0) throw new Error('pipeline: aucune feature OCCT')
-  return { ops, solidAs, pas, parametres, entitesPas, fillets, yMin, yMax }
+  return { ops, solidAs, parametres, fillets, yMin, yMax }
 }
 
 /** Applique les fillets en résolvant les sélecteurs via `list_edges`. */
@@ -480,45 +448,39 @@ function appliquerFillets(
       if (!listed.ok) throw new Error(listed.error ?? 'list_edges failed')
       const payload = listed.aliases?.edges as { ok?: boolean; edges?: AreteKernel[] } | undefined
       const edges = payload?.edges ?? []
-      indices = indicesDepuisSelecteurs(edges, fillet.selecteurs, compilation.yMin, compilation.yMax)
+      // Bornes réelles : une extrusion selon Z ne se lit pas dans les bornes Y du compilateur.
+      const bornes = bornesYMilieux(edges)
+      indices = indicesDepuisSelecteurs(
+        edges,
+        fillet.selecteurs,
+        bornes?.yMin ?? compilation.yMin,
+        bornes?.yMax ?? compilation.yMax,
+      )
     }
-    const feat = opsFillet(solidAs, rayon, indices, String(uid++))
+    const feat =
+      fillet.sorte === 'chanfrein'
+        ? opsChanfrein(solidAs, rayon, indices, String(uid++))
+        : opsFillet(solidAs, rayon, indices, String(uid++))
     ops = [...ops, ...feat.ops]
     solidAs = feat.solidAs
   }
   return { ops, solidAs }
 }
 
-/**
- * Historique Session → wires → runBatch OCCT → maillage.
- * `pas` : OCCT ne porte que tête + Pozi ; le filet hôte fournit le fût (pas d'hélice kernel v1).
- */
+/** Historique Session → wires → runBatch OCCT → maillage. */
 export type MaillagePipeline = MaillageOmbre & { aretes: AreteKernel[] }
 
 export function maillagePipelineOcct(occt: OcctKernelModule, session: Session): MaillagePipeline {
   const compilation = compiler(session.historique(), session.pointeCourante())
   const apresFillet = appliquerFillets(occt, compilation)
-  const { maille: occtPart, aretes } = tesselle(occt, apresFillet.ops, apresFillet.solidAs)
-  if (!compilation.pas) {
-    if (!occtPart.normales) throw new Error('maillage sans normales')
-    return {
-      positions: occtPart.positions,
-      normales: occtPart.normales,
-      indices: occtPart.indices,
-      faces: occtPart.faces,
-      aretes,
-    }
-  }
-  if (!compilation.entitesPas) throw new Error('pas sans profil de corps')
-  const filete = filetHote(compilation.parametres, scriptProfil(compilation.entitesPas))
-  const maille = union(filete, occtPart)
-  if (!maille.normales) throw new Error('hybride sans normales')
+  const { maille, aretes } = tesselle(occt, apresFillet.ops, apresFillet.solidAs)
+  if (!maille.normales) throw new Error('maillage sans normales')
   return {
     positions: maille.positions,
     normales: maille.normales,
     indices: maille.indices,
     faces: maille.faces,
-    aretes: [],
+    aretes,
   }
 }
 

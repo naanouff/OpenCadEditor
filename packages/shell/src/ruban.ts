@@ -52,7 +52,10 @@ function boutonsFonctions(etat: EtatRuban): BoutonRuban[] {
     return [{ id: 'enleve', libelle: 'Enlever', lignes: ['enleve 2'] }]
   }
   if (!etat.support && etat.arete) {
-    return [{ id: 'fillet', libelle: 'Congé', lignes: [`fillet 1 ${etat.arete}`] }]
+    return [
+      { id: 'fillet', libelle: 'Congé', lignes: [`fillet 1 ${etat.arete}`] },
+      { id: 'chanfrein', libelle: 'Chanfrein', lignes: [`chanfrein 1 ${etat.arete}`] },
+    ]
   }
   return []
 }

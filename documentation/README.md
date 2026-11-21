@@ -4,7 +4,10 @@ Suivi du projet et notes de travail. Ce dossier n’appartient pas au moteur : l
 
 | Dossier | Rôle |
 |---------|------|
-| [suivi/feuille-de-route.md](suivi/feuille-de-route.md) | Cap, phases P0–P4 / O1–O4 / W1, garde-fous (2026-10-11) |
+| [suivi/feuille-de-route.md](suivi/feuille-de-route.md) | Cap, phases P0–P6 / O1–O4 / W1, garde-fous (2026-11-20) |
+| [veille/affichage-topologique.md](veille/affichage-topologique.md) | P5 : carreaux / arêtes / datums sélectionnables dans le viewport |
+| [sprints/sprint-62-carreaux-brep.md](sprints/sprint-62-carreaux-brep.md) | Sprint 62 : pick triangle + surbrillance `face.*` |
+| [veille/plateau-service-cadom.md](veille/plateau-service-cadom.md) | P6 : plateau alu + 2 poignées laiton + 4 vis (démo OpenCAD) |
 | [gitflow.md](gitflow.md) | Branches : feature/fix/chore → develop → main → tag ; suppression auto post-merge |
 | [suivi/analyse.md](suivi/analyse.md) | État du dépôt : couches, langage, géométrie, manques |
 | [suivi/occt-kernel.md](suivi/occt-kernel.md) | Vérification : occt-wasm v0.2.0 et kernel B-Rep |
@@ -15,8 +18,13 @@ Suivi du projet et notes de travail. Ce dossier n’appartient pas au moteur : l
 | [veille/pilotage-lignes.md](veille/pilotage-lignes.md) | Ligne de `Session` = interface par défaut ; UI cliente ; Whittle pour les comportements |
 | [developpement.md](developpement.md) | Règle de base : TDD |
 | [veille/](veille/) | Veille fonctionnelle avant développement du modeleur |
-| [maquette/plan-layout.md](maquette/plan-layout.md) | Layout visé de l’éditeur |
-| [maquette/index.html](maquette/index.html) | Maquette statique à ouvrir dans un navigateur |
+| [graphique/](graphique/) | Identité openCAD / Editor : [planche](graphique/planche-identite-opencad-editor.png), [charte](graphique/charte.md) |
+| [maquette/](maquette/) | Maquettes layout : [v1](maquette/v1/) HTML, [v2](maquette/v2/) React/Dockview |
+| [maquette/plan-v2.md](maquette/plan-v2.md) | Plan maquette v2 (Whittle, DS, light/dark) |
+| [maquette/plan-espaces.md](maquette/plan-espaces.md) | Espaces CAM, CTRL, Render Studio |
+| [sprints/sprint-65-maquette-espaces.md](sprints/sprint-65-maquette-espaces.md) | Sprint de ces espaces, dessiné dans la maquette v2 |
+| [maquette/v1/plan-layout.md](maquette/v1/plan-layout.md) | Layout v1 (archive sprint 01) |
+| [maquette/v2/](maquette/v2/) | Maquette interactive : `pnpm dev` dans ce dossier |
 | [sprints/sprint-01-maquette-layout.md](sprints/sprint-01-maquette-layout.md) | Sprint de la maquette de layout, déjà dessinée |
 | [veille/plan-interfaces.md](veille/plan-interfaces.md) | Veille des interfaces du benchmark, avant de reprendre le layout |
 | [veille/interfaces.md](veille/interfaces.md) | Repérage des interfaces du benchmark, captures créditées |

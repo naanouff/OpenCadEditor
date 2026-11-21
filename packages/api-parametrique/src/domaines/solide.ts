@@ -95,7 +95,14 @@ function lireFillet(reste: string): Operation {
   if (parts.length < 1) throw new ErreurApi('fillet sans rayon')
   const [expression, ...aretes] = parts
   for (const a of aretes) {
-    if (a !== 'arete.haut' && a !== 'arete.bas' && a !== 'arete.vertical') {
+    if (
+      a !== 'arete.haut' &&
+      a !== 'arete.bas' &&
+      a !== 'arete.vertical' &&
+      a !== 'arete.poche' &&
+      a !== 'arete.tranche' &&
+      a !== 'arete.fond'
+    ) {
       throw new ErreurApi(`sélecteur d'arête inconnu: ${a}`)
     }
   }
@@ -114,6 +121,7 @@ export const domaineSolide: Domaine = {
   verbes: {
     extrude: (reste) => ({ type: 'extrude', arguments: { expression: reste }, noms: [] }),
     fillet: (reste) => lireFillet(reste),
+    chanfrein: (reste) => ({ ...lireFillet(reste), type: 'chanfrein' }),
     'enleve travers': (reste) => ({
       type: 'enlever',
       arguments: { expression: reste, traverse: 'oui' },
@@ -150,11 +158,22 @@ export const domaineSolide: Domaine = {
       },
       defaire() {},
     },
+    chanfrein: {
+      dansHistorique: true,
+      faire(contexte) {
+        if (!contexte.solide && !contexte.piece.volume) throw new ErreurApi('aucun solide')
+      },
+      defaire() {},
+    },
     enlever: {
       dansHistorique: true,
       faire(contexte, operation) {
-        const rectangles = contexte.esquisse?.entites.some((entite) => entite.sorte === 'rectangle' && entite.longueur)
-        if (!contexte.piece.volume && rectangles) {
+        const entites = contexte.esquisse?.entites ?? []
+        const rectangles = entites.some((entite) => entite.sorte === 'rectangle' && entite.longueur)
+        // Profil de segments et d’arcs (lamage, perçage hors axe) : seul OCCT le coupe.
+        const profilLibre =
+          entites.some((entite) => entite.sorte === 'segment') && !entites.some((entite) => entite.sorte === 'cercle')
+        if (!contexte.piece.volume && (rectangles || profilLibre)) {
           contexte.esquisse = null
           contexte.piece.esquisse = null
           return

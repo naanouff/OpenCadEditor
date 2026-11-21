@@ -4202,9 +4202,11 @@ var _occt_shape_release,
   _occt_make_sphere,
   _occt_make_cone,
   _occt_make_wire_polyline,
+  _occt_make_wire_arcs,
   _occt_make_face_from_wire,
   _occt_extrude,
   _occt_revolve,
+  _occt_sweep_helix,
   _occt_boolean_fuse,
   _occt_boolean_cut,
   _occt_boolean_common,
@@ -4238,9 +4240,11 @@ function assignWasmExports(wasmExports) {
   _occt_make_sphere = Module['_occt_make_sphere'] = wasmExports['occt_make_sphere'];
   _occt_make_cone = Module['_occt_make_cone'] = wasmExports['occt_make_cone'];
   _occt_make_wire_polyline = Module['_occt_make_wire_polyline'] = wasmExports['occt_make_wire_polyline'];
+  _occt_make_wire_arcs = Module['_occt_make_wire_arcs'] = wasmExports['occt_make_wire_arcs'];
   _occt_make_face_from_wire = Module['_occt_make_face_from_wire'] = wasmExports['occt_make_face_from_wire'];
   _occt_extrude = Module['_occt_extrude'] = wasmExports['occt_extrude'];
   _occt_revolve = Module['_occt_revolve'] = wasmExports['occt_revolve'];
+  _occt_sweep_helix = Module['_occt_sweep_helix'] = wasmExports['occt_sweep_helix'];
   _occt_boolean_fuse = Module['_occt_boolean_fuse'] = wasmExports['occt_boolean_fuse'];
   _occt_boolean_cut = Module['_occt_boolean_cut'] = wasmExports['occt_boolean_cut'];
   _occt_boolean_common = Module['_occt_boolean_common'] = wasmExports['occt_boolean_common'];

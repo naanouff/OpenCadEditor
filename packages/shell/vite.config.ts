@@ -20,11 +20,15 @@ function surchargeCamera(): Plugin {
   const fichiers: Record<string, string> = {
     buildCameraProjectionMatrix: path.resolve(ici, 'src/surcharges/buildCameraProjectionMatrix.ts'),
     OrbitalCameraController: path.resolve(ici, 'src/surcharges/OrbitalCameraController.ts'),
+    WebGPUContext: path.resolve(ici, 'src/surcharges/WebGPUContext.ts'),
   }
+  const surcharges = new Set(Object.values(fichiers).map((f) => f.replace(/\\/g, '/')))
   return {
     name: 'opencad-surcharge-camera',
     enforce: 'pre',
-    resolveId(source) {
+    resolveId(source, importer) {
+      // Une surcharge importe l’original qu’elle étend.
+      if (importer && surcharges.has(importer.split('?')[0]!.replace(/\\/g, '/'))) return null
       const base = source.split('?')[0]!.replace(/\\/g, '/')
       for (const [nom, cible] of Object.entries(fichiers)) {
         if (base.endsWith(`/${nom}.ts`) || base.endsWith(`/${nom}`)) return cible
@@ -97,6 +101,10 @@ export default defineConfig({
           ici,
           '../../vendor/opencad/packages/kernel/src/elevationCornes.ts',
         ),
+      },
+      {
+        find: '@opencad/kernel/filet',
+        replacement: path.resolve(ici, '../../vendor/opencad/packages/kernel/src/filetHelice.ts'),
       },
       {
         find: '@opencad/kernel/sketch',

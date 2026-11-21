@@ -1,6 +1,6 @@
 # OpenCadEditor
 
-Éditeur CAO web qui exploite les formats [OpenCAD](https://github.com/naanouff/OpenCAD/tree/develop). Le rendu et l’interface viennent de [w3dts](https://github.com/naanouff/w3dts), présent ici en sous-module (`vendor/w3dts`). Le solide exact au recalcul passe par [occt-wasm](https://github.com/naanouff/occt-wasm) / `occt-kernel` (`vendor/occt-wasm` @ v0.2.0) : bootstrap du futur **OpenCAD Kernel** (K3).
+Éditeur CAO web qui exploite les formats [OpenCAD](https://github.com/naanouff/OpenCAD/tree/develop). Le rendu et l’interface viennent de [w3dts](https://github.com/naanouff/w3dts), présent ici en sous-module (`vendor/w3dts`). Le solide exact au recalcul passe par [occt-wasm](https://github.com/naanouff/occt-wasm) / `occt-kernel` (`vendor/occt-wasm` @ v0.3.0) : bootstrap du futur **OpenCAD Kernel** (K3).
 
 OpenCadEditor est le logiciel. Les fichiers OpenCAD ne le sont pas.
 
@@ -38,7 +38,7 @@ packages/format-opencad/   lecture et écriture `.cadompart`
 packages/mcp/               serveur MCP (langage de commandes + pont viewport)
 packages/shell/             hôte React, Dockview, viewport, pipeline OCCT (`pnpm dev`)
 vendor/w3dts/               moteur WebGPU (sous-module)
-vendor/occt-wasm/           sources occt-wasm @ v0.2.0 (sous-module)
+vendor/occt-wasm/           sources occt-wasm @ v0.3.0 (sous-module)
 packages/shell/occt/        artefacts occt-kernel.wasm (release)
 ```
 

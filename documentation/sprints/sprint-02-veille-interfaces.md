@@ -12,7 +12,7 @@ Avoir, pour chaque modeleur 3D du benchmark, une capture publique et le repérag
 2. Rédiger `documentation/veille/interfaces.md` : image, URL, quatre repères, une observation. AutoCAD en contraste. OpenSCAD et CadQuery sans ruban. Les trois PLM cités sans capture de modeleur.
 3. Lier la note depuis [documentation/README.md](../README.md).
 
-Hors sprint : modifier [maquette/index.html](../maquette/index.html), dessiner un nouveau layout, coder l’éditeur.
+Hors sprint : modifier [maquette/v1/index.html](../maquette/v1/index.html), dessiner un nouveau layout, coder l’éditeur.
 
 ## Terminé quand
 

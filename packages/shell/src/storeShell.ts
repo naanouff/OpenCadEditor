@@ -8,7 +8,8 @@ import {
   type LateLoadPlan,
 } from '@opencad/cadom'
 import { ecrire, lire } from '@opencad/format-opencad'
-import { maillageDepuisAssemblage } from './assemblageMaillage.ts'
+import { maillageDepuisAssemblage, partiesAssemblage } from './assemblageMaillage.ts'
+import { assemblerDansWorker } from './moteur/assembleur.ts'
 import { chargeurCourant } from './chargeurAsset.ts'
 import { selecteurCourant } from './fichierShell.ts'
 import { Hote } from './hote.ts'
@@ -39,6 +40,19 @@ let construction = false
 let maillageAffiche: MaillageOmbre | null = null
 let aretesNommees: AreteNommee[] = []
 let areteChoisie: string | null = null
+/** Carreau tessellé sélectionné (sprint 62). */
+let faceChoisie: { id: number; nom: string } | null = null
+/** Arête BRep sélectionnée (index dans `aretesBrepGroupees`). */
+let segmentChoisi: number | null = null
+/** Survol courant, sans muter le modèle. */
+let survol:
+  | { sorte: 'face'; id: number; nom: string }
+  | { sorte: 'arete'; id: number }
+  | { sorte: 'plan'; id: string }
+  | { sorte: 'axe'; id: string }
+  | null = null
+/** Plan ou axe d’origine sélectionné. */
+let datumChoisi: string | null = null
 let assemblage: CadomDocument | null = null
 
 function retenirAretes(aretes: AreteKernel[] | undefined) {
@@ -50,6 +64,19 @@ function retenirAretes(aretes: AreteKernel[] | undefined) {
 function oublierAretes() {
   aretesNommees = []
   areteChoisie = null
+}
+
+function oublierFace() {
+  faceChoisie = null
+  segmentChoisi = null
+  datumChoisi = null
+  survol = null
+}
+
+function validerFaceChoisie(maille: MaillageOmbre | null) {
+  if (!faceChoisie) return
+  const faces = maille?.faces
+  if (!faces || !faces.includes(faceChoisie.id)) faceChoisie = null
 }
 
 export type EtatAsset = 'en_attente' | 'ok' | 'erreur'
@@ -71,6 +98,9 @@ const moteur = navigateur
         faces: maillage.faces,
       }
       retenirAretes((maillage as Maillage & { aretes?: AreteKernel[] }).aretes)
+      validerFaceChoisie(maillageAffiche)
+      segmentChoisi = null
+      survol = null
       construction = false
       revision += 1
       prevenir()
@@ -118,15 +148,19 @@ async function reconstruireMaillageAssemblage() {
         maille = null
       }
     }
-    maille ??= await maillageDepuisAssemblage(doc)
+    maille ??= navigateur
+      ? await assemblerDansWorker(partiesAssemblage(doc))
+      : await maillageDepuisAssemblage(doc)
     if (generation !== generationAssemblage || assemblage !== doc) return
     maillageAffiche = maille
     oublierAretes()
+    oublierFace()
   } catch (erreur) {
     if (generation !== generationAssemblage) return
     console.error(erreur instanceof Error ? erreur.message : String(erreur))
     maillageAffiche = null
     oublierAretes()
+    oublierFace()
   } finally {
     if (generation === generationAssemblage) {
       construction = false
@@ -156,6 +190,17 @@ function chargerAssemblage(octets: Uint8Array, reconstruire = true) {
   if (reconstruire) void reconstruireMaillageAssemblage()
 }
 
+function quitterAssemblage() {
+  if (!assemblage) return
+  assemblage = null
+  statutsAssets = new Map()
+  generationAssemblage += 1
+  construction = false
+  maillageAffiche = null
+  oublierAretes()
+  oublierFace()
+}
+
 export const storeShell = {
   hote: () => hote,
   revision: () => revision,
@@ -164,12 +209,66 @@ export const storeShell = {
   maillageAffiche: () => maillageAffiche,
   aretesNommees: () => aretesNommees,
   areteChoisie: () => areteChoisie,
+  faceChoisie: () => faceChoisie,
+  segmentChoisi: () => segmentChoisi,
+  survol: () => survol,
   choisirArete(nom: string) {
     if (!aretesNommees.some((a) => a.id === nom)) return false
     areteChoisie = nom
+    faceChoisie = null
+    segmentChoisi = null
+    datumChoisi = null
     revision += 1
     prevenir()
     return true
+  },
+  datumChoisi: () => datumChoisi,
+  choisirFace(id: number, nom: string) {
+    faceChoisie = { id, nom }
+    areteChoisie = null
+    segmentChoisi = null
+    datumChoisi = null
+    revision += 1
+    prevenir()
+  },
+  /** Arête BRep entière ; `classe` = nom kernel (`arete.haut`…) pour le ruban, si elle en a un. */
+  choisirAreteBrep(id: number, classe: string | null) {
+    segmentChoisi = id
+    faceChoisie = null
+    datumChoisi = null
+    areteChoisie = classe && aretesNommees.some((a) => a.id === classe) ? classe : null
+    revision += 1
+    prevenir()
+  },
+  choisirDatum(id: string) {
+    datumChoisi = id
+    faceChoisie = null
+    segmentChoisi = null
+    areteChoisie = null
+    revision += 1
+    prevenir()
+  },
+  /** Clic dans le vide : plus de face, d’arête ni de datum. Faux si rien n’était choisi. */
+  deselectionner() {
+    if (!faceChoisie && segmentChoisi === null && datumChoisi === null && !areteChoisie) return false
+    faceChoisie = null
+    segmentChoisi = null
+    datumChoisi = null
+    areteChoisie = null
+    revision += 1
+    prevenir()
+    return true
+  },
+  definirSurvol(suivant: typeof survol) {
+    const identique =
+      survol === suivant ||
+      (survol?.sorte === suivant?.sorte &&
+        survol?.id === suivant?.id &&
+        (survol?.sorte !== 'face' || suivant?.sorte !== 'face' || survol.nom === suivant.nom))
+    if (identique) return
+    survol = suivant
+    revision += 1
+    prevenir()
   },
   assemblage: () => assemblage,
   /** Graph-first asset fetch plan ; null when no assembly is loaded. */
@@ -196,6 +295,7 @@ export const storeShell = {
   ligne(texte: string) {
     vueEsquisse = null
     areteChoisie = null
+    if (texte.trim()) quitterAssemblage()
     hote.ligne(texte)
     if (texte.trim()) envoyer((sequence) => moteur?.ligne(texte, sequence))
     revision += 1
@@ -247,6 +347,8 @@ export const storeShell = {
   executer(script: string) {
     vueEsquisse = null
     areteChoisie = null
+    faceChoisie = null
+    quitterAssemblage()
     hote.executer(script)
     envoyer((sequence) => moteur?.executer(script, sequence))
     revision += 1
@@ -293,6 +395,7 @@ export const storeShell = {
   },
   remplacer(script: string) {
     vueEsquisse = null
+    quitterAssemblage()
     hote.session.reinitialiser()
     hote.viderJournal()
     if (script.trim()) hote.executer(script)

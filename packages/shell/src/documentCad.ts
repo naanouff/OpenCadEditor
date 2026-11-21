@@ -1,4 +1,5 @@
 import type { EsquissePosee, Frontiere, MaillageOmbre } from '@opencad/api-parametrique'
+import type { MaillageTeinte } from './assemblageMaillage.ts'
 import { aretesBrep, cercleFerme, coteDiametre, coteSegment, filDeFer, grille, pasGrille, repere } from './dessin.ts'
 
 /** Le lecteur CAD et les overlays vector-lines sont en mètres. */
@@ -47,23 +48,39 @@ export function documentCad(
   }
   // Keep the solid visible under an open sketch (grid / profile overlay on top).
   const volumeActif = volume && volume.indices.length > 0 ? volume : null
+  const duVolume = volumeActif ? volumeEnMetres(volumeActif) : null
+  const filFrontiere = duVolume
+    ? null
+    : enMetres(!esquisse && frontiere.faces.length > 0 ? filDeFer(frontiere).position.array : [])
   return {
-    brepWireframe: enMetres(
-      volumeActif
-        ? aretesBrep(volumeActif)
-        : !esquisse && frontiere.faces.length > 0
-          ? filDeFer(frontiere).position.array
-          : [],
-    ),
+    /** Lu seulement quand le viewport n’a pas la topologie du volume. */
+    get brepWireframe() {
+      return duVolume ? duVolume.fil() : filFrontiere!
+    },
     grille: enMetres(grilleMm),
     esquisse: enMetres(esquisseMm),
     cotes: enMetres(cotesMm),
-    maillage: volumeActif
-      ? enMetresOmbre(volumeActif)
+    maillage: duVolume
+      ? duVolume.maillage
       : esquisse
         ? { positions: [], normales: [], indices: [] }
         : maillage(frontiere),
   }
+}
+
+const volumesConvertis = new WeakMap<
+  MaillageOmbre,
+  { fil: () => ReturnType<typeof enMetres>; maillage: ReturnType<typeof enMetresOmbre> }
+>()
+
+/** Chaque réaffichage (survol compris) repasse par ici : un volume n'est converti qu'une fois. */
+function volumeEnMetres(volume: MaillageOmbre) {
+  const connu = volumesConvertis.get(volume)
+  if (connu) return connu
+  let fil: ReturnType<typeof enMetres> | null = null
+  const converti = { fil: () => (fil ??= enMetres(aretesBrep(volume))), maillage: enMetresOmbre(volume) }
+  volumesConvertis.set(volume, converti)
+  return converti
 }
 
 /** Le noyau donne déjà la normale de chaque surface. Seules les longueurs changent d'unité. */
@@ -72,6 +89,8 @@ function enMetresOmbre(volume: MaillageOmbre) {
     positions: volume.positions.map((valeur) => valeur * METRE),
     normales: volume.normales,
     indices: volume.indices,
+    faces: volume.faces,
+    teintes: (volume as MaillageTeinte).teintes,
   }
 }
 

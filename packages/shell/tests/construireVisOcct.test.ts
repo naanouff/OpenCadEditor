@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { chargerKernel } from '../src/occt/chargerKernel.ts'
 import { corpsLisseOcct, maillageVisHybride, solideVisOcct, solideVisOcctSansPozi } from '../src/occt/construireVis.ts'
+import { aretesBrepGroupees, type AreteBrep } from '../src/selectionSegment.ts'
 
 function stats(maille: { positions: number[] }) {
   let yMax = -Infinity
@@ -24,7 +25,7 @@ describe('construireVis OCCT', () => {
     expect(maille.indices.length).toBeGreaterThan(sans.indices.length)
   }, 120_000)
 
-  it('greffe le filet hôte sur la tête OCCT', async () => {
+  it('filète le corps en hélice OCCT', async () => {
     const occt = await chargerKernel()
     const maille = maillageVisHybride(occt)
     const { yMax, rayonMax } = stats(maille)
@@ -41,5 +42,19 @@ describe('construireVis OCCT', () => {
     expect(crete).toBe(true)
     expect(ame).toBe(true)
     expect(corpsLisseOcct(occt).positions.length).toBeGreaterThan(0)
+  }, 180_000)
+
+  it('ne trace pas les coutures de tour du filet, garde crête et racine', async () => {
+    const occt = await chargerKernel()
+    const maille = maillageVisHybride(occt)
+    const r = (p: readonly number[]) => Math.hypot(p[0]!, p[2]!)
+    const dansFilet = (a: AreteBrep) => a.segments.every((s) => s.a[1] > 12 && s.a[1] < 22 && s.b[1] > 12 && s.b[1] < 22)
+    const coutures = (m: typeof maille) => aretesBrepGroupees(m).filter((a) => dansFilet(a) && a.segments.length === 1)
+    // Les tours du filet sont fondus dans leur carreau par la tessellation, normales ou non.
+    expect(coutures({ ...maille, normales: undefined })).toHaveLength(0)
+    expect(coutures(maille)).toHaveLength(0)
+    const tours = aretesBrepGroupees(maille).filter(dansFilet)
+    expect(tours.some((a) => a.segments.every((s) => Math.abs(r(s.a) - 3) < 0.05))).toBe(true)
+    expect(tours.some((a) => a.segments.every((s) => Math.abs(r(s.a) - 1.75) < 0.05))).toBe(true)
   }, 180_000)
 })

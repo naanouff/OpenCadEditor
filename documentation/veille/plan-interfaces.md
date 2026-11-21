@@ -1,6 +1,6 @@
 # Plan — veille des interfaces
 
-Le layout d’OpenCadEditor est en avance sur l’observation des logiciels existants. Cette veille regarde où les modeleurs du benchmark placent le ruban, l’historique, le viewport et le panneau de la fonction en cours. La maquette [index.html](../maquette/index.html) n’est pas modifiée.
+Le layout d’OpenCadEditor est en avance sur l’observation des logiciels existants. Cette veille regarde où les modeleurs du benchmark placent le ruban, l’historique, le viewport et le panneau de la fonction en cours. La maquette [index.html](../maquette/v1/index.html) n’est pas modifiée.
 
 Le sprint qui produit les captures et la note est [sprint 02](../sprints/sprint-02-veille-interfaces.md). La note écrite est [interfaces.md](interfaces.md).
 

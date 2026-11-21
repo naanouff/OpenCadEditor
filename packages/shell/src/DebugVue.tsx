@@ -2,6 +2,7 @@ import { useState, type ReactElement } from 'react'
 import { Panel } from '@naanouff/w3dts-editor-ui'
 import { encode } from '@opencad/cadom'
 import { assemblageBoiteComplete } from './assemblageBoite.ts'
+import { assemblagePlateau } from './assemblagePlateau.ts'
 import { selecteurNavigateur } from './fichierShell.ts'
 import { SCRIPT_BOITE } from './scriptBoite.ts'
 import { SCRIPT_CARRURE } from './scriptCarrure.ts'
@@ -127,6 +128,16 @@ export function DebugVue(): ReactElement {
             onClick={chargerAssemblage}
           >
             Load boîte Complete
+          </button>
+          <button
+            type="button"
+            className="rounded border border-[var(--color-border-default)] bg-[var(--color-surface-input)] px-3 py-1.5 text-left text-[var(--color-text-primary)] hover:bg-[var(--color-surface-hover)]"
+            onClick={() => {
+              storeShell.ouvrir(encode(assemblagePlateau()))
+              setMessage('Plateau — graphe Design (2 poignées, 4 vis noyées)')
+            }}
+          >
+            Load plateau
           </button>
           <button
             type="button"

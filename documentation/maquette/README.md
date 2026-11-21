@@ -1,16 +1,11 @@
-# Maquette du layout
+# Maquettes du layout
 
-Page statique du sprint 01. Ouvrir [index.html](index.html) dans un navigateur. Le cadre vient de [plan-layout.md](plan-layout.md). Les gestes viennent du [flux de construction](../veille/flux-construction-parametrique.md).
+| Version | Forme | Entrée |
+|---------|-------|--------|
+| [v1](v1/) | HTML/CSS statique (sprint 01) | [v1/index.html](v1/index.html) |
+| [v2](v2/) | React + Tailwind + Dockview + Lucide, thèmes light/dark | `cd v2 && pnpm install && pnpm dev` |
 
-| Zone | Rôle |
+| Plan | Rôle |
 |------|------|
-| Ruban | Lance l’esquisse, les fonctions ou nomme les pièces d’assemblage |
-| Historique | Ordre de reconstruction de la carrure, avec un curseur de reprise |
-| Paramètres | `diametre_boite`, `epaisseur_paroi`, `entrecorne` |
-| Viewport | Schéma de l’anneau, repère, cube de vues |
-| Fonction en cours | Règle l’extrusion lancée par le ruban |
-| Barre d’état | Esquisse entièrement contrainte, millimètre, pièce Carrure |
-
-Les blocs marqués « proposition » ne font pas partie du cadre fixe : mode Esquisse, trait blanc du profil contraint, cotes dans la vue, barre près du cercle, recherche, fil d’Ariane, symétrie des cornes, coupe, aperçu fantôme.
-
-Cette page ne résout pas d’esquisse, n’affiche pas WebGPU et n’écrit aucun fichier.
+| [plan-v2.md](plan-v2.md) | Layout Whittle, Dockview, thèmes |
+| [plan-espaces.md](plan-espaces.md) | Espaces CAM, CTRL, Render Studio — [sprint 65](../sprints/sprint-65-maquette-espaces.md) |

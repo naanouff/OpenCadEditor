@@ -15,22 +15,28 @@ import {
   altitudeSupport,
   diametreDepuisUv,
   dimensionsRectangleDepuisUv,
-  facesVersMetres,
   outilEsquissePointeur,
   pointSurPlan,
   rayonVersMm,
+  MM_PAR_METRE,
   uvDepuisMonde,
 } from './esquissePointeur.ts'
-import { areteSousPointeur, SEUIL_ARETE_MM } from './selectionArete.ts'
+import type { Maillage } from '@opencad/api-parametrique'
+import type { CalqueTopo } from './apparenceCad.ts'
+import { carreauSousPointeur, nomCarreau } from './selectionCarreau.ts'
+import { rayonOrthoDepuisNdc } from './selectionFace.ts'
 import {
-  faceSousPointeur,
-  facesDepuisMaillage,
-  rayonOrthoDepuisNdc,
-} from './selectionFace.ts'
+  areteBrepSousPointeur,
+  classeKernelDe,
+  SEUIL_SEGMENT_MM,
+} from './selectionSegment.ts'
+import { topologieAffichee } from './topologieAffichee.ts'
+import { traitsDe, traitsVides } from './traitsArete.ts'
+import { axeSousPointeur, planSousPointeur } from './selectionDatum.ts'
 import { RubanVue } from './RubanVue.tsx'
 import { storeShell } from './storeShell.ts'
 import { TerminalMonaco } from './TerminalMonaco.tsx'
-import { afficher, cadreCameraPick } from './viewportW3dts.ts'
+import { afficher, cadreCameraPick, cadrerVue, pivoterVue } from './viewportW3dts.ts'
 
 const STORAGE_KEY = 'opencad.shell.dockview.layout.v5'
 const REQUIRED = [
@@ -42,6 +48,44 @@ const REQUIRED = [
   'debug',
   'preferences',
 ] as const
+
+function nomArete(maille: Maillage, id: number) {
+  const arete = topologieAffichee(maille).aretes[id]
+  const classe = arete ? classeKernelDe(arete, storeShell.aretesNommees()) : null
+  return classe ? `${classe} (#${id})` : `arete #${id}`
+}
+
+function libelleTopo(maille: Maillage) {
+  const survol = storeShell.survol()
+  if (survol?.sorte === 'face') return survol.nom
+  if (survol?.sorte === 'arete') return nomArete(maille, survol.id)
+  if (survol?.sorte === 'plan' || survol?.sorte === 'axe') return survol.id
+  const segment = storeShell.segmentChoisi()
+  if (segment !== null) return nomArete(maille, segment)
+  return storeShell.datumChoisi() ?? storeShell.faceChoisie()?.nom ?? ''
+}
+
+const MM = 0.001
+/** Demi-largeur de capture d’une arête ou d’un axe, en pixels CSS. */
+const SEUIL_TRAIT_PX = 5
+
+function calqueAffiche(maille: Maillage): CalqueTopo {
+  const survol = storeShell.survol()
+  const { aretes, fil } = topologieAffichee(maille)
+  const trait = (id: number | null) => {
+    const arete = id === null ? undefined : aretes[id]
+    return arete ? traitsDe([arete], MM) : traitsVides
+  }
+  return {
+    survolFace: survol?.sorte === 'face' ? survol.id : null,
+    selectionFace: storeShell.faceChoisie()?.id ?? null,
+    fil,
+    survolArete: trait(survol?.sorte === 'arete' ? survol.id : null),
+    selectionArete: trait(storeShell.segmentChoisi()),
+    datumSurvol: survol?.sorte === 'plan' || survol?.sorte === 'axe' ? survol.id : null,
+    datumChoisi: storeShell.datumChoisi(),
+  }
+}
 
 function useStoreShell() {
   const [revision, setRevision] = useState(() => storeShell.revision())
@@ -120,29 +164,38 @@ function ViewportVue(_props: IDockviewPanelProps) {
     // Volume moteur (OCCT) : fil via aretesBrep — pas besoin du motif decrire.
     const frontiere =
       !posee && maille.indices.length > 0 ? { faces: [] } : hote.session.frontiere()
-    void afficher(canevas, frontiere, posee, maille).catch((erreur: unknown) => {
-      console.error(erreur instanceof Error ? erreur.message : String(erreur))
-    })
+    void afficher(canevas, frontiere, posee, maille, calqueAffiche(maille)).catch(
+      (erreur: unknown) => {
+        console.error(erreur instanceof Error ? (erreur.stack ?? erreur.message) : String(erreur))
+      },
+    )
   }, [hote, revision])
+  useEffect(() => {
+    const surTouche = (e: KeyboardEvent) => {
+      if (e.key !== 'f' && e.key !== 'F') return
+      if (e.ctrlKey || e.metaKey || e.altKey) return
+      const cible = e.target as HTMLElement | null
+      if (cible && (cible.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(cible.tagName))) return
+      cadrerVue()
+    }
+    window.addEventListener('keydown', surTouche)
+    return () => window.removeEventListener('keydown', surTouche)
+  }, [])
 
-  const onPointerDown = (e: ReactPointerEvent) => {
-    if (e.button !== 0) return
-    pointe.current = { x: e.clientX, y: e.clientY }
-  }
-  const onPointerUp = (e: ReactPointerEvent) => {
-    const debut = pointe.current
-    pointe.current = null
-    if (e.button !== 0 || !debut) return
-    if (Math.hypot(e.clientX - debut.x, e.clientY - debut.y) > 4) return
-    if (storeShell.assemblage()) return
+  const mailleAffichee = () =>
+    storeShell.utiliseMoteur()
+      ? (storeShell.maillageAffiche() ?? { positions: [], normales: [], indices: [] })
+      : hote.session.maillage()
+
+  const rayonSousPointeur = (e: ReactPointerEvent) => {
     const canevas = ref.current
     const cadre = cadreCameraPick()
-    if (!canevas || !cadre) return
+    if (!canevas || !cadre) return null
     const rect = canevas.getBoundingClientRect()
-    if (rect.width < 1 || rect.height < 1) return
+    if (rect.width < 1 || rect.height < 1) return null
     const ndcX = ((e.clientX - rect.left) / rect.width) * 2 - 1
     const ndcY = 1 - ((e.clientY - rect.top) / rect.height) * 2
-    const rayonM = rayonOrthoDepuisNdc(
+    return rayonOrthoDepuisNdc(
       ndcX,
       ndcY,
       cadre.eye,
@@ -151,9 +204,81 @@ function ViewportVue(_props: IDockviewPanelProps) {
       cadre.demiHauteur,
       rect.width / rect.height,
     )
-    const maille = storeShell.utiliseMoteur()
-      ? (storeShell.maillageAffiche() ?? { positions: [], normales: [], indices: [] })
-      : hote.session.maillage()
+  }
+
+  /** Seuil de pick d’un trait : quelques pixels à l’écran, jamais moins que la tolérance en mm. */
+  const seuilTrait = () => {
+    const canevas = ref.current
+    const cadre = cadreCameraPick()
+    if (!canevas || !cadre || canevas.clientHeight < 1) return SEUIL_SEGMENT_MM
+    const mmParPixel = (2 * cadre.demiHauteur * 1000) / canevas.clientHeight
+    return Math.max(SEUIL_SEGMENT_MM, SEUIL_TRAIT_PX * mmParPixel)
+  }
+
+  const onPointerMove = (e: ReactPointerEvent) => {
+    // Bouton enfoncé : la caméra tourne, pas de survol.
+    if (e.buttons !== 0) return
+    if (hote.session.esquisseCourante()) {
+      storeShell.definirSurvol(null)
+      return
+    }
+    const rayonM = rayonSousPointeur(e)
+    if (!rayonM) return
+    const maille = mailleAffichee()
+    const topo = topologieAffichee(maille)
+    const rayon = rayonVersMm(rayonM)
+    const seuil = seuilTrait()
+    const arete = areteBrepSousPointeur(topo.aretes, rayon, seuil)
+    if (arete) {
+      storeShell.definirSurvol({ sorte: 'arete', id: arete.id })
+      return
+    }
+    const hit = carreauSousPointeur(maille, rayon)
+    if (hit) {
+      storeShell.definirSurvol({ sorte: 'face', id: hit.faceId, nom: nomCarreau(hit.faceId, topo.noms) })
+      return
+    }
+    const axe = axeSousPointeur(rayon, seuil)
+    if (axe) {
+      storeShell.definirSurvol({ sorte: 'axe', id: axe })
+      return
+    }
+    const plan = planSousPointeur(rayon)
+    storeShell.definirSurvol(plan ? { sorte: 'plan', id: plan } : null)
+  }
+
+  const onPointerLeave = () => {
+    storeShell.definirSurvol(null)
+  }
+
+  /** La vue tourne autour du point de pièce saisi ; dans le vide, autour de son centre. */
+  const poserPivot = (e: ReactPointerEvent) => {
+    const rayonM = rayonSousPointeur(e)
+    const hit = rayonM && !hote.session.esquisseCourante() ? carreauSousPointeur(mailleAffichee(), rayonVersMm(rayonM)) : null
+    if (!rayonM || !hit) {
+      pivoterVue(null)
+      return
+    }
+    const t = hit.t / MM_PAR_METRE
+    const { origine, direction } = rayonM
+    pivoterVue([origine[0] + direction[0] * t, origine[1] + direction[1] * t, origine[2] + direction[2] * t])
+  }
+
+  const onPointerDown = (e: ReactPointerEvent) => {
+    if (e.button === 2) poserPivot(e)
+    if (e.button !== 0) return
+    pointe.current = { x: e.clientX, y: e.clientY }
+  }
+  const onPointerUp = (e: ReactPointerEvent) => {
+    const debut = pointe.current
+    pointe.current = null
+    if (e.button !== 0 || !debut) return
+    if (Math.hypot(e.clientX - debut.x, e.clientY - debut.y) > 4) return
+    // Assemblage : on consulte, aucune pièce n’est en édition pour recevoir une esquisse.
+    const consultation = storeShell.assemblage() !== null
+    const rayonM = rayonSousPointeur(e)
+    if (!rayonM) return
+    const maille = mailleAffichee()
     try {
       let yMax = 0
       for (let i = 1; i < maille.positions.length; i += 3) {
@@ -161,24 +286,45 @@ function ViewportVue(_props: IDockviewPanelProps) {
       }
       let esquisse = hote.session.esquisseCourante()
       if (!esquisse) {
-        const arete = areteSousPointeur(
-          storeShell.aretesNommees(),
-          rayonVersMm(rayonM),
-          SEUIL_ARETE_MM,
-        )
+        const rayon = rayonVersMm(rayonM)
+        const topo = topologieAffichee(maille)
+        const seuil = seuilTrait()
+        const arete = areteBrepSousPointeur(topo.aretes, rayon, seuil)
         if (arete) {
-          storeShell.choisirArete(arete)
+          storeShell.choisirAreteBrep(arete.id, classeKernelDe(arete, storeShell.aretesNommees()))
           return
         }
-        const face = faceSousPointeur(
-          facesVersMetres(facesDepuisMaillage(maille.positions)),
-          rayonM,
-        )
-        // Hit a solid face → sketch on it ; otherwise start on plan.dessus.
-        const support = face ?? 'plan.dessus'
-        if (!storeShell.ouvrirEsquisseSurSupport(support)) return
-        esquisse = hote.session.esquisseCourante()
-        if (!esquisse) return
+        const hit = carreauSousPointeur(maille, rayon)
+        if (!hit) {
+          const axe = axeSousPointeur(rayon, seuil)
+          const plan = axe ?? planSousPointeur(rayon)
+          if (plan) {
+            const deja = storeShell.datumChoisi()
+            storeShell.choisirDatum(plan)
+            if (deja === plan && plan.startsWith('plan.') && !consultation) {
+              if (!storeShell.ouvrirEsquisseSurSupport(plan)) return
+              esquisse = hote.session.esquisseCourante()
+              if (!esquisse) return
+            } else return
+          } else {
+            // Le vide retire la sélection. On n’ouvre une esquisse que si rien n’était choisi.
+            if (storeShell.deselectionner() || consultation) return
+            if (!storeShell.ouvrirEsquisseSurSupport('plan.dessus')) return
+            esquisse = hote.session.esquisseCourante()
+            if (!esquisse) return
+          }
+        } else if (hit) {
+          const nom = nomCarreau(hit.faceId, topo.noms)
+          const deja = storeShell.faceChoisie()
+          storeShell.choisirFace(hit.faceId, nom)
+          // Premier clic : sélection visible. Second clic sur dessus/dessous : esquisse.
+          const second =
+            deja?.id === hit.faceId && (nom === 'face.dessus' || nom === 'face.dessous')
+          if (!second || consultation) return
+          if (!storeShell.ouvrirEsquisseSurSupport(nom)) return
+          esquisse = hote.session.esquisseCourante()
+          if (!esquisse) return
+        }
       }
       const altitude =
         esquisse.cercles[0]?.y ?? esquisse.yPlan ?? altitudeSupport(esquisse.support, yMax)
@@ -204,16 +350,18 @@ function ViewportVue(_props: IDockviewPanelProps) {
         style={{ background: 'var(--color-viewport-clear, #a8abad)' }}
         onPointerDown={onPointerDown}
         onPointerUp={onPointerUp}
+        onPointerMove={onPointerMove}
+        onPointerLeave={onPointerLeave}
       />
       {storeShell.construction() ? (
         <p className="pointer-events-none absolute left-3 top-3 m-0 font-ui text-[13px] text-[var(--color-text-primary)]">
           Construction…
         </p>
-      ) : storeShell.areteChoisie() ? (
+      ) : (
         <p className="pointer-events-none absolute left-3 top-3 m-0 font-ui text-[13px] text-[var(--color-text-primary)]">
-          {storeShell.areteChoisie()}
+          {libelleTopo(mailleAffichee())}
         </p>
-      ) : null}
+      )}
     </div>
   )
 }

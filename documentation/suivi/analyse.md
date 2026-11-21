@@ -1,6 +1,6 @@
 # Analyse d’OpenCadEditor
 
-État au 2026-10-11. Synthèse après les sprints 03–36. Le détail daté reste dans [journal.md](journal.md). Cap et phases : [feuille-de-route.md](feuille-de-route.md). Vérification du noyau : [occt-kernel.md](occt-kernel.md).
+État au 2026-11-20. Synthèse après les sprints 03–61. Le détail daté reste dans [journal.md](journal.md). Cap et phases : [feuille-de-route.md](feuille-de-route.md). Vérification du noyau : [occt-kernel.md](occt-kernel.md).
 
 Éditeur CAO web qui doit exploiter les formats [OpenCAD](https://github.com/naanouff/OpenCAD) (`.cadom`, `.cadompart`, `.cadombrep`, `.cadomesh`). Le rendu vient du sous-module `vendor/w3dts`. Le grand projet est la boîte d’une Rolex Milgauss (carrure Oyster) ; vis Pozi et boulon M8 servent de seconds cas.
 
@@ -26,7 +26,7 @@ flowchart LR
 - **[packages/mcp](../../packages/mcp)** — serveur stdio + pont WebSocket viewport (sprint 34).
 - **[packages/shell](../../packages/shell)** — hôte Dockview, terminal Monaco, pipeline OCCT, worker. `pnpm dev` via Vite.
 - **`vendor/w3dts`** — moteur WebGPU. Chrome via `@naanouff/w3dts-editor-ui`.
-- **`vendor/occt-wasm`** @ v0.2.0 — sources ; artefacts dans `packages/shell/occt/`.
+- **`vendor/occt-wasm`** @ v0.3.0 — sources ; artefacts dans `packages/shell/occt/`.
 
 Pas de `package.json` racine : chaque paquet a son propre lockfile.
 
@@ -56,11 +56,10 @@ TDD : [developpement.md](../developpement.md). Veille avant chaque sprint.
 
 ## Ce qui manque pour le produit annoncé
 
-- **P0** (sprint 37) — test tube-bout, CI tests, doc, hygiène.
-- **P1** — barrette / tube OCCT, fillet, retrait `noyauProvisoire`, `polygone n`.
-- **OpenCAD** — dialecte expressions (O1), paquet kernel extrait (O2), writers `.cadomesh` / `.cadombrep` (O3), SDK `.cadom` (O4).
-- **P3** — assemblage multi-pièces Milgauss.
-- **P4** — esquisse souris, sélection faces, ruban, comme clients des lignes. Puis Electron, mates, maillons.
+- **P5** (en cours, sprint 62) — carreaux / arêtes / datums sélectionnables dans le viewport ([affichage-topologique.md](../veille/affichage-topologique.md)).
+- **P6** — plateau de service OpenCAD : parts + instances + `.cadomat` ([plateau-service-cadom.md](../veille/plateau-service-cadom.md)).
+- **W1** — arcs/cercles natifs, helix/sweep (occt-wasm).
+- Restes P1 — delete BSP / `noyauProvisoire` ; Electron, mates, maillons hors moyen terme.
 
 ## Lecture utile
 
@@ -68,6 +67,7 @@ TDD : [developpement.md](../developpement.md). Veille avant chaque sprint.
 - [journal.md](journal.md) — décisions datées
 - [direction-modeleur.md](../veille/direction-modeleur.md) — pivot
 - [pilotage-lignes.md](../veille/pilotage-lignes.md) — ligne par défaut, UI cliente, emprunt fonctionnel à Whittle
-- [recalage-cap.md](../veille/recalage-cap.md) — P0
-- [sprint-37-recalage.md](../sprints/sprint-37-recalage.md) — prochain code
+- [affichage-topologique.md](../veille/affichage-topologique.md) — P5 viewport CAO
+- [plateau-service-cadom.md](../veille/plateau-service-cadom.md) — P6 démo formats
+- [sprint-62-carreaux-brep.md](../sprints/sprint-62-carreaux-brep.md) — prochain code
 - [genericite.md](../shell/genericite.md) — où le compilateur de pièce quittait le socle

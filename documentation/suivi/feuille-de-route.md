@@ -1,12 +1,12 @@
 # Feuille de route — OpenCadEditor et OpenCAD
 
-État au 2026-10-11. Synthèse après les sprints 03–36. Le détail daté reste dans [journal.md](journal.md). Cap technique : [direction-modeleur.md](../veille/direction-modeleur.md). Pilotage : [pilotage-lignes.md](../veille/pilotage-lignes.md) (2026-11-20). Doctrine formats : [OpenCAD](https://github.com/naanouff/OpenCAD/blob/develop/documentation/opencad-doctrine.md).
+État au 2026-11-20. Synthèse après les sprints 03–61. Le détail daté reste dans [journal.md](journal.md). Cap technique : [direction-modeleur.md](../veille/direction-modeleur.md). Pilotage : [pilotage-lignes.md](../veille/pilotage-lignes.md) (2026-11-20). Doctrine formats : [OpenCAD](https://github.com/naanouff/OpenCAD/blob/develop/documentation/opencad-doctrine.md).
 
 ## Cap
 
 - **Modeleur paramétrique contraint générique** (FreeCAD / Creo web) : historique → GCS → wires → occt-kernel. Pas de compilateur de pièce.
 - **Formats OpenCAD** : `.cadompart` (intention), `.cadom` (assemblage), `.cadomesh` (affichage), `.cadombrep` (solide exact figé). STEP hors vérité.
-- **Pièces pilotes** : boîte Milgauss (carrure → lunette, verre, fond, couronne → maillons), vis, boulon M8.
+- **Pièces pilotes** : boîte Milgauss (carrure → lunette, verre, fond, couronne → maillons), vis, boulon M8 ; démo formats : plateau de service (alu + poignées laiton + vis).
 - **Pilotage** : la ligne de `Session` est l’interface par défaut. Terminal et MCP l’exécutent sans UI. Une interface future émet ou réécrit ces lignes et ne parle pas au noyau. Whittle est la référence des comportements, pas de la pile.
 - **Méthode** : veille avant sprint, TDD, gitflow `feature/*` → `develop` → `main`.
 
@@ -31,7 +31,9 @@ flowchart LR
     P0[P0 Recalage s37]
     P1[P1 Sortie du provisoire s38-40]
     P3[P3 Boite en assemblage s44-47]
-    P4[P4 Ergonomie des lignes]
+    P4[P4 Ergonomie des lignes s56-61]
+    P5[P5 Viewport topologique s62-64]
+    P6[P6 Plateau service OpenCAD s65-66]
   end
   subgraph opencad [OpenCAD]
     O1[O1 Doctrine K3-1 et dialecte v0.3]
@@ -51,6 +53,8 @@ flowchart LR
   O4 --> P3
   O3 --> P3
   P1 --> P4
+  P4 --> P5
+  P5 --> P6
 ```
 
 | Phase | Dépôt | Sprints | Statut | Contenu |
@@ -64,7 +68,9 @@ flowchart LR
 | **O4** SDK `.cadom` | OpenCAD | O4-1…3 | fait | MVP A : DAG, overrides, late-load, lint |
 | **P3** Assemblage | OpenCadEditor | 44–47 | fait (graphe) | open/save/plan/fetch `.cadom` |
 | **P3b** Pièces boîte | OpenCadEditor | 48–55 | fait | Pièces + Complete + octets/viewport `.cadomesh` |
-| **P4** Ergonomie des lignes | OpenCadEditor | 56–… | en cours (61) | Souris, ruban et expression : clients des lignes de `Session` |
+| **P4** Ergonomie des lignes | OpenCadEditor | 56–61 | fait | Souris, ruban et expression : clients des lignes de `Session` |
+| **P5** Viewport topologique | OpenCadEditor | 62–64 | **en cours (62)** | Carreaux, arêtes, datums sélectionnables dans w3dts |
+| **P6** Plateau service | OpenCadEditor | 65–66 | en cours (65) | Démo OpenCAD : plateau alu + 2 poignées laiton + 4 vis |
 
 ### P0 — Recalage (sprint 37)
 
@@ -93,11 +99,19 @@ Sprint 44–47 : ouvrir / plan / enregistrer / fetch injectable ([fichier-cadom.
 
 Sprint 48–55 : pièces + Design/Complete + octets/viewport `.cadomesh` ([assemblage-boite-cadom.md](../veille/assemblage-boite-cadom.md)).
 
-### P4 — Ergonomie des lignes (dès sprint 56)
+### P4 — Ergonomie des lignes (sprints 56–61)
 
 Sprints 56–58 : clic → `esquisse face.*` / cercle / rectangle ([selection-face-souris.md](../veille/selection-face-souris.md), [sprint-58](../sprints/sprint-58-esquisse-rectangle-souris.md)). Sprint 59 : noms `arete.*` et clic sur un milieu ([naming-aretes.md](../veille/naming-aretes.md)). Sprint 60 : ruban Esquisse / Fonctions ([ruban.md](../veille/ruban.md)). Sprint 61 : l’onglet Fonctions règle l’expression de la dernière fonction ([regler-fonction.md](../veille/regler-fonction.md)).
 
 La souris et le ruban restent des clients des lignes ([pilotage-lignes.md](../veille/pilotage-lignes.md)). Pas de second modèle côté React. Les comportements empruntés à Whittle (geste refusé avec la raison, aperçu d’une ligne non écrite, référence ambiguë signalée) arrivent sur les verbes déjà dans le pipeline. Hors moyen terme : maillons, Electron, mates. W1 helix en parallèle occt-wasm.
+
+### P5 — Viewport topologique (dès sprint 62)
+
+Veille : [affichage-topologique.md](../veille/affichage-topologique.md). Sprint 62 : carreaux BRep pick + surbrillance ([sprint-62-carreaux-brep.md](../sprints/sprint-62-carreaux-brep.md)). Sprint 63 : arêtes sur segments du fil BRep. Sprint 64 : datums / repères 3D visibles et pickables. Pick triangle sur `Maillage.faces[]` ; pas de GPU picking ni de pile Three.js.
+
+### P6 — Plateau de service OpenCAD (dès sprint 65)
+
+Veille : [plateau-service-cadom.md](../veille/plateau-service-cadom.md). Cas pédagogique : plateau aluminium, 2 instances de poignée laiton, 4 vis (2 par poignée). Sprint 65 : pièces `.cadompart`. Sprint 66 : assemblage `.cadom` Design/Complete + assets partagés + teinte alu/laiton (`.cadomat` → viewport). Transforms fixes ; mates hors scope. Prérequis : P5 sprint 62 au minimum.
 
 ## Garde-fous
 
@@ -115,4 +129,6 @@ La souris et le ruban restent des clients des lignes ([pilotage-lignes.md](../ve
 - [pilotage-lignes.md](../veille/pilotage-lignes.md) — ligne de commande par défaut, UI cliente, emprunt fonctionnel à Whittle
 - [noyau-occt.md](../veille/noyau-occt.md) — occt-kernel bootstrap du kernel OpenCAD
 - [recalage-cap.md](../veille/recalage-cap.md) — écarts P0
-- [sprint-37-recalage.md](../sprints/sprint-37-recalage.md) — prochain code
+- [affichage-topologique.md](../veille/affichage-topologique.md) — P5 viewport CAO
+- [plateau-service-cadom.md](../veille/plateau-service-cadom.md) — P6 démo formats
+- [sprint-62-carreaux-brep.md](../sprints/sprint-62-carreaux-brep.md) — prochain code

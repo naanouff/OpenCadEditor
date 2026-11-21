@@ -40,4 +40,33 @@ describe('occt-kernel', () => {
     const mesh = out.aliases?.mesh as { triangleCount?: number }
     expect(mesh?.triangleCount ?? 0).toBeGreaterThan(0)
   }, 120_000)
+
+  it('extrude un profil à arc vrai', async () => {
+    const occt = await chargerKernel()
+    // Carré 20 × 10 coiffé d'un demi-cercle de rayon 10 passant par (10, 20).
+    const profil = [0, 0, 0, 20, 0, 0, 20, 10, 0, 10, 20, 0, 0, 10, 0, 0, 0, 0]
+    const out = runBatch(occt, [
+      { op: 'make_wire_arcs', args: [profil, [0, 0, 0, 1, 0, 0]], as: 'wire' },
+      { op: 'make_face_from_wire', args: [{ handle: 'wire' }], as: 'face' },
+      { op: 'extrude', args: [{ handle: 'face' }, 0, 0, 5], as: 'solid' },
+      { op: 'list_edges', args: [{ handle: 'solid' }], as: 'edges' },
+    ])
+    expect(out.ok).toBe(true)
+    const { edges } = out.aliases?.edges as {
+      edges: { length: number; ends: number[]; line: boolean }[]
+    }
+    const arcs = edges.filter((e) => !e.line)
+    expect(arcs).toHaveLength(2)
+    for (const arc of arcs) expect(arc.length).toBeCloseTo(Math.PI * 10, 3)
+    const verticales = edges.filter((e) => e.line && Math.abs(e.ends[2]! - e.ends[5]!) === 5)
+    expect(verticales).toHaveLength(4)
+  }, 120_000)
+
+  it('refuse deux milieux d’arc consécutifs', async () => {
+    const occt = await chargerKernel()
+    const out = runBatch(occt, [
+      { op: 'make_wire_arcs', args: [[0, 0, 0, 10, 5, 0, 20, 0, 0, 10, -5, 0, 0, 0, 0], [0, 1, 1, 0, 0]], as: 'wire' },
+    ])
+    expect(out.ok).toBe(false)
+  }, 120_000)
 })
