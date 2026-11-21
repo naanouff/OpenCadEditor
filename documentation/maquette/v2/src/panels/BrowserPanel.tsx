@@ -20,7 +20,7 @@ import {
   View,
   Wrench,
 } from 'lucide-react'
-import { CAM_PARTS, CTRL_VARS, useMock, type CamSetup } from '../mockState'
+import { CAM_PARTS, CTRL_VARS, mbdById, useMock, type CamSetup, type CtrlVarId } from '../mockState'
 
 type Row = {
   id: string
@@ -181,8 +181,12 @@ function Tree({
   )
 }
 
+function isCtrlVar(id: string): id is CtrlVarId {
+  return id === 'diametre_boite' || id === 'epaisseur_paroi' || id === 'entrecorne'
+}
+
 function DesignBrowser() {
-  const { scene } = useMock()
+  const { scene, setCtrlVar } = useMock()
   const inSketch = scene === 'sketch'
 
   const rows: Row[] = [
@@ -196,6 +200,17 @@ function DesignBrowser() {
         { id: 'p-ep', label: 'epaisseur_paroi = 2,5 mm', icon: null },
         { id: 'p-ec', label: 'entrecorne = 20 mm', icon: null },
       ],
+    },
+    {
+      id: 'mbd',
+      label: 'MBD',
+      icon: <Ruler className="h-3.5 w-3.5" />,
+      count: '3',
+      children: CTRL_VARS.map((variable) => ({
+        id: variable.id,
+        label: `${variable.id} ${variable.tolerance} · ${variable.datum} · ${variable.surface}`,
+        icon: <Ruler className="h-3.5 w-3.5" />,
+      })),
     },
     {
       id: 'origin',
@@ -243,9 +258,12 @@ function DesignBrowser() {
   return (
     <Tree
       rows={rows}
-      expandedIds={['params', 'origin', 'bodies', 'sketches']}
+      expandedIds={['params', 'mbd', 'origin', 'bodies', 'sketches']}
       selected={selected}
-      onSelect={setSelected}
+      onSelect={(id) => {
+        setSelected(id)
+        if (isCtrlVar(id)) setCtrlVar(id)
+      }}
     />
   )
 }
@@ -286,6 +304,15 @@ function setupRows(setup: CamSetup): Row {
             label: `Tool · ${operation.tool}`,
             icon: <Wrench className="h-3.5 w-3.5" />,
           },
+          ...(operation.mbd
+            ? [
+                {
+                  id: `${operation.id}:mbd`,
+                  label: `MBD · ${mbdById(operation.mbd).id} ${mbdById(operation.mbd).tolerance}`,
+                  icon: <Ruler className="h-3.5 w-3.5" />,
+                },
+              ]
+            : []),
         ],
       })),
     ],
@@ -321,7 +348,7 @@ function CtrlBrowser() {
       count: '3',
       children: CTRL_VARS.map((variable) => ({
         id: variable.id,
-        label: `${variable.id} ${variable.tolerance} · ${variable.measured} ${variable.inTolerance ? 'dans' : 'hors'}`,
+        label: `${variable.id} ${variable.tolerance} · réf. ${variable.datum} · ${variable.measured} ${variable.inTolerance ? 'dans' : 'hors'}`,
         icon: <Ruler className="h-3.5 w-3.5" />,
       })),
     },
@@ -365,7 +392,7 @@ function RenderBrowser() {
       icon: <Box className="h-3.5 w-3.5" />,
       count: '1',
       children: [
-        { id: 'steel', label: 'Acier brossé · Carrure', icon: <Box className="h-3.5 w-3.5" /> },
+        { id: 'steel', label: 'Acier brossé · depuis la définition', icon: <Box className="h-3.5 w-3.5" /> },
       ],
     },
   ]

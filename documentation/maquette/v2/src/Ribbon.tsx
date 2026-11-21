@@ -244,16 +244,17 @@ export function Ribbon() {
           </span>
           <span className="text-[11px] text-oc-muted">
             {workspace === 'cam'
-              ? 'Un setup par machine et posage'
+              ? 'Gamme et outil choisis sur la définition MBD'
               : workspace === 'ctrl'
                 ? locked
                   ? 'Relevé verrouillé'
-                  : 'MBD carrure.cadompart'
-                : 'Studio · 1920×1080'}
+                  : 'Relevé jugé contre les tolérances de la définition'
+                : 'PBR piloté par l’apparence et l’état de surface'}
           </span>
         </div>
       ) : !inSketch ? (
-        <div className="flex items-end gap-1 px-2 pt-1">
+        <div className="flex items-end justify-between gap-2 px-2 pt-1">
+          <div className="flex items-end gap-1">
           {TABS.map((tab) => (
             <button
               key={tab.id}
@@ -268,13 +269,19 @@ export function Ribbon() {
               {tab.label}
             </button>
           ))}
+          </div>
+          <span className="pb-1.5 text-[11px] text-oc-muted">
+            Définition MBD · cotes, tolérances, références, apparence
+          </span>
         </div>
       ) : (
         <div className="flex items-center justify-between px-3 pt-1.5">
           <span className="text-[11px] font-semibold uppercase tracking-wider text-oc-accent">
             Sketch
           </span>
-          <span className="text-[11px] text-oc-muted">Plan de dessus · 1 forme</span>
+          <span className="text-[11px] text-oc-muted">
+            Définition MBD · tolérance, référence, état de surface
+          </span>
         </div>
       )}
 

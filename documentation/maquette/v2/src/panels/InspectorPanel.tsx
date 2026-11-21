@@ -1,7 +1,17 @@
 import type { IDockviewPanelProps } from 'dockview'
 import { Aperture, ImagePlus, Pencil, Wrench } from 'lucide-react'
 import { Badge, Button, Field } from '../ds'
-import { CTRL_MBD, CTRL_VARS, ctrlRatio, findCam, useMock, type CtrlVar } from '../mockState'
+import {
+  CTRL_MBD,
+  CTRL_VARS,
+  MBD_APPEARANCE,
+  mbdRoughness,
+  ctrlRatio,
+  findCam,
+  mbdById,
+  useMock,
+  type CtrlVar,
+} from '../mockState'
 
 function DimH({ x1, x2, y, label }: { x1: number; x2: number; y: number; label: string }) {
   return (
@@ -130,6 +140,21 @@ function PosageSketch({ posage }: { posage: string }) {
   )
 }
 
+function MbdCard({ feature, sentence }: { feature: CtrlVar; sentence: string }) {
+  return (
+    <div className="mb-3 rounded-oc border border-oc-accent/40 bg-oc-select/40 p-2 text-[11px]">
+      <p className="m-0 font-semibold text-oc-accent">Définition MBD · {CTRL_MBD}</p>
+      <p className="m-0 mt-1 text-oc-text">
+        {feature.id} · {feature.nominal} {feature.tolerance}
+      </p>
+      <p className="m-0 text-oc-muted">
+        Réf. {feature.datum} · {feature.surface} · {MBD_APPEARANCE}
+      </p>
+      <p className="m-0 mt-1 text-oc-text">{sentence}</p>
+    </div>
+  )
+}
+
 function CamInspector() {
   const { camNode, activeTool, simT } = useMock()
   const hit = findCam(camNode)
@@ -153,6 +178,13 @@ function CamInspector() {
         </div>
       </div>
       <div className="flex-1 px-3 py-3">
+        {operation?.mbd ? (
+          <MbdCard feature={mbdById(operation.mbd)} sentence={operation.mbdUse ?? mbdById(operation.mbd).camUse} />
+        ) : operation ? (
+          <p className="m-0 mb-3 text-[11px] text-oc-muted">
+            Cette opération n’est pas encore reliée à une cote de {CTRL_MBD}.
+          </p>
+        ) : null}
         {setup && operation ? (
           <div className="mb-3 grid grid-cols-[1.4fr_1fr] gap-2">
             <div className="rounded-oc border border-oc-line bg-oc-panel-2 px-1">
@@ -253,9 +285,15 @@ function CtrlInspector() {
         <p className="m-0 mt-0.5 text-[11px] text-oc-muted">MBD · {CTRL_MBD}</p>
       </div>
       <div className="flex-1 px-3 py-3">
+        <MbdCard
+          feature={variable}
+          sentence="Le relevé est comparé à cette bande. Le rattrapage n’est proposé que hors tolérance."
+        />
         <ToleranceGauge variable={variable} />
         <Field label="Nominal" inputProps={{ value: variable.nominal, readOnly: true }} />
         <Field label="Tolérance MBD" inputProps={{ value: variable.tolerance, readOnly: true }} />
+        <Field label="Référence" inputProps={{ value: variable.datum, readOnly: true }} />
+        <Field label="État de surface" inputProps={{ value: variable.surface, readOnly: true }} />
         <Field label="Mini" inputProps={{ value: variable.mini, readOnly: true }} />
         <Field label="Maxi" inputProps={{ value: variable.maxi, readOnly: true }} />
         <Field label="Mesuré" inputProps={{ value: variable.measured, readOnly: true }} />
@@ -288,7 +326,8 @@ function CtrlInspector() {
 }
 
 function RenderInspector() {
-  const { renderReady, generateRender } = useMock()
+  const { ctrlVar, renderReady, generateRender } = useMock()
+  const feature = mbdById(ctrlVar)
   return (
     <aside className="flex h-full flex-col overflow-auto bg-oc-panel text-oc-text">
       <div className="border-b border-oc-line px-3 py-3">
@@ -298,13 +337,20 @@ function RenderInspector() {
           </span>
           <div>
             <h2 className="m-0 text-[14px] font-semibold">Studio</h2>
-            <p className="m-0 mt-0.5 text-[11px] text-oc-muted">Acier brossé · Carrure</p>
+            <p className="m-0 mt-0.5 text-[11px] text-oc-muted">
+              {MBD_APPEARANCE} · {feature.surface}
+            </p>
           </div>
         </div>
       </div>
       <div className="flex-1 px-3 py-3">
-        <Field label="Matière" inputProps={{ value: 'Acier brossé', readOnly: true }} />
-        <Field label="Rugosité" inputProps={{ value: '0,35', readOnly: true }} />
+        <MbdCard
+          feature={feature}
+          sentence={`Le PBR reprend « ${MBD_APPEARANCE} ». La rugosité ${mbdRoughness(feature.surface)} est déduite de ${feature.surface}.`}
+        />
+        <Field label="Apparence MBD" inputProps={{ value: MBD_APPEARANCE, readOnly: true }} />
+        <Field label="État de surface" inputProps={{ value: feature.surface, readOnly: true }} />
+        <Field label="Rugosité PBR" inputProps={{ value: mbdRoughness(feature.surface), readOnly: true }} />
         <Field label="HDRI" inputProps={{ value: 'studio-navy', readOnly: true }} />
         <Field label="Résolution" inputProps={{ value: '1920×1080', readOnly: true }} />
         {renderReady ? <Badge tone="accent">Rendu 1 · 2 s</Badge> : null}
@@ -319,7 +365,7 @@ function RenderInspector() {
 }
 
 export function InspectorPanel(_props: IDockviewPanelProps) {
-  const { scene, workspace, finishSketch, cancelSketch } = useMock()
+  const { scene, workspace, ctrlVar, finishSketch, cancelSketch } = useMock()
   if (workspace === 'cam') return <CamInspector />
   if (workspace === 'ctrl') return <CtrlInspector />
   if (workspace === 'render') return <RenderInspector />
@@ -342,6 +388,10 @@ export function InspectorPanel(_props: IDockviewPanelProps) {
         </div>
 
         <div className="flex-1 overflow-auto px-3 py-3">
+          <MbdCard
+            feature={mbdById(ctrlVar)}
+            sentence="Cote, tolérance, référence, état de surface et apparence sont dans la pièce. CAM, CTRL et Render lisent cette définition."
+          />
           <Field
             label="Plane offset"
             inputProps={{ defaultValue: '0 mm', readOnly: true }}
@@ -397,6 +447,10 @@ export function InspectorPanel(_props: IDockviewPanelProps) {
       </div>
 
       <section className="border-b border-oc-line px-3 py-3">
+        <MbdCard
+          feature={mbdById(ctrlVar)}
+          sentence="Cote, tolérance, référence, état de surface et apparence sont dans la pièce. CAM, CTRL et Render lisent cette définition."
+        />
         <h3 className="m-0 mb-2 text-[11px] font-semibold uppercase tracking-wider text-oc-muted">
           Modèle
         </h3>

@@ -1,5 +1,9 @@
 # Journal de suivi
 
+## 2026-11-21 — Une définition MBD pour tous les espaces
+
+La maquette lit une seule définition. Design porte les cotes, les tolérances, les références et les états de surface. CAM en déduit l’opération et l’outil, CTRL juge le relevé dans cette bande, Render en déduit la rugosité PBR. Chaque viewport dessine ces PMI sur la pièce.
+
 ## 2026-11-21 — Espaces CAM, CTRL, Render
 
 [plan-espaces.md](../maquette/plan-espaces.md) ajoute trois espaces à la maquette v2, à côté de Design. [sprint-65-maquette-espaces.md](../sprints/sprint-65-maquette-espaces.md) est dessiné sur `feature/carreaux-brep` : sélecteur Design · CAM · CTRL · Render, contenus mock, aucun calcul. Les sprints 63 et 64 restent les arêtes et les datums.
@@ -689,6 +693,10 @@ Le plateau suit maintenant le dessin. Il mesure 500 × 350 sur 15 de haut, avec 
 L’arche est une esquisse `plan.12h` extrudée. Ses coudes sont de vrais arcs : dans un profil, un `arc` est le point de passage entre deux `segment`. occt-wasm a reçu `make_wire_arcs` (lignes et arcs par trois points, `GC_MakeArcOfCircle`), et `opsExtrude` l’utilise dès que la polyligne porte des milieux d’arc (`marquerArcs`). `list_edges` renvoie aussi les extrémités et la nature droite de chaque arête. Le nouveau sélecteur `arete.poche` s’en sert pour retenir les droites verticales qui descendent du dessus sans atteindre le dessous, c’est-à-dire les angles de poche.
 
 Le chemin noyau (`historiqueVersKernel`) perdait les sélecteurs de `fillet` : `fillet 20 arete.vertical` arrondissait toutes les arêtes, ce qui est impossible sur une plaque de 15. Ces fillets passent désormais par le pipeline local, qui résout les sélecteurs sur `list_edges`. La vis devient paramétrable (`scriptVis(cotes)`) : `SCRIPT_VIS` reste la 6 × 30 de démonstration, et le plateau prend `VIS_M4X12`.
+
+## 2026-11-21 — Bords de congé tracés, coutures fondues
+
+Les bords des congés avaient disparu sur les extrusions. Un raccord tangent d’un seul segment était écarté comme couture, et sur un flanc droit, le bord vertical d’un congé R20 n’a qu’un segment. Le tri est passé dans la tessellation d’occt-wasm : `tessellateShape` regroupe les faces voisines portées par la même surface en un carreau (`"surface"` par maillage). C’est le cas quand elles ont la même poignée `Geom_Surface` ou la même surface analytique (plan, cylindre, cône, sphère, tore). Les deux moitiés d’un trou fait de deux arcs, ou les tours d’un filet, ne forment plus qu’un carreau, et leur couture lui est intérieure. Entre deux carreaux, tout raccord tangent est donc un bord de congé, et il est tracé.
 
 ## 2026-11-21 — Poignée en D, vis dans l’axe, traits sur l’arête
 

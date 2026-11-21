@@ -32,6 +32,10 @@ export type CamOperation = {
   tool: string
   feed: string
   pass: string
+  /** Cote MBD de la définition qui choisit l’opération et l’outil. */
+  mbd?: CtrlVarId
+  /** Phrase qui relie cette opération à la cote. */
+  mbdUse?: string
 }
 
 export type CamSetup = {
@@ -75,6 +79,8 @@ export const CAM_PARTS: CamPart[] = [
             tool: 'plaquette CNMG',
             feed: '0,2 mm/tr',
             pass: '0,4 mm',
+            mbd: 'diametre_boite',
+            mbdUse: 'Ébauche tour · plaquette CNMG · passe 0,4, la cote finie est laissée à Op20.',
           },
           {
             id: 'op20',
@@ -83,6 +89,8 @@ export const CAM_PARTS: CamPart[] = [
             tool: 'plaquette CNMG',
             feed: '0,08 mm/tr',
             pass: '0,1 mm',
+            mbd: 'diametre_boite',
+            mbdUse: 'Finition · passe 0,1 pour tenir ±0,05 et Ra 0,8.',
           },
         ],
       },
@@ -102,6 +110,8 @@ export const CAM_PARTS: CamPart[] = [
             tool: 'foret Ø1,2',
             feed: '120 mm/min',
             pass: 'traversant',
+            mbd: 'entrecorne',
+            mbdUse: 'Perçage des barrettes · foret Ø1,2 positionné sur entrecorne ±0,10.',
           },
         ],
       },
@@ -254,6 +264,7 @@ export function findCam(id: string): CamHit {
         if (operation.id === id) return { part, setup, operation, kind: 'operation' }
         if (id === `${operation.id}:parcours`) return { part, setup, operation, kind: 'parcours' }
         if (id === `${operation.id}:tool`) return { part, setup, operation, kind: 'tool' }
+        if (id === `${operation.id}:mbd`) return { part, setup, operation, kind: 'operation' }
       }
     }
   }
@@ -270,10 +281,29 @@ export type CtrlVar = {
   ecart: string
   inTolerance: boolean
   offset: string
+  datum: string
+  surface: string
+  /** Opération et outil que la CAM déduit de cette cote. */
+  camUse: string
 }
 
-/** Tolérances MBD portées par `carrure.cadompart`. Le rattrapage est nul tant que le relevé reste dans la bande. */
+/** Tolérances, références, apparence et états de surface portés par la définition. */
 export const CTRL_MBD = 'carrure.cadompart'
+export const MBD_APPEARANCE = 'acier brossé'
+const ROUGHNESS_FROM_SURFACE: Record<string, string> = {
+  'Ra 0,8': '0,18',
+  'Ra 1,6': '0,35',
+  'Ra 3,2': '0,62',
+}
+
+/** Rugosité PBR déduite de l’état de surface de la définition. */
+export function mbdRoughness(surface: string): string {
+  return ROUGHNESS_FROM_SURFACE[surface] ?? '0,35'
+}
+
+export function mbdById(id: CtrlVarId) {
+  return CTRL_VARS.find((item) => item.id === id) ?? CTRL_VARS[0]
+}
 
 function readMm(value: string) {
   const match = value.replace('−', '-').match(/-?\d+(?:[.,]\d+)?/)
@@ -319,6 +349,9 @@ export const CTRL_VARS: CtrlVar[] = [
     ecart: '+0,08 mm',
     inTolerance: false,
     offset: '−0,08 mm',
+    datum: 'A',
+    surface: 'Ra 0,8',
+    camUse: 'Finition tour · plaquette CNMG · passe 0,1 pour tenir ±0,05 et Ra 0,8.',
   },
   {
     id: 'epaisseur_paroi',
@@ -330,6 +363,9 @@ export const CTRL_VARS: CtrlVar[] = [
     ecart: '+0,02 mm',
     inTolerance: true,
     offset: '0 mm',
+    datum: 'B',
+    surface: 'Ra 1,6',
+    camUse: 'Ébauche de face · la passe reste à l’intérieur de ±0,05.',
   },
   {
     id: 'entrecorne',
@@ -341,6 +377,9 @@ export const CTRL_VARS: CtrlVar[] = [
     ecart: '0 mm',
     inTolerance: true,
     offset: '0 mm',
+    datum: 'A-B',
+    surface: 'Ra 3,2',
+    camUse: 'Perçage des barrettes · foret Ø1,2 positionné sur cette cote.',
   },
 ]
 
@@ -488,7 +527,11 @@ export function MockProvider({ children }: { children: ReactNode }) {
       finishSketch,
       cancelSketch,
       camNode,
-      setCamNode,
+      setCamNode: (id: string) => {
+        setCamNode(id)
+        const feature = findCam(id).operation?.mbd
+        if (feature) setCtrlVar(feature)
+      },
       simT,
       setSimT,
       simPlaying,

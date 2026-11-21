@@ -4,7 +4,7 @@ import { EditorDock } from '@naanouff/w3dts-editor-ui'
 import { StatusBar } from './ds'
 import { Chrome } from './Chrome'
 import { Ribbon } from './Ribbon'
-import { MockProvider, useMock } from './mockState'
+import { MBD_APPEARANCE, MockProvider, findCam, mbdById, mbdRoughness, useMock, type CtrlVarId } from './mockState'
 import { BrowserPanel } from './panels/BrowserPanel'
 import { InspectorPanel } from './panels/InspectorPanel'
 import { TimelinePanel } from './panels/TimelinePanel'
@@ -48,16 +48,20 @@ function buildDefaultLayout(api: DockviewApi): void {
   viewport.api.setActive()
 }
 
-function statusLeft(workspace: string, scene: string): string {
-  if (workspace === 'cam') return 'Boîte · un setup par machine et posage · mm'
-  if (workspace === 'ctrl') return 'Relevé · MBD carrure ±0,05 · 40,08 hors tolérance'
-  if (workspace === 'render') return 'Studio · 1920×1080 · pas de raytracing'
-  if (scene === 'sketch') return 'Sketch mode · rectangle W 55 × H 38 · mm'
-  return 'Aperçu bleu hors journal · mm · Carrure'
+function statusLeft(workspace: string, featureId: CtrlVarId, camNode: string): string {
+  const operation = workspace === 'cam' ? findCam(camNode).operation : undefined
+  const feature = mbdById(operation?.mbd ?? featureId)
+  const definition = `${feature.id} ${feature.nominal} ${feature.tolerance} · réf. ${feature.datum} · ${feature.surface}`
+  if (workspace === 'cam') return `CAM · ${operation?.mbdUse ?? feature.camUse}`
+  if (workspace === 'ctrl') {
+    return `CTRL · ${feature.measured} ${feature.inTolerance ? 'dans' : 'hors'} ${feature.tolerance}`
+  }
+  if (workspace === 'render') return `Render · ${MBD_APPEARANCE} · rugosité ${mbdRoughness(feature.surface)} depuis ${feature.surface}`
+  return `Définition · ${definition}`
 }
 
 function Shell() {
-  const { theme, scene, workspace } = useMock()
+  const { theme, workspace, ctrlVar, camNode } = useMock()
 
   const components = useMemo(
     () => ({
@@ -83,7 +87,7 @@ function Shell() {
         />
       </div>
       <StatusBar
-        left={<span>{statusLeft(workspace, scene)}</span>}
+        left={<span>{statusLeft(workspace, ctrlVar, camNode)}</span>}
         right={
           <span className="text-oc-muted">
             Maquette v2 · Design CAM CTRL Render · sans Session / OCCT
