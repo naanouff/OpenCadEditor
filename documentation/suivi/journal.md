@@ -659,3 +659,58 @@ Sur le plateau, chaque survol gelait l’interface 11 à 16 s. Tout réaffichage
 ## 2026-11-20 — Cercles exacts en OCCT
 
 La paroi du trou de la boîte montrait 48 arêtes verticales. Ce n’était pas un défaut d’affichage : chaque cercle d’esquisse partait vers OCCT comme un polygone de 48 côtés, et l’extrusion donnait un prisme à 48 faces planes. Le noyau n’a ni cercle ni placement de cylindre. Un cercle est donc maintenant tourné autour de son axe : un rectangle collé à l’axe, en révolution complète, donne une vraie face cylindrique, avec dessus, dessous et une couture invisible. Le polygone reste porté par l’esquisse. `marquerCercle` y attache le centre et le rayon, et `opsProfil` (dans `@opencad/kernel/ops`) choisit entre révolution et extrusion. Le compilateur du noyau et le chemin local du shell l’utilisent tous deux. Ce changement touche le sous-module `vendor/opencad`.
+
+## 2026-11-20 — Manipulation de la caméra
+
+La molette zoomait à l’envers et par pas fixes de 10 % : w3dts n’en garde que le signe. Le viewport la lit maintenant lui-même (`facteurMolette` dans `cameraCad.ts`). Vers l’avant, elle rapproche, en proportion du défilement, et le point sous le curseur reste en place. Tourner et déplacer suivent la souris sans lissage. Le clic droit tourne autour du point de pièce saisi (`orbiterAutour`) ; dans le vide, autour du centre de la vue. **F** cadre la pièce sans changer l’angle. Le cadre ne faisait que grandir : après le plateau, une petite pièce restait minuscule. Il se resserre maintenant quand le contenu n’occupe plus qu’un quart de sa diagonale.
+
+## 2026-11-20 — Filet OCCT et plateau sans gel
+
+Le plateau gelait environ 4 s. La cause n’était pas l’assemblage : chaque vis unissait en JS son filet au corps OCCT (environ 1,3 s), et les quatre vis refaisaient ce travail. Le filet est maintenant un solide OCCT : `sweep_helix` (occt-wasm) balaie le profil triangulaire le long d’une hélice, à raison d’une arête par tour. Il est borné par une enveloppe de révolution, puis fusionné au corps (`opsFilet`, `@opencad/kernel/filet`). Une vis coûte environ 1,6 s. Une hélice d’une seule arête prenait 2,9 s et perdait parfois le filet.
+
+La tessellation prend une flèche relative à la diagonale de la pièce : l’hélice passe de 44 000 à environ 4 000 triangles. Les normales de sommet sont celles de la surface, et non plus la moyenne des triangles. Deux faces tangentes ont donc la même normale de part et d’autre : `segmentsBrep` n’en trace pas l’arête, ce qui fait disparaître les coutures de tour du filet.
+
+L’assemblage calcule chaque pièce partagée une seule fois (`maillageDepuisParties`) et tourne dans un worker dédié (`assemblageWorker.ts`), qui garde OCCT et ses pièces. Au navigateur, le premier chargement du plateau prend environ 1,6 s, recharger environ 0,1 s, et le JS du fil principal reste sous 50 ms.
+
+## 2026-11-21 — Tampons GPU, ratio de pixels et matériaux
+
+Chaque reconstruction du viewport laissait environ 100 tampons GPU vivants : `ResourceManager.uploadMesh` ne les libère qu’à `clear()`. Le viewport garde maintenant ses maillages. `detacherTampons` (`liberationGpu.ts`) les en détache, puis `libererTampons` les détruit une fois la frame soumise. Au navigateur, le compte reste stable à 208 tampons d’une reconstruction à l’autre.
+
+Le canevas ne suivait pas un changement de ratio de pixels (zoom navigateur, écran différent) : l’observateur de taille ne voit que les pixels CSS. `veilleurRatioPixels` (`ratioPixels.ts`) compare `devicePixelRatio` à chaque frame et redimensionne le contexte et le graphe de rendu ; le ratio est plafonné à 2. Vérifié à 1,25, 1,5 et 2,5, et le pick reste aligné.
+
+Les pièces du plateau portent leur matériau (Sprint 66) : chaque nœud lie un asset `cadomat`. Il n’existe pas encore de codec `.cadomat`, donc une table URI → couleur, métal et rugosité (`MATERIAUX_ASSEMBLAGE`) tient lieu de fichier. `fusionnerMaillages` garde le matériau face par face (`teintes`) jusqu’au viewport : aluminium pour le plateau, laiton pour les poignées, acier pour les vis. Le survol reste bleu, et la face reprend son matériau quand on la quitte.
+
+Le chargeur d’assets comptait comme chargée la page `index.html` que le serveur de dev renvoie à toute URI absente. Il refuse désormais une réponse HTML : les six assets du plateau, qui n’existent pas encore sur disque, sont signalés « introuvable » et la scène reste construite depuis les scripts.
+
+## 2026-11-21 — Plateau d’après le dessin
+
+Le plateau suit maintenant le dessin. Il mesure 500 × 350 sur 15 de haut, avec un fond de 5 et un rebord de 15, des coins R20 et des angles de poche R5. Les poignées en laiton sont des arches de 65 de haut, sur des pieds de 40 × 15 et une section de 12 × 16, vissées par des M4 × 12 au pas de 0,7 (`cotesPlateau.ts`, [plateau-service-cadom.md](../veille/plateau-service-cadom.md)).
+
+L’arche est une esquisse `plan.12h` extrudée. Ses coudes sont de vrais arcs : dans un profil, un `arc` est le point de passage entre deux `segment`. occt-wasm a reçu `make_wire_arcs` (lignes et arcs par trois points, `GC_MakeArcOfCircle`), et `opsExtrude` l’utilise dès que la polyligne porte des milieux d’arc (`marquerArcs`). `list_edges` renvoie aussi les extrémités et la nature droite de chaque arête. Le nouveau sélecteur `arete.poche` s’en sert pour retenir les droites verticales qui descendent du dessus sans atteindre le dessous, c’est-à-dire les angles de poche.
+
+Le chemin noyau (`historiqueVersKernel`) perdait les sélecteurs de `fillet` : `fillet 20 arete.vertical` arrondissait toutes les arêtes, ce qui est impossible sur une plaque de 15. Ces fillets passent désormais par le pipeline local, qui résout les sélecteurs sur `list_edges`. La vis devient paramétrable (`scriptVis(cotes)`) : `SCRIPT_VIS` reste la 6 × 30 de démonstration, et le plateau prend `VIS_M4X12`.
+
+## 2026-11-21 — Poignée en D, vis dans l’axe, traits sur l’arête
+
+La poignée suit la vue de dessus du plan : un D à plat de 12 mm de haut, bras de 14 depuis les trous à entraxe 180, barre à 40 de leur axe. Chaque trou a son lamage Ø 8,4 et son passage Ø 4,5, centrés ; la vis M4 × 20 prend le centre calculé par la matrice de la poignée, tête 0,5 sous le dessus. La pose devient une rotation complète (plus seulement autour de Y). Un `enleve` sur un profil de segments et d’arcs est maintenant accepté par la session ; seul OCCT le coupe. `arete.tranche` ne prend que les deux faces d’extrémité, pas le fond d’un lamage.
+
+Les traits d’arête ne sont plus poussés de 0,8 mm le long de la bissectrice, ce qui les faisait flotter à côté des petites arêtes. Ils sont avancés vers l’œil : en projection orthographique, ils restent sur l’arête à l’écran. Les rubans sont refaits quand la vue tourne de plus de 5°.
+
+## 2026-11-21 — Anse basse et bords de congé visibles
+
+L’anse reprend la vue de côté : barre de 12 mm, pieds de 6, sommet à 36, lamage de 2,5 pour la tête M4 × 16. L’ouverture libre reste 144 mm : à entraxe 180 la tête Ø 8 ne tient pas dans un pied si l’ouverture passe à 180. Les traits d’arête sont dégagés de 0,8 mm, au-delà de la flèche du maillage, sinon le congé les avale.
+
+## 2026-11-21 — Plateau rectangulaire, vis noyée, bords de congé
+
+Le plan revu est un rectangle 500 × 300, pas un carré. Les poignées portent sur 300 mm, vis à l’entraxe 180. La tête fraisée M4 affleure le pied et le fût entre dans le rebord. Un congé garde une arête à chacune de ses extrémités : seules les coutures d’un seul segment restent masquées.
+
+## 2026-11-21 — Poignées boulonnées
+
+Le dessin revu montre un plateau carré de 500 mm et des poignées de 9 mm d'épaisseur, tenues par des boulons traversants. `largeur` passe de 350 à 500 et `poigneeLargeur` de 16 à 9. La vis à bois M4×12 est remplacée par un boulon M4 à tête hexagonale (fût lisse de 40 mm, filetage de 12 mm au bout) et un écrou M4 qui porte sous le plateau : onze instances, quatre définitions. 15 tests verts sur l'assemblage, le maillage et le plateau.
+
+## 2026-11-21 — Congé et chanfrein du plateau
+
+Le verbe `chanfrein` suit `fillet` : même sélecteurs, opération OCCT `chamfer_edges`. Deux sélecteurs s’ajoutent. `arete.tranche` retient les arêtes dans un plan de Z constant, le pourtour d’une extrusion selon +Z. `arete.fond` retient les arêtes horizontales entre le dessous et le dessus, le fond d’une poche.
+
+Le plateau arrondit sa lèvre (R1,5) et le fond de sa poche (R1), et chanfreine son dessous (1 mm). La poignée arrondit le pourtour de ses deux faces (R1,5). Les grands congés, coins R20 et poche R5, restent appliqués avant : un petit rayon ne tient pas sur une arête déjà raccourcie par un grand.
+

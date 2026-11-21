@@ -35,7 +35,33 @@ function areteEnDeuxSegments(): Maillage {
   return { positions, indices, faces: [0, 0, 0, 1, 1, 1] }
 }
 
+/** Deux carreaux pliés de 10° le long de x=0, normales de sommet données par carreau. */
+function pli(normaleCommune: boolean): Maillage {
+  const s = Math.sin((10 * Math.PI) / 180)
+  const c = Math.cos((10 * Math.PI) / 180)
+  const positions = [
+    -5, 0, 0, 0, 0, 0, 0, 0, 5,
+    0, 0, 0, 5 * c, -5 * s, 0, 0, 0, 5,
+  ]
+  const gauche = [0, 1, 0]
+  const droite = normaleCommune ? [0, 1, 0] : [s, c, 0]
+  const normales = [...gauche, ...gauche, ...gauche, ...droite, ...droite, ...droite]
+  return { positions, indices: [0, 2, 1, 3, 5, 4], faces: [0, 1], normales }
+}
+
 describe('arêtes BRep', () => {
+  it('trace le bord d’un congé et masque une couture d’un seul segment', () => {
+    const communes = (m: Maillage) => aretesBrepGroupees(m).filter((a) => a.faces.length === 2)
+    expect(communes(pli(true))).toHaveLength(0)
+    expect(communes(pli(false))).toHaveLength(1)
+    const base = areteEnDeuxSegments()
+    const normales: number[] = []
+    for (let i = 0; i < base.positions.length; i += 3) normales.push(0, 1, 0)
+    const conge = communes({ ...base, normales })
+    expect(conge).toHaveLength(1)
+    expect(conge[0]!.segments.length).toBeGreaterThan(1)
+  })
+
   it('ignore la diagonale interne du carreau dessus', () => {
     const diagonale = segmentsBrep(boite()).find(
       (s) => Math.abs(s.a[0] - s.b[0]) > 9 && Math.abs(s.a[2] - s.b[2]) > 9,

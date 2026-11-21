@@ -15,6 +15,7 @@ import type { Entity } from '@w3dts-core-src/core/ecs/Entity';
 import { TransformComponent } from '@w3dts-core-src/core/ecs/components/TransformComponent';
 import { CameraComponent } from '@w3dts-core-src/core/ecs/components/CameraComponent';
 import { computeOrthographicHalfHeightForAabb } from '@w3dts-core-src/core/camera/orthographicFraming';
+import { orbiterAutour, zoomVersPoint } from '../cameraCad.ts';
 
 const EPSILON = 0.001;
 
@@ -96,6 +97,8 @@ export class OrbitalCameraController implements ICameraController {
   private useSavedViewUp = false;
   private keepViewUp = false;
   private readonly _savedViewUp = vec3.fromValues(0, 1, 0);
+  /** Point fixe de la rotation en cours ; `null` : le focus. */
+  private pivot: vec3 | null = null;
 
   constructor(cameraEntity: Entity, world: World, input: InputManager, logger: ILogger) {
     this.cameraEntity = cameraEntity;
@@ -270,6 +273,42 @@ export class OrbitalCameraController implements ICameraController {
     this.useSavedViewUp = true;
   }
 
+  /** Point autour duquel tourne la vue (pièce sous le curseur au début du glisser). */
+  public pivoter(point: readonly [number, number, number] | null): void {
+    this.pivot = point ? vec3.fromValues(point[0], point[1], point[2]) : null;
+  }
+
+  /**
+   * Zoom de facteur `k` sur la demi-hauteur visible (< 1 rapproche), ancré au point écran
+   * (clientX, clientY) : ce qui est sous le curseur y reste.
+   */
+  public zoomer(clientX: number, clientY: number, k: number): void {
+    const camera = this.world.getComponent(this.cameraEntity, CameraComponent);
+    const rect = this.inputManager.getElement().getBoundingClientRect();
+    if (!camera || rect.width <= 0 || rect.height <= 0 || !(k > 0)) return;
+    const orthographique = camera.projectionMode === 'orthographic';
+    const demi = orthographique
+      ? camera.orthographicHalfHeight
+      : this.currentRadius * Math.tan(camera.fov * 0.5);
+    const suivante = orthographique ? this.clampOrthographicHalfHeight(demi * k) : demi * k;
+    const effectif = suivante / demi;
+    this.syncCurrentToTarget();
+    this.computeCameraBasis(this._right, this._up, this._forward);
+    const nx = ((clientX - rect.left) / rect.width) * 2 - 1;
+    const ny = 1 - ((clientY - rect.top) / rect.height) * 2;
+    const focus = zoomVersPoint(
+      this.currentFocusPoint, this._right, this._up, nx, ny, demi, rect.width / rect.height, effectif
+    );
+    vec3.copy(this.targetFocusPoint, focus);
+    vec3.copy(this.currentFocusPoint, focus);
+    if (orthographique) {
+      camera.orthographicHalfHeight = suivante;
+    } else {
+      this.targetRadius = Math.max(this.minDistance, Math.min(this.maxDistance, this.targetRadius * effectif));
+      this.currentRadius = this.targetRadius;
+    }
+  }
+
   /** Haut de la caméra. `null` rend l'axe Y du monde. Conservé au panoramique. */
   public setViewUp(up: vec3 | null): void {
     if (!up) {
@@ -359,11 +398,21 @@ export class OrbitalCameraController implements ICameraController {
     const zoomDelta = isDragZooming ? 0 : this.inputManager.getAxis('cameraZoom');
     const isOrthographic = camera.projectionMode === 'orthographic';
 
-    if (isRotating) {
+    // Glisser = suivi direct de la souris : sans lissage, la vue traîne derrière le curseur.
+    if (isRotating && (deltaX !== 0 || deltaY !== 0)) {
       this.useSavedViewUp = false;
-      this.targetAzimuth -= deltaX * this.rotateSpeed;
-      this.targetPolar -= deltaY * this.rotateSpeed;
-      this.targetPolar = Math.max(EPSILON, Math.min(Math.PI - EPSILON, this.targetPolar));
+      this.syncCurrentToTarget();
+      const azimut = this.currentAzimuth - deltaX * this.rotateSpeed;
+      const polaire = Math.max(EPSILON, Math.min(Math.PI - EPSILON, this.currentPolar - deltaY * this.rotateSpeed));
+      if (this.pivot) {
+        vec3.copy(
+          this.targetFocusPoint,
+          orbiterAutour(this.currentFocusPoint, this.pivot, this.currentAzimuth, this.currentPolar, azimut, polaire)
+        );
+      }
+      this.targetAzimuth = azimut;
+      this.targetPolar = polaire;
+      this.syncCurrentToTarget();
     }
 
     if (isPanning) {
@@ -380,6 +429,7 @@ export class OrbitalCameraController implements ICameraController {
       vec3.scaleAndAdd(this._panDelta, this._panDelta, this._up, deltaY * panFactor);
 
       vec3.add(this.targetFocusPoint, this.targetFocusPoint, this._panDelta);
+      vec3.copy(this.currentFocusPoint, this.targetFocusPoint);
     }
 
     if (zoomDelta !== 0) {

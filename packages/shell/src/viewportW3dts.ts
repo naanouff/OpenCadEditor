@@ -1,10 +1,14 @@
 import type { EsquissePosee, Frontiere, MaillageOmbre } from '@opencad/api-parametrique'
 import { calqueVide, couleursTopo, epaisseurTopo, type CalqueTopo, type Rgba } from './apparenceCad.ts'
 import { contourPlan, DEMI_DATUM_MM, traitAxe, type AxeId } from './selectionDatum.ts'
-import { decaler, metresParPixel, traitsBruts, zoomAChange, type Traits } from './traitsArete.ts'
+import { avancer, decaler, metresParPixel, traitsBruts, vueAChange, zoomAChange, type Traits } from './traitsArete.ts'
 import { documentCad } from './documentCad.ts'
 import { coteSegment, poseGlyphe, repere, repereSurface, vueDuPlan } from './dessin.ts'
-import { remplacementEsquisse } from './entree.ts'
+import { liaisonsEntree } from './entree.ts'
+import { facteurMolette } from './cameraCad.ts'
+import { detacherTampons } from './liberationGpu.ts'
+import type { MateriauAffichage, MaillageTeinte } from './assemblageMaillage.ts'
+import { veilleurRatioPixels } from './ratioPixels.ts'
 import policeUrl from '../../../vendor/w3dts/node_modules/.pnpm/@fontsource+open-sans@5.2.7/node_modules/@fontsource/open-sans/files/open-sans-latin-400-normal.woff?url'
 import { createTextMeshFromFont } from '@naanouff/w3dts-text-mesh'
 import {
@@ -59,6 +63,20 @@ function enceinteDe(positions: number[], marge: number): Enceinte {
   }
 }
 
+/**
+ * Nouveau cadre si le contenu n’occupe plus qu’une petite part du cadre courant
+ * (autre pièce ouverte après une plus grande), sinon `null`.
+ */
+function retrecie(enceinte: Enceinte, positions: number[]): Enceinte | null {
+  if (positions.length < 3) return null
+  const contenu = enceinteDe(positions, 0)
+  const diagonale = (boite: Enceinte) =>
+    Math.hypot(boite.max[0] - boite.min[0], boite.max[1] - boite.min[1], boite.max[2] - boite.min[2])
+  if (diagonale(contenu) > 0.25 * diagonale(enceinte)) return null
+  const suivante = etendreEnceinte(enceinteDefaut(), positions)
+  return diagonale(suivante) < 0.5 * diagonale(enceinte) ? suivante : null
+}
+
 /** Élargit le cadre si le maillage en sort. La carrure, déjà dedans, ne le déplace pas. */
 function etendreEnceinte(enceinte: Enceinte, positions: number[]): Enceinte {
   if (positions.length < 3) return enceinte
@@ -93,12 +111,16 @@ class ProjetAnneau extends LitAbstractProject {
   private enceinte = enceinteDefaut()
   private dernier: { document: ReturnType<typeof documentCad>; esquisse: EsquissePosee | null; calque: CalqueTopo } | null = null
   private solide = new Map<number, FaceSolide>()
+  /** Maillages GPU de la base (faces, glyphes), rendus à la reconstruction suivante. */
+  private maillages: Mesh[] = []
   private traits: SceneNode | null = null
   private tampons: GPUBuffer[] = []
   private eclats: SceneNode | null = null
   private tamponsEclats: GPUBuffer[] = []
   /** Taille monde d’un pixel CSS au dernier calcul des rubans. */
   private pixel = 0
+  /** Direction unitaire vers l’œil au dernier calcul des rubans. */
+  private versOeil: [number, number, number] | null = null
 
   constructor() {
     super('ProjetAnneau')
@@ -164,8 +186,9 @@ class ProjetAnneau extends LitAbstractProject {
     racine.add(traits)
     this.traits = traits
     this.pixel = this.pixelCourant()
+    this.versOeil = this.oeilCourant()
     const { document, calque } = dernier
-    const pose = new PoseTraits(traits, params, this.pixel || 0.0002)
+    const pose = new PoseTraits(traits, params, this.pixel || 0.0002, this.versOeil)
     const fil = calque.fil.segments.length > 0 ? calque.fil : traitsBruts(document.brepWireframe.position.array)
     pose.ruban(fil, couleursTopo.fil, 'solide', epaisseurTopo.fil)
     pose.trait(document.grille.position.array, [0.8, 0.81, 0.82, 1], 'grille')
@@ -187,7 +210,7 @@ class ProjetAnneau extends LitAbstractProject {
     racine.add(eclats)
     this.eclats = eclats
     const { esquisse, calque } = dernier
-    const pose = new PoseTraits(eclats, params, this.pixel || 0.0002)
+    const pose = new PoseTraits(eclats, params, this.pixel || 0.0002, this.versOeil)
     pose.ruban(calque.survolArete, couleursTopo.survol, 'survol-arete', epaisseurTopo.survol)
     pose.ruban(calque.selectionArete, couleursTopo.selection, 'selection-arete', epaisseurTopo.selection)
     if (!esquisse) poserDatums(pose, calque.datumSurvol, calque.datumChoisi)
@@ -203,10 +226,39 @@ class ProjetAnneau extends LitAbstractProject {
       const groupe = groupeDe(face, calque)
       if (groupe === entree.groupe) continue
       racine.remove(entree.noeud)
-      const noeud = new SceneNode(`face-${face}`, params.world, entree.mesh, matiere(params.engine, groupe))
+      const noeud = new SceneNode(`face-${face}`, params.world, entree.mesh, matiere(params.engine, groupe, entree.teinte))
       racine.add(noeud)
-      this.solide.set(face, { mesh: entree.mesh, noeud, groupe })
+      this.solide.set(face, { ...entree, noeud, groupe })
     }
+  }
+
+  private orbital() {
+    const controleur = this.params?.cameraControllerManager.getActiveController()
+    return controleur instanceof OrbitalCameraController ? controleur : null
+  }
+
+  zoomer(evenement: WheelEvent) {
+    this.orbital()?.zoomer(evenement.clientX, evenement.clientY, facteurMolette(evenement.deltaY, evenement.deltaMode))
+  }
+
+  pivoter(point: [number, number, number] | null) {
+    this.orbital()?.pivoter(point)
+  }
+
+  /** Cadre la pièce affichée, sans tourner la vue. */
+  cadrer() {
+    const orbital = this.orbital()
+    if (!orbital || !this.dernier) return
+    const { document, esquisse } = this.dernier
+    const cadre = esquisse
+      ? [...document.esquisse.position.array, ...document.cotes.position.array]
+      : document.maillage.positions
+    if (cadre.length < 3) return
+    this.enceinte = enceinteDe(cadre, 0.002)
+    orbital.frameBoundingBox(
+      { min: vec3.fromValues(...this.enceinte.min), max: vec3.fromValues(...this.enceinte.max) },
+      { resetViewAngles: false },
+    )
   }
 
   private pixelCourant() {
@@ -214,11 +266,25 @@ class ProjetAnneau extends LitAbstractProject {
     return cadre && canevasMoteur ? metresParPixel(cadre.demiHauteur, canevasMoteur.clientHeight) : 0
   }
 
-  /** Appelé à chaque trame : les rubans suivent le zoom. */
+  private oeilCourant(): [number, number, number] | null {
+    const cadre = this.cadrePick()
+    if (!cadre) return null
+    const d: [number, number, number] = [
+      cadre.eye[0] - cadre.target[0],
+      cadre.eye[1] - cadre.target[1],
+      cadre.eye[2] - cadre.target[2],
+    ]
+    const n = Math.hypot(...d)
+    return n > 0 ? [d[0] / n, d[1] / n, d[2] / n] : null
+  }
+
+  /** Appelé à chaque trame : les rubans suivent le zoom et la direction de vue. */
   suivreZoom() {
     if (!this.dernier) return
     const pixel = this.pixelCourant()
-    if (pixel > 0 && zoomAChange(this.pixel, pixel)) this.poserTraits()
+    const oeil = this.oeilCourant()
+    const zoom = pixel > 0 && zoomAChange(this.pixel, pixel)
+    if (zoom || (oeil && vueAChange(this.versOeil, oeil))) this.poserTraits()
   }
 
   cadrePick(): {
@@ -258,13 +324,14 @@ class ProjetAnneau extends LitAbstractProject {
     if (this.racine) scene.remove(this.racine)
     libererTampons(engine, this.tampons)
     libererTampons(engine, this.tamponsEclats)
+    libererTampons(engine, detacherTampons(this.maillages))
     this.tampons = []
     this.tamponsEclats = []
     const racine = new SceneNode('anneau', world)
     scene.add(racine)
     this.racine = racine
     this.solide = poserSolide(racine, world, engine, document, calque)
-    poserGlyphes(racine, world, engine, esquisse)
+    this.maillages = [...[...this.solide.values()].map((face) => face.mesh), ...poserGlyphes(racine, world, engine, esquisse)]
     this.dernier = { document, esquisse, calque }
     this.traits = null
     this.eclats = null
@@ -273,21 +340,19 @@ class ProjetAnneau extends LitAbstractProject {
     const cadre = esquisse
       ? [...document.esquisse.position.array, ...document.cotes.position.array]
       : document.maillage.positions
-    const suivante =
-      mode === this.modeVue
-        ? etendreEnceinte(this.enceinte, cadre)
-        : esquisse
-          ? enceinteDe(cadre, 0.008)
-          : etendreEnceinte(enceinteDefaut(), document.maillage.positions)
-    const cadreChange = suivante !== this.enceinte
-    if (mode === this.modeVue && !cadreChange) return
+    const memeMode = mode === this.modeVue
+    const suivante = memeMode
+      ? retrecie(this.enceinte, cadre) ?? etendreEnceinte(this.enceinte, cadre)
+      : esquisse
+        ? enceinteDe(cadre, 0.008)
+        : etendreEnceinte(enceinteDefaut(), document.maillage.positions)
+    if (memeMode && suivante === this.enceinte) return
+    if (!memeMode) {
+      const entree = (engine as { inputManager?: { applyInputOverridesJson(texte: string): void } }).inputManager
+      entree?.applyInputOverridesJson(liaisonsEntree(esquisse ? 'esquisse' : 'solide'))
+    }
     this.modeVue = mode
     this.enceinte = suivante
-    const entree = (
-      engine as { inputManager?: { applyInputOverridesJson(texte: string): void; resetInputToDefaults(): void } }
-    ).inputManager
-    if (esquisse) entree?.applyInputOverridesJson(remplacementEsquisse())
-    else entree?.resetInputToDefaults()
     const controleur = cameraControllerManager.getActiveController()
     const boite = {
       min: vec3.fromValues(...this.enceinte.min),
@@ -296,6 +361,11 @@ class ProjetAnneau extends LitAbstractProject {
     if (!(controleur instanceof OrbitalCameraController)) return
     const orbital = controleur as OrbitalCameraController & {
       setViewUp?(up: vec3 | null): void
+    }
+    // Même mode : la pièce a changé de taille, on recadre sans tourner la vue.
+    if (memeMode) {
+      orbital.frameBoundingBox(boite, { resetViewAngles: false })
+      return
     }
     const iso = Math.acos(1 / Math.sqrt(3))
     orbital.setProjectionMode('orthographic')
@@ -318,7 +388,7 @@ class ProjetAnneau extends LitAbstractProject {
 
 type GroupeSolide = 'solide' | 'survol' | 'selection'
 
-type FaceSolide = { mesh: Mesh; noeud: SceneNode; groupe: GroupeSolide }
+type FaceSolide = { mesh: Mesh; noeud: SceneNode; groupe: GroupeSolide; teinte?: MateriauAffichage }
 
 /** Clé des triangles d’un maillage sans étiquettes de face. */
 const SANS_FACE = -1
@@ -330,30 +400,30 @@ function groupeDe(face: number, calque: CalqueTopo): GroupeSolide {
   return 'solide'
 }
 
-let matieres: { engine: Engine; parGroupe: Record<GroupeSolide, Material> } | null = null
+let matieres: { engine: Engine; parNom: Map<string, Material> } | null = null
 
-function matiere(engine: Engine, groupe: GroupeSolide) {
-  if (matieres?.engine !== engine) {
-    const creer = (nom: GroupeSolide) => {
-      const couleur = couleursTopo[nom]
-      const cree = new Material({
-        name: `solide-${nom}`,
-        shadingModel: 'pbr',
-        shaderGraph: graphe ?? undefined,
-        properties: {
-          baseColor: [couleur[0], couleur[1], couleur[2]],
-          roughness: 1,
-          metallic: 0,
-          normalTexture: null,
-          metallicRoughnessTexture: null,
-        },
-      })
-      engine.resourceManager.uploadMaterial(cree)
-      return cree
-    }
-    matieres = { engine, parGroupe: { solide: creer('solide'), survol: creer('survol'), selection: creer('selection') } }
-  }
-  return matieres.parGroupe[groupe]
+/** Survol et sélection gardent leur couleur ; au repos, une face prend le matériau de sa pièce. */
+function matiere(engine: Engine, groupe: GroupeSolide, teinte?: MateriauAffichage) {
+  if (matieres?.engine !== engine) matieres = { engine, parNom: new Map() }
+  const nom = groupe === 'solide' && teinte ? `solide-${teinte.name}` : `solide-${groupe}`
+  const connue = matieres.parNom.get(nom)
+  if (connue) return connue
+  const couleur = groupe === 'solide' && teinte ? teinte.baseColorFactor : couleursTopo[groupe]
+  const cree = new Material({
+    name: nom,
+    shadingModel: 'pbr',
+    shaderGraph: graphe ?? undefined,
+    properties: {
+      baseColor: [couleur[0], couleur[1], couleur[2]],
+      roughness: groupe === 'solide' && teinte ? teinte.roughnessFactor : 1,
+      metallic: groupe === 'solide' && teinte ? teinte.metallicFactor : 0,
+      normalTexture: null,
+      metallicRoughnessTexture: null,
+    },
+  })
+  engine.resourceManager.uploadMaterial(cree)
+  matieres.parNom.set(nom, cree)
+  return cree
 }
 
 /**
@@ -369,6 +439,7 @@ function poserSolide(
 ) {
   const solide = new Map<number, FaceSolide>()
   const { positions, normales, indices, faces } = document.maillage
+  const teintes = (document.maillage as MaillageTeinte).teintes
   if (indices.length === 0) return solide
   const parFace = new Map<number, number[]>()
   for (let t = 0; t < indices.length / 3; t++) {
@@ -400,9 +471,10 @@ function poserSolide(
     const mesh = new Mesh(new Float32Array(sommets), tampon, `face-${face}`)
     engine.resourceManager.uploadMesh(mesh)
     const groupe = groupeDe(face, calque)
-    const noeud = new SceneNode(`face-${face}`, world, mesh, matiere(engine, groupe))
+    const teinte = teintes?.materiaux[teintes.parFace[face] ?? -1]
+    const noeud = new SceneNode(`face-${face}`, world, mesh, matiere(engine, groupe, teinte))
     parent.add(noeud)
-    solide.set(face, { mesh, noeud, groupe })
+    solide.set(face, { mesh, noeud, groupe, teinte })
   }
   return solide
 }
@@ -442,12 +514,20 @@ class PoseTraits {
     private readonly params: ProjectLoadParams,
     /** Taille monde d’un pixel CSS. */
     private readonly pixel: number,
+    /** Direction vers l’œil ; absente avant la première trame. */
+    private readonly versOeil: [number, number, number] | null,
   ) {}
 
-  /** Ruban de `px` pixels, sorti de la matière d’une demi-largeur. */
+  /**
+   * Ruban de `px` pixels, posé sur l’arête puis avancé vers l’œil :
+   * le prisme passe devant les faces qui se rejoignent sur l’arête, sans glisser de côté.
+   */
   ruban(traits: Traits, rgba: Rgba, nom: string, px: number) {
     const demi = (px / 2) * this.pixel
-    this.poser(decaler(traits, demi), rgba, nom, demi)
+    const segments = this.versOeil
+      ? avancer(traits.segments, this.versOeil, 2 * demi + 0.0001)
+      : decaler(traits, demi)
+    this.poser(segments, rgba, nom, demi)
   }
 
   /** Trait d’un pixel matériel (grille, esquisse) : ni décalage ni épaisseur. */
@@ -477,8 +557,9 @@ function poserGlyphes(
   world: ProjectLoadParams['world'],
   engine: Engine,
   esquisse: EsquissePosee | null,
-) {
-  if (!esquisse || !police || !graphe) return
+): Mesh[] {
+  const poses: Mesh[] = []
+  if (!esquisse || !police || !graphe) return poses
   const altitude = esquisse.cercles[0]?.y ?? 0
   const poserTexte = (
     nom: string,
@@ -501,6 +582,7 @@ function poserGlyphes(
       name: nom,
     })
     engine.resourceManager.uploadMesh(mesh)
+    poses.push(mesh)
     const matiere = new Material({
       name: nom,
       shadingModel: 'pbr',
@@ -532,6 +614,7 @@ function poserGlyphes(
       pose.direction,
     )
   })
+  return poses
 }
 
 function poserFil(
@@ -590,7 +673,21 @@ async function demarrer(canevas: HTMLCanvasElement) {
   const logger = new Logger()
   await GPUManager.initialize(logger)
   const engine = await new EngineBuilder(canevas).setLogger(logger).withModelLoader(chargeurVide).build()
-  engine.scheduler.addSystem(() => projet?.suivreZoom())
+  const veillerRatio = veilleurRatioPixels(() =>
+    engine.webGPUContext.resize(undefined, undefined, (w, h) => engine.sceneRenderGraph.resize(w, h)),
+  )
+  engine.scheduler.addSystem(() => {
+    veillerRatio()
+    projet?.suivreZoom()
+  })
+  canevas.addEventListener(
+    'wheel',
+    (evenement) => {
+      evenement.preventDefault()
+      projet?.zoomer(evenement)
+    },
+    { passive: false },
+  )
   engine.scheduler.addSystem(createVectorLineOverlaySystem(engine.renderer))
   projet = new ProjetAnneau()
   engine.director.register(projet)
@@ -611,6 +708,15 @@ export function afficher(
     demarrage = demarrer(canevas)
   }
   return demarrage.then(() => projet?.montrer(document, esquisse, calque))
+}
+
+/** Point (m) autour duquel tournera la vue ; `null` : le centre de la vue. */
+export function pivoterVue(point: [number, number, number] | null) {
+  projet?.pivoter(point)
+}
+
+export function cadrerVue() {
+  projet?.cadrer()
 }
 
 /** Caméra active pour un pick NDC (null si moteur pas prêt). */

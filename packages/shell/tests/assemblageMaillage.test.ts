@@ -4,6 +4,7 @@ import { assemblageBoiteMilgauss, BOITE_ID } from '../src/assemblageBoite.ts'
 import {
   fusionnerMaillages,
   maillageDepuisAssemblage,
+  MATERIAUX_ASSEMBLAGE,
   SCRIPTS_ASSEMBLAGE,
   transformerMaillage,
 } from '../src/assemblageMaillage.ts'
@@ -39,6 +40,25 @@ describe('assemblage maillage viewport', () => {
     const fused = fusionnerMaillages([cube, moved])
     expect(fused.indices).toEqual([0, 1, 2, 3, 4, 5])
     expect(fused.positions).toHaveLength(18)
+  })
+
+  it('garde le matériau de chaque pièce, face par face', () => {
+    const deuxFaces = (faces: number[]) => ({
+      positions: [0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 1, 0],
+      normales: [0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0],
+      indices: [0, 1, 2, 1, 3, 2],
+      faces,
+    })
+    const alu = MATERIAUX_ASSEMBLAGE['./aluminium.cadomat']!
+    const laiton = MATERIAUX_ASSEMBLAGE['./laiton.cadomat']!
+    const fused = fusionnerMaillages([
+      { ...deuxFaces([0, 1]), materiau: alu },
+      { ...deuxFaces([0, 0]) },
+      { ...deuxFaces([1, 0]), materiau: laiton },
+    ])
+    expect(fused.faces).toEqual([0, 1, 2, 2, 4, 3])
+    expect(fused.teintes?.materiaux.map((m) => m.name)).toEqual(['aluminium', 'laiton'])
+    expect(fused.teintes?.parFace).toEqual([0, 0, -1, 1, 1])
   })
 
   it('reconstruit un maillage OCCT pour la boîte (lunette seule si timeout)', async () => {

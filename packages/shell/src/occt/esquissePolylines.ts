@@ -7,7 +7,7 @@ import {
   type Esquisse,
 } from '@opencad/api-parametrique'
 import { resoudreViaKernel } from './gcsKernel.ts'
-import { marquerCercle, type Polyline3 } from './opsDepuisFonction.ts'
+import { marquerArcs, marquerCercle, type Polyline3 } from './opsDepuisFonction.ts'
 
 export type { Polyline3 }
 
@@ -54,15 +54,20 @@ function cercleSurDatum(
   })
 }
 
+/** Sommets (rayon, hauteur) dans l’ordre ; un arc passe par son sommet, entre ses deux voisins. */
 function profilRevolution(entites: EntiteEsquisse[], evaluer: (e: string) => number): Polyline3 {
-  const segments = entites.filter((e) => e.sorte === 'segment')
-  if (segments.length < 2) throw new Error('profil révolution trop court')
+  const sommets = entites.filter((e) => e.sorte === 'segment' || e.sorte === 'arc')
+  if (sommets.length < 2) throw new Error('profil révolution trop court')
   const xyz: number[] = []
-  for (const s of segments) {
-    if (s.rayon === undefined || s.hauteur === undefined) throw new Error('segment sans rayon/hauteur')
+  const genres: number[] = []
+  for (const s of sommets) {
+    if (s.rayon === undefined || s.hauteur === undefined) throw new Error(`${s.sorte} sans rayon/hauteur`)
     xyz.push(evaluer(s.rayon), evaluer(s.hauteur), 0)
+    genres.push(s.sorte === 'arc' ? 1 : 0)
   }
-  return fermer(xyz)
+  const ferme = fermer(xyz)
+  while (genres.length < ferme.length / 3) genres.push(0)
+  return marquerArcs(ferme, genres)
 }
 
 /**
@@ -81,8 +86,10 @@ export function polylinesDepuisEsquisse(
   const { support, entites } = esquisse
 
   if (support === 'plan.12h') {
-    const segments = entites.filter((e) => e.sorte === 'segment' && e.rayon !== undefined && e.hauteur !== undefined)
-    if (segments.length >= 2) return [profilRevolution(entites, evaluer)]
+    const sommets = entites.filter(
+      (e) => (e.sorte === 'segment' || e.sorte === 'arc') && e.rayon !== undefined && e.hauteur !== undefined,
+    )
+    if (sommets.length >= 2) return [profilRevolution(entites, evaluer)]
   }
 
   const datum = datumParId(support)

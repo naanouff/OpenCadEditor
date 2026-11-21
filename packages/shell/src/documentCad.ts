@@ -1,4 +1,5 @@
 import type { EsquissePosee, Frontiere, MaillageOmbre } from '@opencad/api-parametrique'
+import type { MaillageTeinte } from './assemblageMaillage.ts'
 import { aretesBrep, cercleFerme, coteDiametre, coteSegment, filDeFer, grille, pasGrille, repere } from './dessin.ts'
 
 /** Le lecteur CAD et les overlays vector-lines sont en mètres. */
@@ -89,6 +90,7 @@ function enMetresOmbre(volume: MaillageOmbre) {
     normales: volume.normales,
     indices: volume.indices,
     faces: volume.faces,
+    teintes: (volume as MaillageTeinte).teintes,
   }
 }
 

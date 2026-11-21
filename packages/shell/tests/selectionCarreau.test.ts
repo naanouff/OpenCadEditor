@@ -5,6 +5,7 @@ import {
   nomCarreau,
   supportsCarreaux,
 } from '../src/selectionCarreau.ts'
+import { storeShell } from '../src/storeShell.ts'
 
 /** Boîte 10×8×10 mm : dessus, dessous, +X (2 triangles chacun). */
 function boiteMaillage(): Maillage {
@@ -69,5 +70,23 @@ describe('selection carreau (P5)', () => {
     const lat = supportsCarreaux(maille).supports.get('face.2')!
     expect(lat.normal[0]).toBeGreaterThan(0.9)
     expect(Math.abs(lat.normal[1])).toBeLessThan(0.1)
+  })
+})
+
+describe('clic dans le vide', () => {
+  it('retire la face, l’arête et le datum', () => {
+    storeShell.choisirFace(50, 'face.50')
+    expect(storeShell.deselectionner()).toBe(true)
+    expect(storeShell.faceChoisie()).toBeNull()
+
+    storeShell.choisirAreteBrep(3, null)
+    expect(storeShell.segmentChoisi()).toBe(3)
+    expect(storeShell.deselectionner()).toBe(true)
+    expect(storeShell.segmentChoisi()).toBeNull()
+
+    storeShell.choisirDatum('plan.dessus')
+    expect(storeShell.deselectionner()).toBe(true)
+    expect(storeShell.datumChoisi()).toBeNull()
+    expect(storeShell.deselectionner()).toBe(false)
   })
 })

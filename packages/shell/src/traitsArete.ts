@@ -42,6 +42,30 @@ export function decaler(traits: Traits, distance: number): number[] {
   return sortie
 }
 
+type Vec3 = readonly [number, number, number]
+
+/**
+ * Translation de tous les points vers l’œil. En projection orthographique le trait reste
+ * exactement sur son arête à l’écran ; seule sa profondeur passe devant les faces voisines.
+ */
+export function avancer(segments: readonly number[], versOeil: Vec3, distance: number): number[] {
+  const sortie = segments.slice()
+  for (let i = 0; i + 2 < sortie.length; i += 3) {
+    sortie[i] += versOeil[0] * distance
+    sortie[i + 1] += versOeil[1] * distance
+    sortie[i + 2] += versOeil[2] * distance
+  }
+  return sortie
+}
+
+/** Au-delà de ~5°, le décalage vers l’ancien œil se verrait de côté : les rubans sont refaits. */
+const COS_VUE = Math.cos((5 * Math.PI) / 180)
+
+export function vueAChange(avant: Vec3 | null, apres: Vec3): boolean {
+  if (!avant) return true
+  return avant[0] * apres[0] + avant[1] * apres[1] + avant[2] * apres[2] < COS_VUE
+}
+
 /** Taille monde d’un pixel CSS pour une caméra orthographique. */
 export function metresParPixel(demiHauteur: number, hauteurCss: number): number {
   return hauteurCss > 0 ? (2 * demiHauteur) / hauteurCss : 0

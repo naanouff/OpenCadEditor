@@ -52,6 +52,7 @@ describe('ruban', () => {
     const boutons = boutonsRuban({ ...vide, onglet: 'fonctions', arete: 'arete.haut' })
     expect(boutons).toEqual([
       { id: 'fillet', libelle: 'Congé', lignes: ['fillet 1 arete.haut'] },
+      { id: 'chanfrein', libelle: 'Chanfrein', lignes: ['chanfrein 1 arete.haut'] },
     ])
   })
 

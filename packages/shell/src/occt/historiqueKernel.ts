@@ -151,6 +151,8 @@ export function historiqueVersKernel(
       continue
     }
     if (op.type === 'fillet') {
+      // Les sélecteurs se résolvent sur `list_edges` : seul le pipeline local le fait.
+      if (a.aretes) return null
       out.push({ type: 'fillet', rayon: a.expression! })
       continue
     }

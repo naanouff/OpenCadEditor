@@ -18,6 +18,7 @@ import {
   outilEsquissePointeur,
   pointSurPlan,
   rayonVersMm,
+  MM_PAR_METRE,
   uvDepuisMonde,
 } from './esquissePointeur.ts'
 import type { Maillage } from '@opencad/api-parametrique'
@@ -35,7 +36,7 @@ import { axeSousPointeur, planSousPointeur } from './selectionDatum.ts'
 import { RubanVue } from './RubanVue.tsx'
 import { storeShell } from './storeShell.ts'
 import { TerminalMonaco } from './TerminalMonaco.tsx'
-import { afficher, cadreCameraPick } from './viewportW3dts.ts'
+import { afficher, cadreCameraPick, cadrerVue, pivoterVue } from './viewportW3dts.ts'
 
 const STORAGE_KEY = 'opencad.shell.dockview.layout.v5'
 const REQUIRED = [
@@ -169,6 +170,17 @@ function ViewportVue(_props: IDockviewPanelProps) {
       },
     )
   }, [hote, revision])
+  useEffect(() => {
+    const surTouche = (e: KeyboardEvent) => {
+      if (e.key !== 'f' && e.key !== 'F') return
+      if (e.ctrlKey || e.metaKey || e.altKey) return
+      const cible = e.target as HTMLElement | null
+      if (cible && (cible.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(cible.tagName))) return
+      cadrerVue()
+    }
+    window.addEventListener('keydown', surTouche)
+    return () => window.removeEventListener('keydown', surTouche)
+  }, [])
 
   const mailleAffichee = () =>
     storeShell.utiliseMoteur()
@@ -239,7 +251,21 @@ function ViewportVue(_props: IDockviewPanelProps) {
     storeShell.definirSurvol(null)
   }
 
+  /** La vue tourne autour du point de pièce saisi ; dans le vide, autour de son centre. */
+  const poserPivot = (e: ReactPointerEvent) => {
+    const rayonM = rayonSousPointeur(e)
+    const hit = rayonM && !hote.session.esquisseCourante() ? carreauSousPointeur(mailleAffichee(), rayonVersMm(rayonM)) : null
+    if (!rayonM || !hit) {
+      pivoterVue(null)
+      return
+    }
+    const t = hit.t / MM_PAR_METRE
+    const { origine, direction } = rayonM
+    pivoterVue([origine[0] + direction[0] * t, origine[1] + direction[1] * t, origine[2] + direction[2] * t])
+  }
+
   const onPointerDown = (e: ReactPointerEvent) => {
+    if (e.button === 2) poserPivot(e)
     if (e.button !== 0) return
     pointe.current = { x: e.clientX, y: e.clientY }
   }
@@ -281,7 +307,8 @@ function ViewportVue(_props: IDockviewPanelProps) {
               if (!esquisse) return
             } else return
           } else {
-            if (consultation) return
+            // Le vide retire la sélection. On n’ouvre une esquisse que si rien n’était choisi.
+            if (storeShell.deselectionner() || consultation) return
             if (!storeShell.ouvrirEsquisseSurSupport('plan.dessus')) return
             esquisse = hote.session.esquisseCourante()
             if (!esquisse) return

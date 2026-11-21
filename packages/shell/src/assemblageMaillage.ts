@@ -13,7 +13,7 @@ import { SCRIPT_LUNETTE } from './scriptLunette.ts'
 import { SCRIPT_PLATEAU } from './scriptPlateau.ts'
 import { SCRIPT_POIGNEE } from './scriptPoignee.ts'
 import { SCRIPT_VERRE } from './scriptVerre.ts'
-import { SCRIPT_VIS } from './scriptVis.ts'
+import { scriptVis, VIS_M4_NOYEE } from './scriptVis.ts'
 
 /** URI → script known to the Debug graphs (boîte Milgauss, plateau). */
 export const SCRIPTS_ASSEMBLAGE: Record<string, string> = {
@@ -24,8 +24,28 @@ export const SCRIPTS_ASSEMBLAGE: Record<string, string> = {
   './couronne.cadompart': SCRIPT_COURONNE,
   './plateau.cadompart': SCRIPT_PLATEAU,
   './poignee.cadompart': SCRIPT_POIGNEE,
-  './vis.cadompart': SCRIPT_VIS,
+  './vis.cadompart': scriptVis(VIS_M4_NOYEE),
 }
+
+/** Champs d’affichage d’un `CadomatFile` v0 (PBR glTF metallic-roughness). */
+export type MateriauAffichage = {
+  name: string
+  baseColorFactor: readonly [number, number, number, number]
+  metallicFactor: number
+  roughnessFactor: number
+}
+
+/** URI → contenu `.cadomat`, faute de codec : le proto n’a pas encore de paquet d’exécution. */
+export const MATERIAUX_ASSEMBLAGE: Record<string, MateriauAffichage> = {
+  './aluminium.cadomat': { name: 'aluminium', baseColorFactor: [0.78, 0.8, 0.83, 1], metallicFactor: 0.4, roughnessFactor: 0.55 },
+  './laiton.cadomat': { name: 'laiton', baseColorFactor: [0.85, 0.66, 0.3, 1], metallicFactor: 0.4, roughnessFactor: 0.5 },
+  './acier.cadomat': { name: 'acier', baseColorFactor: [0.55, 0.56, 0.58, 1], metallicFactor: 0.4, roughnessFactor: 0.55 },
+}
+
+/** Matériau de chaque face fusionnée : index dans `materiaux`, −1 sans matériau. */
+export type Teintes = { materiaux: MateriauAffichage[]; parFace: number[] }
+
+export type MaillageTeinte = MaillageOmbre & { teintes?: Teintes }
 
 /** Apply column-major mat4 to positions ; rotate normals. */
 export function transformerMaillage(maille: MaillageOmbre, world: Float32Array): MaillageOmbre {
@@ -57,20 +77,34 @@ export function transformerMaillage(maille: MaillageOmbre, world: Float32Array):
   }
 }
 
-export function fusionnerMaillages(parties: MaillageOmbre[]): MaillageOmbre {
+type PartieFusionnee = MaillageOmbre & { materiau?: MateriauAffichage }
+
+export function fusionnerMaillages(parties: readonly PartieFusionnee[]): MaillageTeinte {
   const positions: number[] = []
   const normales: number[] = []
   const indices: number[] = []
   const faces: number[] = []
+  const materiaux: MateriauAffichage[] = []
+  const parFace: number[] = []
   let decalage = 0
   let faceBase = 0
   for (const partie of parties) {
-    positions.push(...partie.positions)
-    normales.push(...partie.normales)
+    for (const v of partie.positions) positions.push(v)
+    for (const v of partie.normales) normales.push(v)
     for (const i of partie.indices) indices.push(i + decalage)
     if (partie.faces) {
-      for (const f of partie.faces) faces.push(f + faceBase)
-      faceBase += 1 + Math.max(0, ...partie.faces)
+      let maxFace = 0
+      for (const f of partie.faces) {
+        faces.push(f + faceBase)
+        if (f > maxFace) maxFace = f
+      }
+      let teinte = -1
+      if (partie.materiau) {
+        teinte = materiaux.findIndex((m) => m.name === partie.materiau!.name)
+        if (teinte < 0) teinte = materiaux.push(partie.materiau) - 1
+      }
+      for (let f = 0; f <= maxFace; f++) parFace.push(teinte)
+      faceBase += 1 + maxFace
     }
     decalage += partie.positions.length / 3
   }
@@ -79,15 +113,15 @@ export function fusionnerMaillages(parties: MaillageOmbre[]): MaillageOmbre {
     normales,
     indices,
     faces: faces.length > 0 ? faces : undefined,
+    teintes: materiaux.length > 0 ? { materiaux, parFace } : undefined,
   }
 }
 
-export async function maillageDepuisAssemblage(
-  doc: CadomDocument,
-  occt?: OcctKernelModule,
-): Promise<MaillageOmbre | null> {
-  const kernel = occt ?? (await chargerKernel())
-  const parties: MaillageOmbre[] = []
+/** Une pièce posée : son script, sa matrice monde (mat4 colonne) et son matériau. Clonable vers un worker. */
+export type PartieAssemblage = { script: string; monde: Float32Array; materiau?: MateriauAffichage }
+
+export function partiesAssemblage(doc: CadomDocument): PartieAssemblage[] {
+  const parties: PartieAssemblage[] = []
   for (const node of doc.nodes.values()) {
     const binding =
       node.assetBindings.find((b) => b.role === 'parametric') ?? node.assetBindings[0]
@@ -96,12 +130,40 @@ export async function maillageDepuisAssemblage(
     if (!asset) continue
     const script = SCRIPTS_ASSEMBLAGE[asset.uri]
     if (!script) continue
-    const session = new Session({ geometrie: false })
-    session.executer(script)
-    const local = maillagePipelineOcct(kernel, session)
-    if (local.indices.length === 0) continue
-    parties.push(transformerMaillage(local, doc.getWorldMatrix(node.id)))
+    const lienMateriau = node.assetBindings.find((b) => b.role === 'material')
+    const uriMateriau = lienMateriau ? doc.assets.get(lienMateriau.assetId)?.uri : undefined
+    const materiau = uriMateriau ? MATERIAUX_ASSEMBLAGE[uriMateriau] : undefined
+    parties.push({ script, monde: Float32Array.from(doc.getWorldMatrix(node.id)), ...(materiau && { materiau }) })
   }
-  if (parties.length === 0) return null
-  return fusionnerMaillages(parties)
+  return parties
+}
+
+/** Chaque script distinct passe une fois par OCCT ; le cache garde son maillage local. */
+export function maillageDepuisParties(
+  kernel: OcctKernelModule,
+  parties: readonly PartieAssemblage[],
+  cache: Map<string, MaillageOmbre> = new Map(),
+): MaillageTeinte | null {
+  const posees: PartieFusionnee[] = []
+  for (const { script, monde, materiau } of parties) {
+    let local = cache.get(script)
+    if (!local) {
+      const session = new Session({ geometrie: false })
+      session.executer(script)
+      local = maillagePipelineOcct(kernel, session)
+      cache.set(script, local)
+    }
+    if (local.indices.length === 0) continue
+    posees.push({ ...transformerMaillage(local, monde), materiau })
+  }
+  if (posees.length === 0) return null
+  return fusionnerMaillages(posees)
+}
+
+export async function maillageDepuisAssemblage(
+  doc: CadomDocument,
+  occt?: OcctKernelModule,
+): Promise<MaillageTeinte | null> {
+  const kernel = occt ?? (await chargerKernel())
+  return maillageDepuisParties(kernel, partiesAssemblage(doc))
 }

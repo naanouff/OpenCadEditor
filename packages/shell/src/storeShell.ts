@@ -8,7 +8,8 @@ import {
   type LateLoadPlan,
 } from '@opencad/cadom'
 import { ecrire, lire } from '@opencad/format-opencad'
-import { maillageDepuisAssemblage } from './assemblageMaillage.ts'
+import { maillageDepuisAssemblage, partiesAssemblage } from './assemblageMaillage.ts'
+import { assemblerDansWorker } from './moteur/assembleur.ts'
 import { chargeurCourant } from './chargeurAsset.ts'
 import { selecteurCourant } from './fichierShell.ts'
 import { Hote } from './hote.ts'
@@ -147,7 +148,9 @@ async function reconstruireMaillageAssemblage() {
         maille = null
       }
     }
-    maille ??= await maillageDepuisAssemblage(doc)
+    maille ??= navigateur
+      ? await assemblerDansWorker(partiesAssemblage(doc))
+      : await maillageDepuisAssemblage(doc)
     if (generation !== generationAssemblage || assemblage !== doc) return
     maillageAffiche = maille
     oublierAretes()
@@ -244,6 +247,17 @@ export const storeShell = {
     areteChoisie = null
     revision += 1
     prevenir()
+  },
+  /** Clic dans le vide : plus de face, d’arête ni de datum. Faux si rien n’était choisi. */
+  deselectionner() {
+    if (!faceChoisie && segmentChoisi === null && datumChoisi === null && !areteChoisie) return false
+    faceChoisie = null
+    segmentChoisi = null
+    datumChoisi = null
+    areteChoisie = null
+    revision += 1
+    prevenir()
+    return true
   },
   definirSurvol(suivant: typeof survol) {
     const identique =

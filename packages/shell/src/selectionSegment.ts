@@ -13,6 +13,8 @@ export type SegmentBrep = {
   faces: readonly number[]
   /** Bissectrice unitaire des normales voisines : sens de sortie de la matière. */
   normale: Point
+  /** Normales de sommet confondues : raccord lisse (bord de congé ou couture). */
+  tangente: boolean
 }
 
 export type AreteBrep = {
@@ -25,6 +27,7 @@ export type AreteBrep = {
 export const SEUIL_SEGMENT_MM = 1.2
 
 const COPLANAIRE = 0.999
+const TANGENTE = 0.9995
 
 const q = (v: number) => Math.round(v * 1e4) / 1e4
 const clePoint = (p: Point) => `${q(p[0])},${q(p[1])},${q(p[2])}`
@@ -58,8 +61,16 @@ function normaleTriangle(
 export function segmentsBrep(maillage: Maillage): SegmentBrep[] {
   const { positions, indices, faces } = maillage
   if (!faces || faces.length === 0) return []
-  type Acc = { a: Point; b: Point; faces: number[]; normales: [number, number, number][] }
+  type Acc = {
+    a: Point
+    b: Point
+    faces: number[]
+    normales: [number, number, number][]
+    /** Normales de sommet aux deux extrémités (clé croissante), par carreau. */
+    sommets: [number, number][]
+  }
   const map = new Map<string, Acc>()
+  const normalesSommet = maillage.normales
   const nTri = Math.min(faces.length, Math.floor(indices.length / 3))
   for (let t = 0; t < nTri; t++) {
     const n = normaleTriangle(positions, indices, t)
@@ -76,26 +87,50 @@ export function segmentsBrep(maillage: Maillage): SegmentBrep[] {
       const ka = clePoint(a)
       const kb = clePoint(b)
       const nom = ka < kb ? `${ka}|${kb}` : `${kb}|${ka}`
+      const sommets: [number, number] = ka < kb ? [ia, ib] : [ib, ia]
       const acc = map.get(nom)
       if (acc) {
         acc.faces.push(face)
         acc.normales.push(n)
-      } else map.set(nom, { a, b, faces: [face], normales: [n] })
+        acc.sommets.push(sommets)
+      } else map.set(nom, { a, b, faces: [face], normales: [n], sommets: [sommets] })
     }
   }
   const segments: SegmentBrep[] = []
   for (const acc of map.values()) {
     const ids = [...new Set(acc.faces)].sort((x, y) => x - y)
     if (ids.length < 2) {
-      if (acc.faces.length === 1) segments.push({ a: acc.a, b: acc.b, faces: ids, normale: bissectrice(acc.normales) })
+      if (acc.faces.length === 1) {
+        segments.push({ a: acc.a, b: acc.b, faces: ids, normale: bissectrice(acc.normales), tangente: false })
+      }
       continue
     }
     const u = acc.normales[0]!
     const coplanaires = acc.normales.every((v) => u[0] * v[0] + u[1] * v[1] + u[2] * v[2] > COPLANAIRE)
     if (coplanaires) continue
-    segments.push({ a: acc.a, b: acc.b, faces: ids, normale: bissectrice(acc.normales) })
+    const lisse = normalesSommet ? tangente(normalesSommet, acc.sommets) : false
+    segments.push({ a: acc.a, b: acc.b, faces: ids, normale: bissectrice(acc.normales), tangente: lisse })
   }
   return segments
+}
+
+/**
+ * Les carreaux se raccordent sans pli : à chaque extrémité du segment, toutes leurs
+ * normales de sommet coïncident. Un congé a pourtant une arête à chacune des siennes :
+ * seule une couture isolée (un seul segment) est écartée au regroupement.
+ */
+function tangente(normales: ArrayLike<number>, sommets: readonly (readonly [number, number])[]): boolean {
+  const [premier] = sommets
+  if (!premier) return false
+  for (let bout = 0; bout < 2; bout++) {
+    const r = premier[bout]!
+    for (const s of sommets) {
+      const i = s[bout]!
+      const dot = normales[r]! * normales[i]! + normales[r + 1]! * normales[i + 1]! + normales[r + 2]! * normales[i + 2]!
+      if (!(dot > TANGENTE)) return false
+    }
+  }
+  return true
 }
 
 function bissectrice(normales: readonly (readonly [number, number, number])[]): Point {
@@ -142,6 +177,7 @@ export function aretesBrepGroupees(maillage: Maillage): AreteBrep[] {
       else groupes.set(r, [segment])
     })
     for (const groupe of groupes.values()) {
+      if (groupe.length === 1 && groupe[0]!.tangente) continue
       aretes.push({ id: aretes.length, faces: groupe[0]!.faces, segments: groupe })
     }
   }

@@ -6,10 +6,12 @@ export {
   opsExtrude,
   opsProfil,
   marquerCercle,
+  marquerArcs,
   decalerPolyline,
   opsRevolution,
   opsCouper,
   opsFillet,
+  opsChanfrein,
   accrocherSolide,
   type Polyline3,
 } from '@opencad/kernel/ops'

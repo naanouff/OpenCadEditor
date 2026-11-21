@@ -134,7 +134,7 @@ export function DebugVue(): ReactElement {
             className="rounded border border-[var(--color-border-default)] bg-[var(--color-surface-input)] px-3 py-1.5 text-left text-[var(--color-text-primary)] hover:bg-[var(--color-surface-hover)]"
             onClick={() => {
               storeShell.ouvrir(encode(assemblagePlateau()))
-              setMessage('Plateau — graphe Design (2 poignées, 4 vis)')
+              setMessage('Plateau — graphe Design (2 poignées, 4 vis noyées)')
             }}
           >
             Load plateau

@@ -7,6 +7,8 @@ const chargeurFetch: ChargeurAsset = {
   async charger(uri) {
     const reponse = await fetch(uri)
     if (!reponse.ok) throw new Error(`HTTP ${reponse.status} · ${uri}`)
+    // Le serveur de dev répond index.html (200) à toute URI absente.
+    if (reponse.headers.get('content-type')?.startsWith('text/html')) throw new Error(`introuvable · ${uri}`)
     return new Uint8Array(await reponse.arrayBuffer())
   },
 }

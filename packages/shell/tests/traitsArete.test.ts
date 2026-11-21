@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { Maillage } from '@opencad/api-parametrique'
 import { aretesBrepGroupees } from '../src/selectionSegment.ts'
-import { decaler, metresParPixel, traitsDe, zoomAChange } from '../src/traitsArete.ts'
+import { avancer, decaler, metresParPixel, traitsDe, vueAChange, zoomAChange } from '../src/traitsArete.ts'
 
 /** Dièdre : dessus +Y (face 0) et flanc +X (face 1), arête commune x = 1, y = 1. */
 const diedre: Maillage = {
@@ -27,5 +27,20 @@ describe('traits d’arête', () => {
     expect(metresParPixel(0.2, 400)).toBeCloseTo(0.001)
     expect(zoomAChange(0.001, 0.00102)).toBe(false)
     expect(zoomAChange(0.001, 0.0011)).toBe(true)
+  })
+
+  it('avance le trait vers l’œil : sa projection à l’écran ne bouge pas', () => {
+    const vue: [number, number, number] = [0, 0.6, 0.8]
+    const avance = avancer([1, 2, 3, 4, 5, 6], vue, 0.5)
+    expect(avance).toEqual([1, 2.3, 3.4, 4, 5.3, 6.4])
+    // Projection orthographique : la composante le long de la vue est la seule qui change.
+    const ecran = (p: number[]) => [p[0]!, p[1]! * 0.8 - p[2]! * 0.6]
+    expect(ecran(avance.slice(0, 3))[1]).toBeCloseTo(ecran([1, 2, 3])[1]!)
+  })
+
+  it('reconstruit les rubans quand la vue tourne de plus de quelques degrés', () => {
+    expect(vueAChange(null, [0, 0, 1])).toBe(true)
+    expect(vueAChange([0, 0, 1], [0, Math.sin(0.02), Math.cos(0.02)])).toBe(false)
+    expect(vueAChange([0, 0, 1], [0, Math.sin(0.2), Math.cos(0.2)])).toBe(true)
   })
 })
