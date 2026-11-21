@@ -1,5 +1,9 @@
 # Journal de suivi
 
+## 2026-11-21 — Sprint 71 : filtre viewport
+
+Barre Tout / Corps / Face / Arête sur le canvas ; pick filtré. P4b clos (67–71). Branche `feature/shell-viewport-hints`.
+
 ## 2026-11-21 — Sprint 70 : layout Dockview v6
 
 Layout Whittle : browser / viewport / inspector / timeline + terminal (`layout.v6`). Debug hors requis. Branche `feature/shell-layout-v6`. Suite : overlays viewport (phase 5).

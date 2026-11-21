@@ -34,6 +34,13 @@ import { RubanVue } from './RubanVue.tsx'
 import { ShellStatusBar } from './ShellStatusBar.tsx'
 import { storeShell } from './storeShell.ts'
 import { TerminalMonaco } from './TerminalMonaco.tsx'
+import {
+  ViewportFilterBar,
+  autoriseArete,
+  autoriseDatum,
+  autoriseFace,
+  type FiltreSelection,
+} from './ViewportFilterBar.tsx'
 import { afficher, cadreCameraPick, cadrerVue, pivoterVue } from './viewportW3dts.ts'
 
 const STORAGE_KEY = 'opencad.shell.dockview.layout.v6'
@@ -131,6 +138,7 @@ function ViewportVue(_props: IDockviewPanelProps) {
   const { hote, revision } = useStoreShell()
   const ref = useRef<HTMLCanvasElement>(null)
   const pointe = useRef<{ x: number; y: number } | null>(null)
+  const [filtre, setFiltre] = useState<FiltreSelection>('any')
   useEffect(() => {
     const canevas = ref.current
     if (!canevas) return
@@ -206,23 +214,35 @@ function ViewportVue(_props: IDockviewPanelProps) {
     const topo = topologieAffichee(maille)
     const rayon = rayonVersMm(rayonM)
     const seuil = seuilTrait()
-    const arete = areteBrepSousPointeur(topo.aretes, rayon, seuil)
-    if (arete) {
-      storeShell.definirSurvol({ sorte: 'arete', id: arete.id })
+    if (autoriseArete(filtre)) {
+      const arete = areteBrepSousPointeur(topo.aretes, rayon, seuil)
+      if (arete) {
+        storeShell.definirSurvol({ sorte: 'arete', id: arete.id })
+        return
+      }
+    }
+    if (autoriseFace(filtre)) {
+      const hit = carreauSousPointeur(maille, rayon)
+      if (hit) {
+        storeShell.definirSurvol({
+          sorte: 'face',
+          id: hit.faceId,
+          nom: nomCarreau(hit.faceId, topo.noms),
+        })
+        return
+      }
+    }
+    if (autoriseDatum(filtre)) {
+      const axe = axeSousPointeur(rayon, seuil)
+      if (axe) {
+        storeShell.definirSurvol({ sorte: 'axe', id: axe })
+        return
+      }
+      const plan = planSousPointeur(rayon)
+      storeShell.definirSurvol(plan ? { sorte: 'plan', id: plan } : null)
       return
     }
-    const hit = carreauSousPointeur(maille, rayon)
-    if (hit) {
-      storeShell.definirSurvol({ sorte: 'face', id: hit.faceId, nom: nomCarreau(hit.faceId, topo.noms) })
-      return
-    }
-    const axe = axeSousPointeur(rayon, seuil)
-    if (axe) {
-      storeShell.definirSurvol({ sorte: 'axe', id: axe })
-      return
-    }
-    const plan = planSousPointeur(rayon)
-    storeShell.definirSurvol(plan ? { sorte: 'plan', id: plan } : null)
+    storeShell.definirSurvol(null)
   }
 
   const onPointerLeave = () => {
@@ -267,31 +287,35 @@ function ViewportVue(_props: IDockviewPanelProps) {
         const rayon = rayonVersMm(rayonM)
         const topo = topologieAffichee(maille)
         const seuil = seuilTrait()
-        const arete = areteBrepSousPointeur(topo.aretes, rayon, seuil)
-        if (arete) {
-          storeShell.choisirAreteBrep(arete.id, classeKernelDe(arete, storeShell.aretesNommees()))
-          return
-        }
-        const hit = carreauSousPointeur(maille, rayon)
-        if (!hit) {
-          const axe = axeSousPointeur(rayon, seuil)
-          const plan = axe ?? planSousPointeur(rayon)
-          if (plan) {
-            const deja = storeShell.datumChoisi()
-            storeShell.choisirDatum(plan)
-            if (deja === plan && plan.startsWith('plan.') && !consultation) {
-              if (!storeShell.ouvrirEsquisseSurSupport(plan)) return
-              esquisse = hote.session.esquisseCourante()
-              if (!esquisse) return
-            } else return
-          } else {
-            // Le vide retire la sélection. On n’ouvre une esquisse que si rien n’était choisi.
-            if (storeShell.deselectionner() || consultation) return
-            if (!storeShell.ouvrirEsquisseSurSupport('plan.dessus')) return
-            esquisse = hote.session.esquisseCourante()
-            if (!esquisse) return
+        if (autoriseArete(filtre)) {
+          const arete = areteBrepSousPointeur(topo.aretes, rayon, seuil)
+          if (arete) {
+            storeShell.choisirAreteBrep(arete.id, classeKernelDe(arete, storeShell.aretesNommees()))
+            return
           }
-        } else if (hit) {
+        }
+        const hit = autoriseFace(filtre) ? carreauSousPointeur(maille, rayon) : null
+        if (!hit) {
+          if (autoriseDatum(filtre)) {
+            const axe = axeSousPointeur(rayon, seuil)
+            const plan = axe ?? planSousPointeur(rayon)
+            if (plan) {
+              const deja = storeShell.datumChoisi()
+              storeShell.choisirDatum(plan)
+              if (deja === plan && plan.startsWith('plan.') && !consultation) {
+                if (!storeShell.ouvrirEsquisseSurSupport(plan)) return
+                esquisse = hote.session.esquisseCourante()
+                if (!esquisse) return
+              } else return
+            }
+          }
+          // Le vide retire la sélection. On n’ouvre une esquisse que si rien n’était choisi.
+          if (storeShell.deselectionner() || consultation) return
+          if (!autoriseDatum(filtre)) return
+          if (!storeShell.ouvrirEsquisseSurSupport('plan.dessus')) return
+          esquisse = hote.session.esquisseCourante()
+          if (!esquisse) return
+        } else {
           const nom = nomCarreau(hit.faceId, topo.noms)
           const deja = storeShell.faceChoisie()
           storeShell.choisirFace(hit.faceId, nom)
@@ -332,14 +356,17 @@ function ViewportVue(_props: IDockviewPanelProps) {
         onPointerLeave={onPointerLeave}
       />
       {storeShell.construction() ? (
-        <p className="pointer-events-none absolute left-3 top-3 m-0 font-ui text-[13px] text-[var(--color-text-primary)]">
+        <p className="pointer-events-none absolute left-3 top-3 m-0 font-ui text-[13px] text-oc-text">
           Construction…
         </p>
       ) : (
-        <p className="pointer-events-none absolute left-3 top-3 m-0 font-ui text-[13px] text-[var(--color-text-primary)]">
+        <p className="pointer-events-none absolute left-3 top-3 m-0 font-ui text-[13px] text-oc-text">
           {libelleTopo(mailleAffichee())}
         </p>
       )}
+      {!hote.session.esquisseCourante() ? (
+        <ViewportFilterBar value={filtre} onChange={setFiltre} />
+      ) : null}
     </div>
   )
 }

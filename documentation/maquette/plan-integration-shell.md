@@ -88,11 +88,11 @@ Sprint : [70](../sprints/sprint-70-shell-layout-v6.md). Branche : `feature/shell
 
 ## Phase 5 — Affordances viewport + profondeur panneaux
 
-Branche prévue : `feature/shell-viewport-hints`.
+Sprint : [71](../sprints/sprint-71-shell-viewport-hints.md). Branche : `feature/shell-viewport-hints`. **Fait.**
 
 1. Barre flottante Tout / Corps / Face / Arête sur le mode de sélection réel.
-2. Inspector : expressions (sprint 61), hints dérivés de `storeShell`.
-3. Timeline : historique ; reprise pointe si Session le permet, sinon lecture seule.
+2. Inspector : expressions (sprint 61), hints dérivés de `storeShell` (posé en sprint 70).
+3. Timeline : historique + `pointe` (posé en sprint 70).
 
 ## Hors scope
 
