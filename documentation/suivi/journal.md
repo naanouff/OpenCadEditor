@@ -1,5 +1,9 @@
 # Journal de suivi
 
+## 2026-11-21 — Sprint 69 : ruban Lucide
+
+`RubanVue` en grille Whittle (ESQUISSE / SOLIDE, Lucide, outils grisés + raison). Actions toujours via `boutonsRuban` / `executer`. Branche `feature/shell-ribbon`. Suite : layout Dockview v6.
+
 ## 2026-11-21 — Sprint 68 : chrome + StatusBar
 
 Chrome OpenCad Editor (marque, fichier, undo/redo, titre, Ctrl+K placeholder, thème) et StatusBar (mode · sélection · unité). Branche `feature/shell-chrome`. Suite : ruban Lucide (phase 3).

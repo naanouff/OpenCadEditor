@@ -71,7 +71,7 @@ Sprint : [68](../sprints/sprint-68-shell-chrome.md). Branche : `feature/shell-ch
 
 ## Phase 3 — Ruban présentation
 
-Branche prévue : `feature/shell-ribbon`.
+Sprint : [69](../sprints/sprint-69-shell-ribbon.md). Branche : `feature/shell-ribbon`. **Fait.**
 
 1. UI type Whittle (Lucide, groupes, onglets) sur le rendu de `RubanVue`.
 2. `ruban.ts` + tests inchangés comme source des actions.
