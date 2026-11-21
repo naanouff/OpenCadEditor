@@ -50,9 +50,12 @@ function pli(normaleCommune: boolean): Maillage {
 }
 
 describe('arêtes BRep', () => {
-  it('trace le bord d’un congé et masque une couture d’un seul segment', () => {
+  it('trace le bord d’un congé, même d’un seul segment', () => {
+    // Les coutures sont fondues dans leur carreau par la tessellation : entre deux carreaux,
+    // un raccord tangent est toujours le bord d’un congé.
     const communes = (m: Maillage) => aretesBrepGroupees(m).filter((a) => a.faces.length === 2)
-    expect(communes(pli(true))).toHaveLength(0)
+    expect(communes(pli(true))).toHaveLength(1)
+    expect(communes(pli(true))[0]!.segments[0]!.tangente).toBe(true)
     expect(communes(pli(false))).toHaveLength(1)
     const base = areteEnDeuxSegments()
     const normales: number[] = []

@@ -3,7 +3,7 @@ import { Session } from '@opencad/api-parametrique'
 import { chargerKernel } from '../src/occt/chargerKernel.ts'
 import { maillagePipelineOcct } from '../src/occt/pipelineOcct.ts'
 import { COTE_PLATEAU } from '../src/cotesPlateau.ts'
-import { aretesBrepGroupees } from '../src/selectionSegment.ts'
+import { aretesBrepGroupees, type AreteBrep } from '../src/selectionSegment.ts'
 import { SCRIPT_PLATEAU } from '../src/scriptPlateau.ts'
 import { SCRIPT_POIGNEE } from '../src/scriptPoignee.ts'
 import { BOULON_M4, ECROU_M4, SCRIPT_BOULON, SCRIPT_ECROU } from '../src/scriptBoulon.ts'
@@ -104,13 +104,27 @@ extrude 5
         a.segments.some((s) => s.a[1] > COTE_PLATEAU.hauteur - 2 && s.b[1] > COTE_PLATEAU.hauteur - 2),
     )
     expect(bord).toBe(true)
+    // Bords du congé R20 sur les flancs : un trait vertical à chaque raccord tangent.
+    const vertical = (a: AreteBrep, x: number, z: number) =>
+      longueur(a) > 5 &&
+      a.segments.every(
+        (s) =>
+          Math.abs(s.a[0]! - s.b[0]!) < 0.05 &&
+          Math.abs(s.a[2]! - s.b[2]!) < 0.05 &&
+          Math.hypot(Math.abs(s.a[0]!) - x, Math.abs(s.a[2]!) - z) < 0.05 &&
+          Math.hypot(Math.abs(s.b[0]!) - x, Math.abs(s.b[2]!) - z) < 0.05,
+      )
+    const aretes = aretesBrepGroupees(maille)
+    expect(aretes.filter((a) => vertical(a, xBord, zBord))).toHaveLength(4)
+    expect(aretes.filter((a) => vertical(a, COTE_PLATEAU.longueur / 2, zBord - COTE_PLATEAU.rayonCoin))).toHaveLength(4)
   }, 120_000)
 
   it('dessine la poignée en D, percée et lamée à l’entraxe, pourtour arrondi', async () => {
     const occt = await chargerKernel()
     const session = new Session({ geometrie: false })
     session.executer(SCRIPT_POIGNEE)
-    const pts = sommets(maillagePipelineOcct(occt, session))
+    const maille = maillagePipelineOcct(occt, session)
+    const pts = sommets(maille)
     const { largeurBras, saillie, hauteurPoignee, entraxeVis, diametreLamage, profondeurLamage, diametrePassage } =
       COTE_PLATEAU
     const e = largeurBras / 2
@@ -133,6 +147,17 @@ extrude 5
     // Congé de pourtour : le coin vif du bras sur la face du dessus a disparu.
     const coin = Math.min(...pts.map((p) => Math.hypot(p[0] - (u + e), p[1] - 10, p[2])))
     expect(coin).toBeGreaterThan(0.25)
+    // Le passage est un cylindre de deux arcs : sa couture ne se trace pas.
+    const aretes = aretesBrepGroupees(maille)
+    const surPassage = (p: readonly number[]) =>
+      [-1, 1].some((s) => Math.abs(Math.hypot(p[0]! - s * u, p[1]!) - diametrePassage / 2) < 0.05)
+    const couture = aretes.some((a) =>
+      a.segments.every((s) => surPassage(s.a) && surPassage(s.b) && Math.abs(s.a[2]! - s.b[2]!) > 1),
+    )
+    expect(couture).toBe(false)
+    // Le coude se raccorde tangent aux bras et à la barre : ses bords se tracent.
+    const coudes = aretes.filter((a) => a.segments.length > 0 && a.segments.every((s) => s.tangente))
+    expect(coudes.length).toBeGreaterThan(8)
   }, 120_000)
 
   it('filete le bout du boulon et perce l’écrou', async () => {

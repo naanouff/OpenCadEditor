@@ -4,6 +4,8 @@ type MeshFace = {
   positions?: number[]
   normals?: number[]
   indices?: number[]
+  /** Carreau : faces voisines portées par la même surface. Absent : une face, un carreau. */
+  surface?: number
 }
 
 type TessellateJson = {
@@ -21,8 +23,15 @@ export function maillageDepuisTessellate(json: TessellateJson): Maillage {
   const indices: number[] = []
   const faces: number[] = []
   let decalage = 0
-  let faceId = 0
-  for (const mesh of json.meshes ?? []) {
+  const carreaux = new Map<number, number>()
+  let suivant = 0
+  for (const [rang, mesh] of (json.meshes ?? []).entries()) {
+    const cle = mesh.surface ?? -1 - rang
+    let faceId = carreaux.get(cle)
+    if (faceId === undefined) {
+      faceId = suivant++
+      carreaux.set(cle, faceId)
+    }
     const pos = mesh.positions ?? []
     const nor = mesh.normals ?? []
     const idx = mesh.indices ?? []
@@ -37,7 +46,6 @@ export function maillageDepuisTessellate(json: TessellateJson): Maillage {
       if (i % 3 === 0) faces.push(faceId)
     }
     decalage += sommets
-    faceId += 1
   }
   return { positions, normales, indices, faces }
 }

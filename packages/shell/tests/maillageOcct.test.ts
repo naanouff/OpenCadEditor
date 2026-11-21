@@ -23,4 +23,17 @@ describe('maillageDepuisTessellate', () => {
     expect(maille.faces).toEqual([0, 1])
     expect(maille.normales).toHaveLength(18)
   })
+
+  it('numérote un carreau par surface : deux moitiés de cylindre n’en font qu’un', () => {
+    const tri = { positions: [0, 0, 0, 1, 0, 0, 0, 1, 0], normals: [0, 0, 1, 0, 0, 1, 0, 0, 1], indices: [0, 1, 2] }
+    const maille = maillageDepuisTessellate({
+      ok: true,
+      meshes: [
+        { ...tri, surface: 3 },
+        { ...tri, surface: 1 },
+        { ...tri, surface: 3 },
+      ],
+    })
+    expect(maille.faces).toEqual([0, 1, 0])
+  })
 })

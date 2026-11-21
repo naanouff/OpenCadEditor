@@ -116,8 +116,8 @@ export function segmentsBrep(maillage: Maillage): SegmentBrep[] {
 
 /**
  * Les carreaux se raccordent sans pli : à chaque extrémité du segment, toutes leurs
- * normales de sommet coïncident. Un congé a pourtant une arête à chacune des siennes :
- * seule une couture isolée (un seul segment) est écartée au regroupement.
+ * normales de sommet coïncident. C’est le bord d’un congé, toujours tracé : les coutures
+ * sont déjà fondues dans leur carreau par la tessellation.
  */
 function tangente(normales: ArrayLike<number>, sommets: readonly (readonly [number, number])[]): boolean {
   const [premier] = sommets
@@ -177,7 +177,6 @@ export function aretesBrepGroupees(maillage: Maillage): AreteBrep[] {
       else groupes.set(r, [segment])
     })
     for (const groupe of groupes.values()) {
-      if (groupe.length === 1 && groupe[0]!.tangente) continue
       aretes.push({ id: aretes.length, faces: groupe[0]!.faces, segments: groupe })
     }
   }

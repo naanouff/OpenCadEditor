@@ -50,7 +50,8 @@ describe('construireVis OCCT', () => {
     const r = (p: readonly number[]) => Math.hypot(p[0]!, p[2]!)
     const dansFilet = (a: AreteBrep) => a.segments.every((s) => s.a[1] > 12 && s.a[1] < 22 && s.b[1] > 12 && s.b[1] < 22)
     const coutures = (m: typeof maille) => aretesBrepGroupees(m).filter((a) => dansFilet(a) && a.segments.length === 1)
-    expect(coutures({ ...maille, normales: undefined }).length).toBeGreaterThan(0)
+    // Les tours du filet sont fondus dans leur carreau par la tessellation, normales ou non.
+    expect(coutures({ ...maille, normales: undefined })).toHaveLength(0)
     expect(coutures(maille)).toHaveLength(0)
     const tours = aretesBrepGroupees(maille).filter(dansFilet)
     expect(tours.some((a) => a.segments.every((s) => Math.abs(r(s.a) - 3) < 0.05))).toBe(true)
