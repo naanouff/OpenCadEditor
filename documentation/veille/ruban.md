@@ -1,6 +1,6 @@
 # Ruban
 
-Sprint : [sprint-60-ruban.md](../sprints/sprint-60-ruban.md). Phase **P4**. Axe : **modeleur générique**. Suite de [naming-aretes.md](naming-aretes.md). Le cadre vient de [plan-layout.md](../maquette/plan-layout.md) : le ruban lance, il ne règle pas la fonction.
+Sprint : [sprint-60-ruban.md](../sprints/sprint-60-ruban.md). Phase **P4**. Axe : **modeleur générique**. Suite de [naming-aretes.md](naming-aretes.md). Le cadre vient de [plan-layout.md](../maquette/v1/plan-layout.md) : le ruban lance, il ne règle pas la fonction.
 
 ## But
 

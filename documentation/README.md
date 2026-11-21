@@ -18,8 +18,13 @@ Suivi du projet et notes de travail. Ce dossier n’appartient pas au moteur : l
 | [veille/pilotage-lignes.md](veille/pilotage-lignes.md) | Ligne de `Session` = interface par défaut ; UI cliente ; Whittle pour les comportements |
 | [developpement.md](developpement.md) | Règle de base : TDD |
 | [veille/](veille/) | Veille fonctionnelle avant développement du modeleur |
-| [maquette/plan-layout.md](maquette/plan-layout.md) | Layout visé de l’éditeur |
-| [maquette/index.html](maquette/index.html) | Maquette statique à ouvrir dans un navigateur |
+| [graphique/](graphique/) | Identité openCAD / Editor : [planche](graphique/planche-identite-opencad-editor.png), [charte](graphique/charte.md) |
+| [maquette/](maquette/) | Maquettes layout : [v1](maquette/v1/) HTML, [v2](maquette/v2/) React/Dockview |
+| [maquette/plan-v2.md](maquette/plan-v2.md) | Plan maquette v2 (Whittle, DS, light/dark) |
+| [maquette/plan-espaces.md](maquette/plan-espaces.md) | Espaces CAM, CTRL, Render Studio |
+| [sprints/sprint-65-maquette-espaces.md](sprints/sprint-65-maquette-espaces.md) | Sprint de ces espaces, dessiné dans la maquette v2 |
+| [maquette/v1/plan-layout.md](maquette/v1/plan-layout.md) | Layout v1 (archive sprint 01) |
+| [maquette/v2/](maquette/v2/) | Maquette interactive : `pnpm dev` dans ce dossier |
 | [sprints/sprint-01-maquette-layout.md](sprints/sprint-01-maquette-layout.md) | Sprint de la maquette de layout, déjà dessinée |
 | [veille/plan-interfaces.md](veille/plan-interfaces.md) | Veille des interfaces du benchmark, avant de reprendre le layout |
 | [veille/interfaces.md](veille/interfaces.md) | Repérage des interfaces du benchmark, captures créditées |

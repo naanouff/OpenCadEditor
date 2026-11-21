@@ -1,5 +1,17 @@
 # Journal de suivi
 
+## 2026-11-21 — Espaces CAM, CTRL, Render
+
+[plan-espaces.md](../maquette/plan-espaces.md) ajoute trois espaces à la maquette v2, à côté de Design. [sprint-65-maquette-espaces.md](../sprints/sprint-65-maquette-espaces.md) est dessiné sur `feature/carreaux-brep` : sélecteur Design · CAM · CTRL · Render, contenus mock, aucun calcul. Les sprints 63 et 64 restent les arêtes et les datums.
+
+## 2026-11-21 — Charte graphique openCAD Editor
+
+La planche d’identité est dans [graphique/](../graphique/) ([planche](../graphique/planche-identite-opencad-editor.png), [charte.md](../graphique/charte.md)). Mise à jour team : orange = **mode Sketch** (mannequin), cyan = marque / actions. Kit logo SVG/PNG/WebP : [graphique/kit](../graphique/kit/) (variante sketch incluse). Maquette v2 : navy / cyan / orange Sketch.
+
+## 2026-11-20 — Maquette v2 (Whittle)
+
+L’ancienne page HTML est archivée dans [maquette/v1](../maquette/v1/). La [maquette v2](../maquette/v2/) est une app Vite React : Dockview (`EditorDock`), Tailwind, Lucide, design system light/dark. Layout calqué sur Whittle : chrome + ruban, Browser, viewport avec filtre flottant, inspector « Prochaines étapes », timeline. Aucune Session / OCCT. Plan : [plan-v2.md](../maquette/plan-v2.md).
+
 ## 2026-09-24 — Cadrage avant développement
 
 - Le document d’assemblage visé est CADOM (dépôt [OpenCAD](https://github.com/naanouff/OpenCAD)) : graphe d’assemblage, transforms, références vers des géométries STEP ou glTF externes. Le fichier `.cadom` ne porte pas la géométrie.
@@ -647,4 +659,3 @@ Sur le plateau, chaque survol gelait l’interface 11 à 16 s. Tout réaffichage
 ## 2026-11-20 — Cercles exacts en OCCT
 
 La paroi du trou de la boîte montrait 48 arêtes verticales. Ce n’était pas un défaut d’affichage : chaque cercle d’esquisse partait vers OCCT comme un polygone de 48 côtés, et l’extrusion donnait un prisme à 48 faces planes. Le noyau n’a ni cercle ni placement de cylindre. Un cercle est donc maintenant tourné autour de son axe : un rectangle collé à l’axe, en révolution complète, donne une vraie face cylindrique, avec dessus, dessous et une couture invisible. Le polygone reste porté par l’esquisse. `marquerCercle` y attache le centre et le rayon, et `opsProfil` (dans `@opencad/kernel/ops`) choisit entre révolution et extrusion. Le compilateur du noyau et le chemin local du shell l’utilisent tous deux. Ce changement touche le sous-module `vendor/opencad`.
-

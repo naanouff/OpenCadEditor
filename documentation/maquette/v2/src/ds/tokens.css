@@ -1,0 +1,97 @@
+/**
+ * Design system openCAD Editor — charte :
+ * documentation/graphique/charte.md
+ *
+ * Navy + cyan marque + orange Sketch (light & dark).
+ * Voir documentation/graphique/charte.md
+ */
+
+[data-theme='light'] {
+  color-scheme: light;
+  --oc-bg: #e8eef5;
+  --oc-panel: #ffffff;
+  --oc-panel-2: #f0f4fa;
+  --oc-line: #cfd8e6;
+  --oc-text: #0e1423;
+  --oc-muted: #5a6a82;
+  --oc-accent: #0891b2;
+  --oc-accent-bright: #00b8d9;
+  --oc-editor: #d97706; /* alias Sketch (historique) */
+  --oc-sketch: #d97706;
+  --oc-select: #cff4fc;
+  --oc-preview: #0891b2;
+  --oc-add: #159e4a;
+  --oc-cut: #dc2626;
+  --oc-proposal: #d97706;
+  --oc-proposal-bg: rgba(217, 119, 6, 0.12);
+  --oc-ok: #0e1423;
+  --oc-disabled: #94a3b8;
+  --oc-radius: 8px;
+  --oc-font: 'Segoe UI', system-ui, sans-serif;
+  --oc-viewport-grid: rgba(8, 145, 178, 0.1);
+  --oc-viewport-bg: #f4f7fb;
+  --oc-ribbon: #ffffff;
+  --oc-chrome: #ffffff;
+  --oc-brand-open: #334155;
+
+  --color-background-page: var(--oc-bg);
+  --color-text-primary: var(--oc-text);
+  --color-text-secondary: var(--oc-muted);
+  --color-text-tertiary: var(--oc-disabled);
+  --color-surface-panel: var(--oc-panel);
+  --color-surface-elevated: var(--oc-panel-2);
+  --color-surface-header: var(--oc-panel-2);
+  --color-surface-input: #fff;
+  --color-surface-hover: rgba(14, 20, 35, 0.05);
+  --color-surface-active: var(--oc-select);
+  --color-border-default: var(--oc-line);
+  --theme-accent-color: var(--oc-accent);
+  --theme-bg-color: var(--oc-panel);
+  --theme-border-color: var(--oc-line);
+  --font-family-ui: var(--oc-font);
+}
+
+[data-theme='dark'] {
+  color-scheme: dark;
+  --oc-bg: #0e1423;
+  --oc-panel: #151c2e;
+  --oc-panel-2: #1a2338;
+  --oc-line: #2a3550;
+  --oc-text: #e8eef7;
+  --oc-muted: #8b9bb8;
+  --oc-accent: #22d3ee;
+  --oc-accent-bright: #22d3ee;
+  --oc-editor: #f59e0b; /* alias Sketch (historique) */
+  --oc-sketch: #f59e0b;
+  --oc-select: rgba(34, 211, 238, 0.16);
+  --oc-preview: #22d3ee;
+  --oc-add: #34d399;
+  --oc-cut: #f87171;
+  --oc-proposal: #f59e0b;
+  --oc-proposal-bg: rgba(245, 158, 11, 0.14);
+  --oc-ok: #e8eef7;
+  --oc-disabled: #64748b;
+  --oc-radius: 8px;
+  --oc-font: 'Segoe UI', system-ui, sans-serif;
+  --oc-viewport-grid: rgba(34, 211, 238, 0.07);
+  --oc-viewport-bg: #0b111e;
+  --oc-ribbon: #151c2e;
+  --oc-chrome: #151c2e;
+  --oc-brand-open: #e8eef7;
+
+  --color-background-page: var(--oc-bg);
+  --color-text-primary: var(--oc-text);
+  --color-text-secondary: var(--oc-muted);
+  --color-text-tertiary: var(--oc-disabled);
+  --color-surface-panel: var(--oc-panel);
+  --color-surface-elevated: var(--oc-panel-2);
+  --color-surface-header: var(--oc-panel-2);
+  --color-surface-input: rgba(0, 0, 0, 0.35);
+  --color-surface-hover: rgba(34, 211, 238, 0.08);
+  --color-surface-active: var(--oc-select);
+  --color-border-default: var(--oc-line);
+  --theme-accent-color: var(--oc-accent);
+  --theme-bg-color: var(--oc-panel);
+  --theme-border-color: var(--oc-line);
+  --font-family-ui: var(--oc-font);
+}

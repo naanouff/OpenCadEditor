@@ -8,9 +8,10 @@ Le sprint qui produit les fichiers est [sprint 01](../sprints/sprint-01-maquette
 
 | Fichier | Rôle |
 |---------|------|
-| [index.html](index.html) | Structure des zones |
+| [index.html](index.html) | Structure des zones (archive v1) |
 | [layout.css](layout.css) | Grille plein écran, thème sombre lisible |
 | [README.md](README.md) | Rôle de chaque zone, et ce que la maquette ne fait pas |
+| [../v2/](../v2/) | Maquette v2 React / Dockview |
 
 ## Zones
 
