@@ -1,5 +1,9 @@
 # Journal de suivi
 
+## 2026-11-21 — Sprint 68 : chrome + StatusBar
+
+Chrome OpenCad Editor (marque, fichier, undo/redo, titre, Ctrl+K placeholder, thème) et StatusBar (mode · sélection · unité). Branche `feature/shell-chrome`. Suite : ruban Lucide (phase 3).
+
 ## 2026-11-21 — Sprint 67 : DS OpenCad dans le shell
 
 `packages/shell/src/ds/` porte tokens + primitives de la maquette. Thème `light|dark` (`opencad.shell.theme`), bascule dans le ruban, bridge Dockview. Layout `v5` inchangé. Suite : chrome (phase 2).

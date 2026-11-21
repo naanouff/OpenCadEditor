@@ -63,7 +63,7 @@ Sprint : [67](../sprints/sprint-67-shell-ds.md). Branche : `feature/shell-ds`. *
 
 ## Phase 2 — Chrome + StatusBar (Design)
 
-Branche prévue : `feature/shell-chrome`.
+Sprint : [68](../sprints/sprint-68-shell-chrome.md). Branche : `feature/shell-chrome`. **Fait.**
 
 1. Porter `Chrome.tsx` + `BrandMark.tsx` ; brancher titre / document / undo (ou disabled + raison).
 2. Pas de sélecteur CAM / CTRL / Render.

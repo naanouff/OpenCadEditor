@@ -1,6 +1,4 @@
-import { Moon, Sun } from 'lucide-react'
 import { useEffect, useState, type ReactElement } from 'react'
-import { IconButton, type OcTheme } from './ds'
 import { storeShell } from './storeShell.ts'
 import { boutonsRuban, ligneReglage, reglageFonction, type OngletRuban, type ProfilRuban } from './ruban.ts'
 
@@ -10,12 +8,7 @@ function useRevision() {
   return revision
 }
 
-type Props = {
-  theme: OcTheme
-  onThemeChange: (theme: OcTheme) => void
-}
-
-export function RubanVue({ theme, onThemeChange }: Props): ReactElement {
+export function RubanVue(): ReactElement {
   const revision = useRevision()
   const [onglet, setOnglet] = useState<OngletRuban>('esquisse')
   const posee = storeShell.hote().session.esquisseCourante()
@@ -88,14 +81,6 @@ export function RubanVue({ theme, onThemeChange }: Props): ReactElement {
           />
         </form>
       ) : null}
-      <div className="ml-auto">
-        <IconButton
-          label={theme === 'dark' ? 'Thème clair' : 'Thème sombre'}
-          onClick={() => onThemeChange(theme === 'dark' ? 'light' : 'dark')}
-        >
-          {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-        </IconButton>
-      </div>
     </div>
   )
 }

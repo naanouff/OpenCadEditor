@@ -71,7 +71,7 @@ flowchart LR
 | **P3** Assemblage | OpenCadEditor | 44–47 | fait (graphe) | open/save/plan/fetch `.cadom` |
 | **P3b** Pièces boîte | OpenCadEditor | 48–55 | fait | Pièces + Complete + octets/viewport `.cadomesh` |
 | **P4** Ergonomie des lignes | OpenCadEditor | 56–61 | fait | Souris, ruban et expression : clients des lignes de `Session` |
-| **P4b** Chrome Whittle + DS | OpenCadEditor | [67](../sprints/sprint-67-shell-ds.md)+ | **en cours (67 fait)** | Intégration maquette v2 → shell ([plan](../maquette/plan-integration-shell.md)) |
+| **P4b** Chrome Whittle + DS | OpenCadEditor | [67](../sprints/sprint-67-shell-ds.md)–[68](../sprints/sprint-68-shell-chrome.md)+ | **en cours (68 fait)** | Intégration maquette v2 → shell ([plan](../maquette/plan-integration-shell.md)) |
 | **P5** Viewport topologique | OpenCadEditor | 62–64 | **en cours (62)** | Carreaux, arêtes, datums sélectionnables dans w3dts |
 | **P6** Plateau service | OpenCadEditor | 65–66 | en cours (65) | Démo OpenCAD : plateau alu + 2 poignées laiton + 4 vis |
 
@@ -110,7 +110,7 @@ La souris et le ruban restent des clients des lignes ([pilotage-lignes.md](../ve
 
 ### P4b — Chrome Whittle + design system (dès sprint 67)
 
-Plan : [plan-integration-shell.md](../maquette/plan-integration-shell.md). Porter la maquette v2 dans le shell par couches (DS → chrome → ruban Lucide → layout Dockview v6 + terminal). Design seulement ; CAM / CTRL / Render restent maquette. Sprint 67 : tokens + primitives dans `packages/shell/src/ds/` ([sprint-67-shell-ds.md](../sprints/sprint-67-shell-ds.md), branche `feature/shell-ds`). Parallèle à P5 / P6, sans les bloquer.
+Plan : [plan-integration-shell.md](../maquette/plan-integration-shell.md). Porter la maquette v2 dans le shell par couches (DS → chrome → ruban Lucide → layout Dockview v6 + terminal). Design seulement ; CAM / CTRL / Render restent maquette. Sprint 67 : DS (`feature/shell-ds`). Sprint 68 : chrome + StatusBar (`feature/shell-chrome`). Parallèle à P5 / P6, sans les bloquer.
 
 ### P5 — Viewport topologique (dès sprint 62)
 

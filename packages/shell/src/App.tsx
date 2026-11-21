@@ -28,7 +28,9 @@ import {
 import { topologieAffichee } from './topologieAffichee.ts'
 import { traitsDe, traitsVides } from './traitsArete.ts'
 import { axeSousPointeur, planSousPointeur } from './selectionDatum.ts'
+import { Chrome } from './Chrome.tsx'
 import { RubanVue } from './RubanVue.tsx'
+import { ShellStatusBar } from './ShellStatusBar.tsx'
 import { storeShell } from './storeShell.ts'
 import { TerminalMonaco } from './TerminalMonaco.tsx'
 import { afficher, cadreCameraPick, cadrerVue, pivoterVue } from './viewportW3dts.ts'
@@ -431,7 +433,8 @@ export function App() {
 
   return (
     <div className="shell-root">
-      <RubanVue theme={theme} onThemeChange={setTheme} />
+      <Chrome theme={theme} onThemeChange={setTheme} />
+      <RubanVue />
       <div className="shell-dock">
         <EditorDock
           resolvedTheme={resolvedTheme}
@@ -441,6 +444,7 @@ export function App() {
           buildDefaultLayout={buildDefaultLayout}
         />
       </div>
+      <ShellStatusBar />
     </div>
   )
 }
